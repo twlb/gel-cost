@@ -1,130 +1,432 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-<meta name="theme-color" content="#0b0d10" />
-<title>GEL Cost — V5</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#0b0d10">
+<title>GEL Cost</title>
 <style>
 :root{
-  --bg:#0b0d10;--card:#15191f;--card2:#0f1318;--text:#f5f7fa;--muted:#8d98a5;
-  --line:#27303a;--accent:#25b7ff;--good:#23d18b;--warn:#ffb020;--bad:#ff5a6a;
+  --bg:#0b0d10;--card:#15191f;--card2:#0f1318;--text:#f5f7fa;--muted:#8f99a5;
+  --line:#27303a;--accent:#29b6f6;--good:#2bd18b;--warn:#ffb020;--bad:#ff6b78
 }
 *{box-sizing:border-box}
-html{background:var(--bg)}
-body{margin:0;background:linear-gradient(180deg,#090b0e 0%,#0d1116 100%);color:var(--text);font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif}
-.wrap{max-width:760px;margin:0 auto;padding:14px 12px calc(32px + env(safe-area-inset-bottom))}
-.head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;padding:4px 2px 8px}
-h1{font-size:27px;line-height:1;margin:0 0 6px}.sub{color:var(--muted);font-size:13px}.badge{font-size:12px;color:#061018;background:var(--accent);font-weight:900;padding:7px 10px;border-radius:999px}
-.panel{background:rgba(21,25,31,.96);border:1px solid var(--line);border-radius:18px;padding:14px;margin:10px 0;box-shadow:0 10px 28px rgba(0,0,0,.18)}
-.panel h2{font-size:16px;margin:0 0 12px}.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
-@media(max-width:600px){.grid,.grid3{grid-template-columns:1fr}}
-label{display:block;color:var(--muted);font-size:11px;margin-bottom:5px}.input{display:flex;align-items:center;background:var(--card2);border:1px solid var(--line);border-radius:13px;padding:0 11px}
-input{width:100%;background:transparent;border:0;outline:0;color:var(--text);font-size:18px;padding:12px 0;font-variant-numeric:tabular-nums}.unit{color:var(--muted);font-size:12px;margin-left:8px;white-space:nowrap}.hint{font-size:10px;color:#6f7b88;margin-top:4px}
-.hero{background:linear-gradient(135deg,rgba(37,183,255,.14),rgba(35,209,139,.08));border:1px solid rgba(37,183,255,.35);border-radius:18px;padding:15px;margin:10px 0}.heroTop{display:flex;justify-content:space-between;align-items:flex-end;gap:8px}.hero .label{font-size:11px;color:var(--muted)}.hero .big{font-size:30px;font-weight:900;line-height:1.05;font-variant-numeric:tabular-nums}.hero .rub{font-size:17px;font-weight:800;text-align:right}.hero .small{font-size:11px;color:var(--muted);margin-top:5px}
-.results{display:grid;gap:9px}.r{display:grid;grid-template-columns:1.15fr .85fr .85fr;gap:8px;align-items:center;background:var(--card2);border:1px solid var(--line);border-radius:15px;padding:12px}.r.best{border-color:rgba(35,209,139,.7);box-shadow:inset 0 0 0 1px rgba(35,209,139,.16)}.name{font-weight:800}.small{font-size:11px;color:var(--muted);margin-top:2px}.num{font-size:18px;font-weight:850;text-align:right;font-variant-numeric:tabular-nums}.num small{display:block;font-size:10px;color:var(--muted);font-weight:600;margin-top:2px}
-.sep{height:1px;background:var(--line);margin:12px 0}.winner{border-radius:15px;padding:13px;background:rgba(35,209,139,.08);border:1px solid rgba(35,209,139,.28)}.winner strong{font-size:18px}.winner p{margin:5px 0 0;color:var(--muted);font-size:12px}
-.ops{display:grid;gap:8px}.op{display:grid;grid-template-columns:1fr 1fr auto;gap:8px;align-items:end}.op button{height:44px}.actions{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}button{border:0;border-radius:13px;padding:11px 13px;font-weight:850;cursor:pointer}.primary{background:var(--accent);color:#061018}.secondary{background:#1a2027;color:var(--text);border:1px solid var(--line)}.danger{background:#25171a;color:#ff9aa5;border:1px solid #4a252c}.grow{flex:1}.foot{color:#6f7b88;font-size:10px;line-height:1.5;margin-top:11px}.status{font-size:11px;color:var(--muted);margin-top:7px}
-@media(max-width:460px){.r{grid-template-columns:1fr 1fr}.r>div:first-child{grid-column:1/-1}.num{text-align:left}.hero .big{font-size:28px}.op{grid-template-columns:1fr 1fr auto}}
+body{margin:0;background:linear-gradient(180deg,#090b0e,#0d1116);color:var(--text);
+font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif}
+.wrap{max-width:760px;margin:0 auto;padding:16px 14px 44px}
+.top{display:flex;justify-content:space-between;gap:12px;align-items:flex-start}
+h1{font-size:27px;line-height:1.08;margin:0 0 6px}
+.sub{font-size:13px;color:var(--muted);line-height:1.4}
+.badge{background:var(--accent);color:#061018;font-size:12px;font-weight:900;padding:7px 10px;border-radius:999px}
+.hero{margin:14px 0;background:linear-gradient(135deg,rgba(41,182,246,.16),rgba(43,209,139,.10));
+border:1px solid rgba(41,182,246,.28);border-radius:22px;padding:17px}
+.hero .eyebrow{font-size:12px;color:var(--muted)}
+.hero .big{font-size:38px;font-weight:900;letter-spacing:-.8px;margin-top:4px}
+.hero .route{color:var(--good);font-weight:850;margin-top:6px}
+.quick{display:grid;grid-template-columns:1fr auto;gap:10px;margin-top:14px}
+.input{display:flex;align-items:center;background:#0b0f14;border:1px solid var(--line);border-radius:14px;padding:0 12px}
+input{width:100%;background:transparent;border:0;outline:0;color:var(--text);font-size:20px;padding:13px 0;font-variant-numeric:tabular-nums}
+.unit{font-size:12px;color:var(--muted);margin-left:8px;white-space:nowrap}
+.quickout{min-width:145px;background:#0f1318;border:1px solid var(--line);border-radius:14px;padding:10px 12px;text-align:right}
+.quickout .v{font-size:21px;font-weight:900}
+.quickout .k{font-size:11px;color:var(--muted);margin-top:2px}
+.panel{background:rgba(21,25,31,.96);border:1px solid var(--line);border-radius:20px;padding:15px;margin:12px 0}
+.panel h2{font-size:17px;margin:0 0 5px}
+.desc{font-size:12px;color:var(--muted);line-height:1.45}
+.cards{display:grid;gap:10px;margin-top:12px}
+.card{background:var(--card2);border:1px solid var(--line);border-radius:17px;padding:13px}
+.card.best{border-color:rgba(43,209,139,.62);box-shadow:inset 0 0 0 1px rgba(43,209,139,.12)}
+.cardhead{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}
+.name{font-weight:850}
+.price{font-size:22px;font-weight:900;text-align:right}
+.meta{font-size:12px;color:var(--muted);line-height:1.5;margin-top:8px}
+.actions{display:flex;gap:8px;margin-top:11px}
+button{border:0;border-radius:12px;padding:10px 12px;font-weight:850;cursor:pointer}
+.primary{background:var(--accent);color:#061018}
+.secondary{background:#1a2027;color:var(--text);border:1px solid var(--line)}
+.ghost{background:transparent;color:var(--muted);border:1px solid var(--line)}
+.full{width:100%}
+.market{display:flex;justify-content:space-between;gap:12px;align-items:center}
+.market .mprice{font-weight:900;font-size:19px}
+.market .stamp{font-size:11px;color:var(--muted);margin-top:3px}
+.status{font-size:11px;padding:5px 8px;border-radius:999px;background:#101820;color:var(--muted)}
+.history{display:none;margin-top:10px;border-top:1px solid var(--line);padding-top:8px}
+.history.show{display:block}
+.row{display:flex;justify-content:space-between;gap:12px;padding:8px 0;border-bottom:1px solid rgba(39,48,58,.55);font-size:12px}
+.row:last-child{border-bottom:0}
+.row .r{color:var(--muted);text-align:right}
+.modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.66);padding:18px;z-index:10;align-items:flex-end;justify-content:center}
+.modal.show{display:flex}
+.sheet{width:min(720px,100%);background:#15191f;border:1px solid var(--line);border-radius:22px;padding:16px;max-height:88vh;overflow:auto}
+.sheet h3{margin:0 0 12px}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+@media(max-width:560px){.grid{grid-template-columns:1fr}.quick{grid-template-columns:1fr}.quickout{text-align:left}}
+label{display:block;color:var(--muted);font-size:12px;margin-bottom:5px}
+.note{font-size:11px;color:var(--muted);line-height:1.45;margin-top:9px}
+.sep{height:1px;background:var(--line);margin:12px 0}
+.smallbtn{padding:7px 9px;font-size:12px}
 </style>
 </head>
 <body>
 <div class="wrap">
-  <div class="head">
-    <div><h1>GEL Cost</h1><div class="sub">Сколько реально стоит 1 ₾ — сразу в рублях</div></div>
-    <div class="badge">V5</div>
-  </div>
-
-  <div class="panel">
-    <h2>Быстрый расчёт</h2>
-    <div class="grid">
-      <div><label>Сумма покупки / расхода</label><div class="input"><input id="gelAmount" type="number" inputmode="decimal" step="1" value="1000"><span class="unit">GEL</span></div></div>
-      <div><label>Мой текущий заработок / база</label><div class="input"><input id="rubBase" type="number" inputmode="decimal" step="1000" value="100000"><span class="unit">₽</span></div><div class="hint">Нужен только для постоянного рублёвого ориентира</div></div>
+  <div class="top">
+    <div>
+      <h1>Сколько мне стоит GEL?</h1>
+      <div class="sub">Все ваши обмены автоматически сводятся к рублю.</div>
     </div>
+    <div class="badge">V5.1</div>
   </div>
 
   <div class="hero">
-    <div class="heroTop"><div><div class="label">Лучший вариант сейчас</div><div class="big" id="heroRoute">—</div></div><div class="rub" id="heroRub">— ₽</div></div>
-    <div class="small" id="heroDetail">—</div>
+    <div class="eyebrow">Лучший реальный курс сейчас</div>
+    <div class="big" id="heroPrice">— ₽/GEL</div>
+    <div class="route" id="heroRoute">—</div>
+
+    <div class="quick">
+      <div class="input">
+        <input id="quickGel" type="number" step="0.01" value="100" inputmode="decimal">
+        <span class="unit">GEL</span>
+      </div>
+      <div class="quickout">
+        <div class="v" id="quickRub">— ₽</div>
+        <div class="k">в рублях</div>
+      </div>
+    </div>
   </div>
 
   <div class="panel">
-    <h2>Курсы</h2>
-    <div class="grid3">
-      <div><label>RUB → USD, мой фактический</label><div class="input"><input id="rubUsd" type="number" step="0.01" value="88"><span class="unit">₽/$</span></div></div>
-      <div><label>USD → GEL, наличный обмен</label><div class="input"><input id="streetRate" type="number" step="0.001" value="2.620"><span class="unit">₾/$</span></div></div>
-      <div><label>USD → GEL, TBC</label><div class="input"><input id="tbcRate" type="number" step="0.001" value="2.600"><span class="unit">₾/$</span></div></div>
+    <div class="market">
+      <div>
+        <div class="desc">Официальный ориентир</div>
+        <div class="mprice" id="marketPrice">— ₽/GEL</div>
+        <div class="stamp" id="marketStamp">последние сохранённые данные</div>
+      </div>
+      <div class="status" id="marketStatus">benchmark</div>
     </div>
-    <div class="sep"></div>
-    <div class="grid3">
-      <div><label>Официальный USD/RUB — ориентир</label><div class="input"><input id="officialRubUsd" type="number" step="0.01" placeholder="например 81.50"><span class="unit">₽/$</span></div></div>
-      <div><label>Официальный USD/GEL — ориентир</label><div class="input"><input id="officialUsdGel" type="number" step="0.0001" placeholder="например 2.70"><span class="unit">₾/$</span></div></div>
-      <div><label>Дата ориентира</label><div class="input"><input id="officialDate" type="text" placeholder="04.09.2026"></div></div>
-    </div>
-    <div class="status" id="officialDelta">Официальные курсы здесь используются только как ориентир и не участвуют в выборе маршрута.</div>
+    <div class="note" id="marketNote">Используется только как официальный ориентир. Старые данные всегда помечаются датой и не выдаются за текущие.</div>
   </div>
 
   <div class="panel">
-    <h2>Bybit / USDT</h2>
-    <div class="grid3">
-      <div><label>Текущая средняя себестоимость USDT</label><div class="input"><input id="usdtRub" type="number" step="0.01" value="86.55"><span class="unit">₽/USDT</span></div></div>
-      <div><label>Курс карты Bybit</label><div class="input"><input id="bybitRate" type="number" step="0.0001" value="2.5802"><span class="unit">₾/$</span></div></div>
-      <div><label>Комиссия / кэшбэк</label><div class="input"><input id="fee" type="number" step="0.1" value="2"><span class="unit">% fee</span></div><div class="input" style="margin-top:6px"><input id="cashback" type="number" step="0.1" value="2"><span class="unit">% back</span></div></div>
+    <h2>Мои способы</h2>
+    <div class="desc">В повседневной работе меняете только текущую конвертацию. Средняя цена USD/USDT считается из покупок автоматически.</div>
+
+    <div class="cards">
+      <div class="card" id="cashCard">
+        <div class="cardhead">
+          <div>
+            <div class="name">Наличный USD</div>
+            <div class="desc">₽ → USD → GEL</div>
+          </div>
+          <div class="price" id="cashPrice">—</div>
+        </div>
+        <div class="meta">
+          USD куплен в среднем: <b id="cashAvg">—</b><br>
+          Сейчас $1 = <b id="cashGelRate">2,620 GEL</b>
+        </div>
+        <div class="actions">
+          <button class="primary smallbtn" onclick="openRate('cash')">Обновить курс</button>
+          <button class="secondary smallbtn" onclick="openPurchase('usd')">+ Купил USD</button>
+          <button class="ghost smallbtn" onclick="toggleHistory('usdHistory')">История</button>
+        </div>
+        <div class="history" id="usdHistory"></div>
+      </div>
+
+      <div class="card" id="bybitCard">
+        <div class="cardhead">
+          <div>
+            <div class="name">Bybit / USDT</div>
+            <div class="desc">₽ → USDT → GEL</div>
+          </div>
+          <div class="price" id="bybitPrice">—</div>
+        </div>
+        <div class="meta">
+          USDT куплен в среднем: <b id="usdtAvg">—</b><br>
+          Конвертация Bybit: $1 = <b id="bybitGelRate">2,580 GEL</b><br>
+          комиссия <b id="feeShow">2%</b> · cashback <b>2%</b>
+        </div>
+        <div class="actions">
+          <button class="primary smallbtn" onclick="openRate('bybit')">Обновить курс</button>
+          <button class="secondary smallbtn" onclick="openPurchase('usdt')">+ Купил USDT</button>
+          <button class="ghost smallbtn" onclick="toggleHistory('usdtHistory')">История</button>
+        </div>
+        <div class="history" id="usdtHistory"></div>
+      </div>
     </div>
-    <div class="sep"></div>
-    <div class="small" style="margin-bottom:8px">Средний курс USDT по операциям</div>
-    <div class="ops" id="ops"></div>
-    <div class="actions"><button class="secondary grow" id="addOp">+ Добавить покупку USDT</button><button class="danger" id="clearOps">Очистить</button></div>
-    <div class="status" id="avgInfo">Нет операций — используется значение выше.</div>
   </div>
 
-  <div class="panel">
-    <h2>Сравнение</h2>
-    <div class="results">
-      <div class="r" id="streetRow"><div><div class="name">Наличные</div><div class="small">RUB → USD → GEL в обменнике</div></div><div class="num" id="street1">—<small>₽ / GEL</small></div><div class="num" id="streetTotal">—<small>₽ за сумму</small></div></div>
-      <div class="r" id="tbcRow"><div><div class="name">TBC</div><div class="small">RUB → USD → GEL в приложении</div></div><div class="num" id="tbc1">—<small>₽ / GEL</small></div><div class="num" id="tbcTotal">—<small>₽ за сумму</small></div></div>
-      <div class="r" id="bybitRow"><div><div class="name">Bybit</div><div class="small">USDT → карта → GEL, fee и cashback</div></div><div class="num" id="bybit1">—<small>₽ / GEL</small></div><div class="num" id="bybitTotal">—<small>₽ за сумму</small></div></div>
+  <button class="secondary full" onclick="openSettings()">Настройки и данные</button>
+</div>
+
+<div class="modal" id="purchaseModal">
+  <div class="sheet">
+    <h3 id="purchaseTitle">Добавить покупку</h3>
+    <div class="grid">
+      <div>
+        <label>Потратил</label>
+        <div class="input"><input id="purchaseRub" type="number" step="0.01" inputmode="decimal"><span class="unit">₽</span></div>
+      </div>
+      <div>
+        <label>Получил</label>
+        <div class="input"><input id="purchaseQty" type="number" step="0.0001" inputmode="decimal"><span class="unit" id="purchaseUnit">USD</span></div>
+      </div>
     </div>
-    <div class="sep"></div>
-    <div class="winner"><div class="small">Разница</div><strong id="winner">—</strong><p id="savings">—</p></div>
-    <div class="actions"><button class="primary grow" id="calc">Пересчитать</button><button class="secondary" id="reset">Сбросить V5</button></div>
-    <div class="foot">Все расчёты идут от фактической себестоимости денег, а не от «красивого» официального курса. Средняя цена USDT считается взвешенно: общая сумма рублей / общее количество купленных USDT.</div>
+    <div class="note" id="purchasePreview">Курс рассчитается автоматически.</div>
+    <div class="actions">
+      <button class="primary" onclick="savePurchase()">Сохранить</button>
+      <button class="secondary" onclick="closeModal('purchaseModal')">Отмена</button>
+    </div>
   </div>
 </div>
+
+<div class="modal" id="rateModal">
+  <div class="sheet">
+    <h3 id="rateTitle">Обновить курс</h3>
+    <div>
+      <label id="rateLabel">За $1 дают</label>
+      <div class="input"><input id="rateValue" type="number" step="0.0001" inputmode="decimal"><span class="unit">GEL</span></div>
+    </div>
+    <div class="actions">
+      <button class="primary" onclick="saveRate()">Сохранить</button>
+      <button class="secondary" onclick="closeModal('rateModal')">Отмена</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal" id="settingsModal">
+  <div class="sheet">
+    <h3>Настройки и данные</h3>
+    <div class="grid">
+      <div>
+        <label>Комиссия Bybit</label>
+        <div class="input"><input id="feeInput" type="number" step="0.1" value="2"><span class="unit">%</span></div>
+      </div>
+      <div>
+        <label>Cashback Bybit</label>
+        <div class="input"><input value="2" readonly><span class="unit">% фикс.</span></div>
+      </div>
+    </div>
+
+    <div class="sep"></div>
+    <div class="desc">Официальный ориентир</div>
+    <div class="grid" style="margin-top:8px">
+      <div>
+        <label>Последний USD/RUB — ЦБ РФ</label>
+        <div class="input"><input id="officialRub" type="number" step="0.0001" readonly><span class="unit">₽/$</span></div>
+      </div>
+      <div>
+        <label>Последний USD/GEL — НБГ</label>
+        <div class="input"><input id="officialGel" type="number" step="0.0001" readonly><span class="unit">GEL/$</span></div>
+      </div>
+    </div>
+    <div class="note">Официальный ориентир обновляется автоматически. Если обновление не удалось, показывается только последняя успешно загруженная пара курсов с датой. Тестовые значения не используются.</div>
+
+    <div class="actions">
+      <button class="primary" onclick="saveSettings()">Сохранить</button>
+      <button class="secondary" onclick="refreshOfficial()">Обновить ориентир</button>
+      <button class="ghost" onclick="closeModal('settingsModal')">Закрыть</button>
+    </div>
+
+    <div class="sep"></div>
+    <button class="ghost full" onclick="resetPeriod('usd')">Начать новый период USD</button>
+    <button class="ghost full" onclick="resetPeriod('usdt')">Начать новый период USDT</button>
+  </div>
+</div>
+
 <script>
 const $=id=>document.getElementById(id);
-const ids=["gelAmount","rubBase","rubUsd","streetRate","tbcRate","officialRubUsd","officialUsdGel","officialDate","usdtRub","bybitRate","fee","cashback"];
-const fmt=(n,d=2)=>Number.isFinite(n)?Number(n).toLocaleString("ru-RU",{minimumFractionDigits:d,maximumFractionDigits:d}):"—";
-const val=id=>parseFloat($(id).value)||0;
-let operations=[];
+const fmt=(n,d=2)=>Number(n).toLocaleString("ru-RU",{minimumFractionDigits:d,maximumFractionDigits:d});
+const state=JSON.parse(localStorage.getItem("gelcost-v5")||"null")||{
+  usdPurchases:[{rub:8800,qty:100,ts:Date.now()-3*86400000}],
+  usdtPurchases:[
+    {rub:3977,qty:46.2980,ts:Date.now()-4*86400000},
+    {rub:1190,qty:13.8372,ts:Date.now()-3*86400000},
+    {rub:17620,qty:202.8785,ts:Date.now()-2*86400000},
+    {rub:3600,qty:41.8604,ts:Date.now()-86400000}
+  ],
+  cashGelRate:2.620,
+  bybitGelRate:2.5802,
+  feePct:2,
+  cashbackPct:2,
+  officialUsdRub:null,
+  officialUsdGel:null,
+  officialUpdated:null,
+  officialSource:null
+};
+let purchaseKind="usd", rateKind="cash";
 
-function save(){localStorage.setItem("gelcost-v5",JSON.stringify({fields:Object.fromEntries(ids.map(id=>[id,$(id).value])),operations}));}
-function load(){try{const s=JSON.parse(localStorage.getItem("gelcost-v5")||"{}");if(s.fields)ids.forEach(id=>{if(s.fields[id]!==undefined)$(id).value=s.fields[id]});if(Array.isArray(s.operations))operations=s.operations;}catch(e){}renderOps();calc();}
-function renderOps(){const root=$("ops");root.innerHTML="";operations.forEach((op,i)=>{const row=document.createElement("div");row.className="op";row.innerHTML=`<div><label>Потрачено ₽</label><div class="input"><input data-i="${i}" data-k="rub" type="number" inputmode="decimal" step="1" value="${op.rub??""}"><span class="unit">₽</span></div></div><div><label>Получено USDT</label><div class="input"><input data-i="${i}" data-k="usdt" type="number" inputmode="decimal" step="0.01" value="${op.usdt??""}"><span class="unit">USDT</span></div></div><button class="danger" data-del="${i}">×</button>`;root.appendChild(row);});
-root.querySelectorAll("input[data-i]").forEach(el=>el.addEventListener("input",e=>{const i=+e.target.dataset.i,k=e.target.dataset.k;operations[i][k]=parseFloat(e.target.value)||0;recalcAverage();calc();save();}));
-root.querySelectorAll("button[data-del]").forEach(b=>b.addEventListener("click",()=>{operations.splice(+b.dataset.del,1);renderOps();recalcAverage();calc();save();}));
-recalcAverage();}
-function recalcAverage(){const valid=operations.filter(o=>o.rub>0&&o.usdt>0);if(!valid.length){$("avgInfo").textContent="Нет операций — используется значение выше.";return;}const rub=valid.reduce((s,o)=>s+o.rub,0),usdt=valid.reduce((s,o)=>s+o.usdt,0),avg=rub/usdt;$("usdtRub").value=avg.toFixed(4);$("avgInfo").textContent=`Средняя: ${fmt(avg,2)} ₽/USDT · ${fmt(rub,0)} ₽ / ${fmt(usdt,2)} USDT`;}
-function calc(){
- const amount=val("gelAmount"),rubUsd=val("rubUsd"),streetRate=val("streetRate"),tbcRate=val("tbcRate"),usdtRub=val("usdtRub"),bybitRate=val("bybitRate"),fee=val("fee")/100,cashback=val("cashback")/100;
- const street=streetRate>0?rubUsd/streetRate:Infinity;
- const tbc=tbcRate>0?rubUsd/tbcRate:Infinity;
- const multiplier=(1+fee)*(1-cashback);
- const bybitEff=bybitRate>0?bybitRate/multiplier:0;
- const bybit=bybitEff>0?usdtRub/bybitEff:Infinity;
- const rows=[{name:"Наличные",v:street,row:"streetRow",one:"street1",total:"streetTotal"},{name:"TBC",v:tbc,row:"tbcRow",one:"tbc1",total:"tbcTotal"},{name:"Bybit",v:bybit,row:"bybitRow",one:"bybit1",total:"bybitTotal"}].filter(r=>Number.isFinite(r.v)&&r.v>0);
- ["streetRow","tbcRow","bybitRow"].forEach(id=>$(id).classList.remove("best"));
- rows.forEach(r=>{$(r.one).innerHTML=`${fmt(r.v)}<small>₽ / GEL</small>`;$(r.total).innerHTML=`${fmt(r.v*amount,0)}<small>₽ за ${fmt(amount,0)} GEL</small>`;});
- if(rows.length){const sorted=[...rows].sort((a,b)=>a.v-b.v),best=sorted[0],second=sorted[1];$(best.row).classList.add("best");$("winner").textContent=`${best.name}: ${fmt(best.v)} ₽/GEL`;$("heroRoute").textContent=best.name;$("heroRub").textContent=`${fmt(best.v*amount,0)} ₽`;$("heroDetail").textContent=`${fmt(amount,0)} GEL × ${fmt(best.v)} ₽ = ${fmt(best.v*amount,0)} ₽`;if(second){const save=(second.v-best.v)*amount,pct=(second.v/best.v-1)*100;$("savings").textContent=`Экономия против следующего варианта: ≈ ${fmt(save,0)} ₽ на ${fmt(amount,0)} GEL (${fmt(pct,2)}%).`;}else $("savings").textContent="Для сравнения заполните ещё один маршрут.";}
- const oru=val("officialRubUsd"),ogel=val("officialUsdGel");if(oru>0&&ogel>0){const official=oru/ogel;const actual=street;const delta=Number.isFinite(actual)?((actual/official)-1)*100:0;$("officialDelta").textContent=`Официальный ориентир: ${fmt(official,2)} ₽/GEL. Ваш наличный маршрут: ${delta>=0?"дороже":"дешевле"} на ${fmt(Math.abs(delta),2)}%.`;}else $("officialDelta").textContent="Официальные курсы здесь используются только как ориентир и не участвуют в выборе маршрута.";
- save();
+function save(){localStorage.setItem("gelcost-v5",JSON.stringify(state))}
+function weighted(list){
+  const rub=list.reduce((s,x)=>s+Number(x.rub||0),0);
+  const qty=list.reduce((s,x)=>s+Number(x.qty||0),0);
+  return qty>0?rub/qty:NaN;
 }
-$("addOp").addEventListener("click",()=>{operations.push({rub:0,usdt:0});renderOps();save();});
-$("clearOps").addEventListener("click",()=>{operations=[];renderOps();calc();save();});
-$("calc").addEventListener("click",calc);
-$("reset").addEventListener("click",()=>{localStorage.removeItem("gelcost-v5");location.reload();});
-ids.forEach(id=>$(id).addEventListener("input",calc));
-load();
+function calc(){
+  const usdAvg=weighted(state.usdPurchases);
+  const usdtAvg=weighted(state.usdtPurchases);
+  const cash=state.cashGelRate>0?usdAvg/state.cashGelRate:Infinity;
+  const mult=(1+state.feePct/100)*(1-state.cashbackPct/100);
+  const bybit=state.bybitGelRate>0?usdtAvg*mult/state.bybitGelRate:Infinity;
+  const hasOfficial=Number(state.officialUsdRub)>0 && Number(state.officialUsdGel)>0;
+  const benchmark=hasOfficial?Number(state.officialUsdRub)/Number(state.officialUsdGel):Infinity;
+  const best=Math.min(cash,bybit);
+  const bestName=cash<=bybit?"Наличный USD":"Bybit / USDT";
+
+  $("cashAvg").textContent=isFinite(usdAvg)?fmt(usdAvg)+" ₽/$":"—";
+  $("usdtAvg").textContent=isFinite(usdtAvg)?fmt(usdtAvg)+" ₽/USDT":"—";
+  $("cashGelRate").textContent=fmt(state.cashGelRate,3)+" GEL";
+  $("bybitGelRate").textContent=fmt(state.bybitGelRate,3)+" GEL";
+  $("feeShow").textContent=fmt(state.feePct,1)+"%";
+  $("cashPrice").textContent=isFinite(cash)?fmt(cash)+" ₽/GEL":"—";
+  $("bybitPrice").textContent=isFinite(bybit)?fmt(bybit)+" ₽/GEL":"—";
+  $("heroPrice").textContent=isFinite(best)?fmt(best)+" ₽/GEL":"—";
+  $("heroRoute").textContent=bestName;
+
+  $("cashCard").classList.toggle("best",cash<=bybit);
+  $("bybitCard").classList.toggle("best",bybit<cash);
+
+  const q=parseFloat($("quickGel").value)||0;
+  $("quickRub").textContent=isFinite(best)?fmt(q*best,0)+" ₽":"—";
+
+  $("marketPrice").textContent=isFinite(benchmark)?fmt(benchmark)+" ₽/GEL":"—";
+  if(state.officialUpdated && isFinite(benchmark)){
+    const d=new Date(state.officialUpdated), now=new Date();
+    const sameDay=d.getFullYear()===now.getFullYear() && d.getMonth()===now.getMonth() && d.getDate()===now.getDate();
+    $("marketStamp").textContent=(sameDay?"обновлено сегодня ":"данные от ")+d.toLocaleString("ru-RU",{day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit"});
+    $("marketStatus").textContent=isFinite(best)
+      ?((best/benchmark-1)*100>=0?"+":"")+fmt((best/benchmark-1)*100,1)+"%"
+      :"официальный";
+    $("marketNote").textContent=sameDay
+      ?"Свежий официальный кросс-ориентир ЦБ РФ + НБГ. Он не участвует в расчёте вашей себестоимости."
+      :"Официальный ориентир устарел. Для вашей себестоимости используются только реальные операции; ориентир показан с датой.";
+  }else{
+    $("marketStamp").textContent="нет успешно загруженных официальных данных";
+    $("marketStatus").textContent="нет данных";
+    $("marketNote").textContent="Официальный ориентир не показывается, пока приложение не получит реальные данные от ЦБ РФ и НБГ.";
+  }
+
+  renderHistory("usd");
+  renderHistory("usdt");
+  save();
+}
+function renderHistory(kind){
+  const box=$(kind+"History");
+  const list=(kind==="usd"?state.usdPurchases:state.usdtPurchases).slice().reverse();
+  box.innerHTML=list.length?list.map(x=>{
+    const rate=x.qty?x.rub/x.qty:0;
+    return `<div class="row"><div>${fmt(x.rub,0)} ₽ → ${fmt(x.qty,kind==="usd"?2:4)} ${kind.toUpperCase()}</div><div class="r">${fmt(rate,2)} ₽<br>${new Date(x.ts).toLocaleDateString("ru-RU")}</div></div>`;
+  }).join(""):'<div class="note">Операций пока нет.</div>';
+}
+function toggleHistory(id){$(id).classList.toggle("show")}
+function openPurchase(kind){
+  purchaseKind=kind;
+  $("purchaseTitle").textContent=kind==="usd"?"Купил USD":"Купил USDT";
+  $("purchaseUnit").textContent=kind.toUpperCase();
+  $("purchaseRub").value="";
+  $("purchaseQty").value="";
+  $("purchasePreview").textContent="Курс рассчитается автоматически.";
+  $("purchaseModal").classList.add("show");
+  setTimeout(()=>$("purchaseRub").focus(),50);
+}
+function updatePreview(){
+  const r=parseFloat($("purchaseRub").value)||0,q=parseFloat($("purchaseQty").value)||0;
+  $("purchasePreview").textContent=(r>0&&q>0)?"Курс этой покупки: "+fmt(r/q,2)+" ₽/"+purchaseKind.toUpperCase():"Курс рассчитается автоматически.";
+}
+$("purchaseRub").addEventListener("input",updatePreview);
+$("purchaseQty").addEventListener("input",updatePreview);
+function savePurchase(){
+  const rub=parseFloat($("purchaseRub").value)||0,qty=parseFloat($("purchaseQty").value)||0;
+  if(!(rub>0&&qty>0))return;
+  (purchaseKind==="usd"?state.usdPurchases:state.usdtPurchases).push({rub,qty,ts:Date.now()});
+  closeModal("purchaseModal");calc();
+}
+function openRate(kind){
+  rateKind=kind;
+  $("rateTitle").textContent=kind==="cash"?"Обновить USD → GEL":"Обновить конвертацию Bybit";
+  $("rateLabel").textContent=kind==="cash"?"За $1 дают":"Bybit: $1 =";
+  $("rateValue").value=kind==="cash"?state.cashGelRate:state.bybitGelRate;
+  $("rateModal").classList.add("show");
+  setTimeout(()=>$("rateValue").focus(),50);
+}
+function saveRate(){
+  const v=parseFloat($("rateValue").value)||0;if(v<=0)return;
+  if(rateKind==="cash")state.cashGelRate=v;else state.bybitGelRate=v;
+  closeModal("rateModal");calc();
+}
+function openSettings(){
+  $("feeInput").value=state.feePct;
+  $("officialRub").value=state.officialUsdRub ?? "";
+  $("officialGel").value=state.officialUsdGel ?? "";
+  $("settingsModal").classList.add("show");
+}
+function saveSettings(){
+  state.feePct=parseFloat($("feeInput").value)||0;
+  closeModal("settingsModal");calc();
+}
+function closeModal(id){$(id).classList.remove("show")}
+function resetPeriod(kind){
+  if(!confirm("Удалить историю "+kind.toUpperCase()+" и начать новый период?"))return;
+  if(kind==="usd")state.usdPurchases=[];else state.usdtPurchases=[];
+  calc();
+}
+async function refreshOfficial(){
+  $("marketStatus").textContent="обновление…";
+  let rubRate=null, gelRate=null;
+
+  try{
+    const r=await fetch("https://www.cbr.ru/scripts/XML_daily.asp",{cache:"no-store"});
+    if(r.ok){
+      const xml=new DOMParser().parseFromString(await r.text(),"text/xml");
+      const usd=[...xml.querySelectorAll("Valute")].find(n=>n.querySelector("CharCode")?.textContent==="USD");
+      if(usd){
+        const v=parseFloat(usd.querySelector("Value").textContent.replace(",","."));
+        const nominal=parseFloat(usd.querySelector("Nominal").textContent)||1;
+        if(v>0) rubRate=v/nominal;
+      }
+    }
+  }catch(e){}
+
+  try{
+    const body=`<?xml version="1.0" encoding="utf-8"?>
+      <soap:Envelope xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
+        <soap:Body><GetCurrentRates xmlns="http://www.nbg.ge/"><Currencies>USD</Currencies></GetCurrentRates></soap:Body>
+      </soap:Envelope>`;
+    const r=await fetch("https://services.nbg.gov.ge/Rates/Service.asmx",{
+      method:"POST",
+      headers:{"Content-Type":"text/xml; charset=utf-8","SOAPAction":"http://www.nbg.ge/GetCurrentRates"},
+      body
+    });
+    if(r.ok){
+      const xml=new DOMParser().parseFromString(await r.text(),"text/xml");
+      const cr=[...xml.getElementsByTagName("*")].find(n=>n.localName==="CurrencyRate" && [...n.children].some(c=>c.localName==="Code" && c.textContent==="USD"));
+      if(cr){
+        const rate=parseFloat([...cr.children].find(c=>c.localName==="Rate")?.textContent);
+        const qty=parseFloat([...cr.children].find(c=>c.localName==="Quantity")?.textContent)||1;
+        if(rate>0) gelRate=rate/qty;
+      }
+    }
+  }catch(e){}
+
+  if(rubRate && gelRate){
+    state.officialUsdRub=rubRate;
+    state.officialUsdGel=gelRate;
+    state.officialUpdated=Date.now();
+    state.officialSource="CBR+NBG";
+  }
+
+  save();
+  calc();
+  if($("settingsModal").classList.contains("show")){
+    $("officialRub").value=state.officialUsdRub ?? "";
+    $("officialGel").value=state.officialUsdGel ?? "";
+  }
+}
+
+$("quickGel").addEventListener("input",calc);
+document.querySelectorAll(".modal").forEach(m=>m.addEventListener("click",e=>{if(e.target===m)m.classList.remove("show")}));
+calc();
+
+// Не чаще одного раза в 12 часов пытаемся освежить официальный ориентир.
+if(!state.officialUpdated || !state.officialUsdRub || !state.officialUsdGel || Date.now()-state.officialUpdated>12*3600*1000){refreshOfficial()}
 </script>
 </body>
 </html>
