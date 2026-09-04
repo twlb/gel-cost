@@ -4,197 +4,125 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
 <meta name="theme-color" content="#0b0d10" />
-<title>GEL Cost — V1</title>
+<title>GEL Cost — V5</title>
 <style>
-  :root{
-    --bg:#0b0d10; --card:#15191f; --card2:#0f1318; --text:#f5f7fa; --muted:#8d98a5;
-    --line:#27303a; --accent:#25b7ff; --good:#23d18b; --warn:#ffb020; --bad:#ff5a6a;
-  }
-  *{box-sizing:border-box}
-  body{margin:0;background:linear-gradient(180deg,#090b0e 0%,#0d1116 100%);color:var(--text);
-       font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif}
-  .wrap{max-width:720px;margin:0 auto;padding:20px 16px 40px}
-  .head{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;margin-bottom:18px}
-  h1{font-size:28px;line-height:1.05;margin:0 0 6px}
-  .sub{color:var(--muted);font-size:14px}
-  .badge{font-size:12px;color:#061018;background:var(--accent);font-weight:800;padding:7px 10px;border-radius:999px;white-space:nowrap}
-  .panel{background:rgba(21,25,31,.95);border:1px solid var(--line);border-radius:20px;padding:16px;margin:12px 0;
-         box-shadow:0 10px 30px rgba(0,0,0,.18)}
-  .panel h2{font-size:17px;margin:0 0 14px}
-  .grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-  @media (max-width:560px){.grid{grid-template-columns:1fr}}
-  label{display:block;color:var(--muted);font-size:12px;margin-bottom:6px}
-  .input{display:flex;align-items:center;background:var(--card2);border:1px solid var(--line);border-radius:14px;padding:0 12px}
-  input{width:100%;background:transparent;border:0;outline:0;color:var(--text);font-size:18px;padding:13px 0;font-variant-numeric:tabular-nums}
-  .unit{color:var(--muted);font-size:13px;margin-left:8px;white-space:nowrap}
-  .hint{font-size:11px;color:#6f7b88;margin-top:5px}
-  .results{display:grid;gap:10px}
-  .r{display:grid;grid-template-columns:1.15fr .85fr .85fr;gap:8px;align-items:center;background:var(--card2);
-     border:1px solid var(--line);border-radius:16px;padding:13px}
-  .r.best{border-color:rgba(35,209,139,.7);box-shadow:inset 0 0 0 1px rgba(35,209,139,.18)}
-  .name{font-weight:750}
-  .small{font-size:12px;color:var(--muted);margin-top:2px}
-  .num{font-size:19px;font-weight:800;text-align:right;font-variant-numeric:tabular-nums}
-  .num small{font-size:11px;color:var(--muted);font-weight:600;display:block}
-  .winner{background:linear-gradient(135deg,rgba(35,209,139,.12),rgba(37,183,255,.08));border:1px solid rgba(35,209,139,.35);
-          border-radius:18px;padding:16px}
-  .winner strong{font-size:20px}
-  .winner p{margin:6px 0 0;color:var(--muted);font-size:13px}
-  .actions{display:flex;gap:10px;margin-top:12px}
-  button{border:0;border-radius:14px;padding:12px 14px;font-weight:800;cursor:pointer}
-  .primary{background:var(--accent);color:#061018;flex:1}
-  .secondary{background:#1a2027;color:var(--text);border:1px solid var(--line)}
-  .foot{color:#6f7b88;font-size:11px;line-height:1.45;margin-top:14px}
-  .sep{height:1px;background:var(--line);margin:14px 0}
+:root{
+  --bg:#0b0d10;--card:#15191f;--card2:#0f1318;--text:#f5f7fa;--muted:#8d98a5;
+  --line:#27303a;--accent:#25b7ff;--good:#23d18b;--warn:#ffb020;--bad:#ff5a6a;
+}
+*{box-sizing:border-box}
+html{background:var(--bg)}
+body{margin:0;background:linear-gradient(180deg,#090b0e 0%,#0d1116 100%);color:var(--text);font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif}
+.wrap{max-width:760px;margin:0 auto;padding:14px 12px calc(32px + env(safe-area-inset-bottom))}
+.head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;padding:4px 2px 8px}
+h1{font-size:27px;line-height:1;margin:0 0 6px}.sub{color:var(--muted);font-size:13px}.badge{font-size:12px;color:#061018;background:var(--accent);font-weight:900;padding:7px 10px;border-radius:999px}
+.panel{background:rgba(21,25,31,.96);border:1px solid var(--line);border-radius:18px;padding:14px;margin:10px 0;box-shadow:0 10px 28px rgba(0,0,0,.18)}
+.panel h2{font-size:16px;margin:0 0 12px}.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+@media(max-width:600px){.grid,.grid3{grid-template-columns:1fr}}
+label{display:block;color:var(--muted);font-size:11px;margin-bottom:5px}.input{display:flex;align-items:center;background:var(--card2);border:1px solid var(--line);border-radius:13px;padding:0 11px}
+input{width:100%;background:transparent;border:0;outline:0;color:var(--text);font-size:18px;padding:12px 0;font-variant-numeric:tabular-nums}.unit{color:var(--muted);font-size:12px;margin-left:8px;white-space:nowrap}.hint{font-size:10px;color:#6f7b88;margin-top:4px}
+.hero{background:linear-gradient(135deg,rgba(37,183,255,.14),rgba(35,209,139,.08));border:1px solid rgba(37,183,255,.35);border-radius:18px;padding:15px;margin:10px 0}.heroTop{display:flex;justify-content:space-between;align-items:flex-end;gap:8px}.hero .label{font-size:11px;color:var(--muted)}.hero .big{font-size:30px;font-weight:900;line-height:1.05;font-variant-numeric:tabular-nums}.hero .rub{font-size:17px;font-weight:800;text-align:right}.hero .small{font-size:11px;color:var(--muted);margin-top:5px}
+.results{display:grid;gap:9px}.r{display:grid;grid-template-columns:1.15fr .85fr .85fr;gap:8px;align-items:center;background:var(--card2);border:1px solid var(--line);border-radius:15px;padding:12px}.r.best{border-color:rgba(35,209,139,.7);box-shadow:inset 0 0 0 1px rgba(35,209,139,.16)}.name{font-weight:800}.small{font-size:11px;color:var(--muted);margin-top:2px}.num{font-size:18px;font-weight:850;text-align:right;font-variant-numeric:tabular-nums}.num small{display:block;font-size:10px;color:var(--muted);font-weight:600;margin-top:2px}
+.sep{height:1px;background:var(--line);margin:12px 0}.winner{border-radius:15px;padding:13px;background:rgba(35,209,139,.08);border:1px solid rgba(35,209,139,.28)}.winner strong{font-size:18px}.winner p{margin:5px 0 0;color:var(--muted);font-size:12px}
+.ops{display:grid;gap:8px}.op{display:grid;grid-template-columns:1fr 1fr auto;gap:8px;align-items:end}.op button{height:44px}.actions{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}button{border:0;border-radius:13px;padding:11px 13px;font-weight:850;cursor:pointer}.primary{background:var(--accent);color:#061018}.secondary{background:#1a2027;color:var(--text);border:1px solid var(--line)}.danger{background:#25171a;color:#ff9aa5;border:1px solid #4a252c}.grow{flex:1}.foot{color:#6f7b88;font-size:10px;line-height:1.5;margin-top:11px}.status{font-size:11px;color:var(--muted);margin-top:7px}
+@media(max-width:460px){.r{grid-template-columns:1fr 1fr}.r>div:first-child{grid-column:1/-1}.num{text-align:left}.hero .big{font-size:28px}.op{grid-template-columns:1fr 1fr auto}}
 </style>
 </head>
 <body>
 <div class="wrap">
   <div class="head">
-    <div>
-      <h1>GEL Cost</h1>
-      <div class="sub">Сравнение реальной стоимости лари: улица, TBC и Bybit</div>
-    </div>
-    <div class="badge">V1</div>
+    <div><h1>GEL Cost</h1><div class="sub">Сколько реально стоит 1 ₾ — сразу в рублях</div></div>
+    <div class="badge">V5</div>
   </div>
 
   <div class="panel">
-    <h2>1. Наличный USD</h2>
+    <h2>Быстрый расчёт</h2>
     <div class="grid">
-      <div>
-        <label>Себестоимость наличного доллара</label>
-        <div class="input"><input id="cashRub" type="number" step="0.01" value="88"><span class="unit">₽/$</span></div>
-      </div>
-      <div>
-        <label>Уличный курс — обменник покупает USD</label>
-        <div class="input"><input id="streetRate" type="number" step="0.001" value="2.620"><span class="unit">GEL/$</span></div>
-      </div>
-      <div>
-        <label>Курс TBC USD → GEL</label>
-        <div class="input"><input id="tbcRate" type="number" step="0.001" value="2.600"><span class="unit">GEL/$</span></div>
-        <div class="hint">Берите Your Rate из Currency Exchange</div>
-      </div>
+      <div><label>Сумма покупки / расхода</label><div class="input"><input id="gelAmount" type="number" inputmode="decimal" step="1" value="1000"><span class="unit">GEL</span></div></div>
+      <div><label>Мой текущий заработок / база</label><div class="input"><input id="rubBase" type="number" inputmode="decimal" step="1000" value="100000"><span class="unit">₽</span></div><div class="hint">Нужен только для постоянного рублёвого ориентира</div></div>
     </div>
   </div>
 
-  <div class="panel">
-    <h2>2. Bybit / USDT</h2>
-    <div class="grid">
-      <div>
-        <label>Средняя себестоимость USDT</label>
-        <div class="input"><input id="usdtRub" type="number" step="0.01" value="86.55"><span class="unit">₽/USDT</span></div>
-      </div>
-      <div>
-        <label>Карточный курс Bybit</label>
-        <div class="input"><input id="bybitRate" type="number" step="0.0001" value="2.5802"><span class="unit">GEL/USD</span></div>
-        <div class="hint">По операции 15,12 GEL / 5,86 USD</div>
-      </div>
-      <div>
-        <label>Foreign Transaction Fee</label>
-        <div class="input"><input id="fee" type="number" step="0.1" value="2"><span class="unit">%</span></div>
-      </div>
-      <div>
-        <label>Кэшбэк</label>
-        <div class="input"><input id="cashback" type="number" step="0.1" value="2"><span class="unit">%</span></div>
-      </div>
-    </div>
+  <div class="hero">
+    <div class="heroTop"><div><div class="label">Лучший вариант сейчас</div><div class="big" id="heroRoute">—</div></div><div class="rub" id="heroRub">— ₽</div></div>
+    <div class="small" id="heroDetail">—</div>
   </div>
 
   <div class="panel">
-    <h2>Результат</h2>
-    <div class="results">
-      <div class="r" id="streetRow">
-        <div><div class="name">Улица</div><div class="small">наличный USD → GEL</div></div>
-        <div class="num" id="street1">—<small>₽ / GEL</small></div>
-        <div class="num" id="street1000">—<small>₽ / 1000 GEL</small></div>
-      </div>
-      <div class="r" id="tbcRow">
-        <div><div class="name">TBC</div><div class="small">USD → GEL в приложении</div></div>
-        <div class="num" id="tbc1">—<small>₽ / GEL</small></div>
-        <div class="num" id="tbc1000">—<small>₽ / 1000 GEL</small></div>
-      </div>
-      <div class="r" id="bybitRow">
-        <div><div class="name">Bybit</div><div class="small">с комиссией и кэшбэком</div></div>
-        <div class="num" id="bybit1">—<small>₽ / GEL</small></div>
-        <div class="num" id="bybit1000">—<small>₽ / 1000 GEL</small></div>
-      </div>
+    <h2>Курсы</h2>
+    <div class="grid3">
+      <div><label>RUB → USD, мой фактический</label><div class="input"><input id="rubUsd" type="number" step="0.01" value="88"><span class="unit">₽/$</span></div></div>
+      <div><label>USD → GEL, наличный обмен</label><div class="input"><input id="streetRate" type="number" step="0.001" value="2.620"><span class="unit">₾/$</span></div></div>
+      <div><label>USD → GEL, TBC</label><div class="input"><input id="tbcRate" type="number" step="0.001" value="2.600"><span class="unit">₾/$</span></div></div>
     </div>
-
     <div class="sep"></div>
+    <div class="grid3">
+      <div><label>Официальный USD/RUB — ориентир</label><div class="input"><input id="officialRubUsd" type="number" step="0.01" placeholder="например 81.50"><span class="unit">₽/$</span></div></div>
+      <div><label>Официальный USD/GEL — ориентир</label><div class="input"><input id="officialUsdGel" type="number" step="0.0001" placeholder="например 2.70"><span class="unit">₾/$</span></div></div>
+      <div><label>Дата ориентира</label><div class="input"><input id="officialDate" type="text" placeholder="04.09.2026"></div></div>
+    </div>
+    <div class="status" id="officialDelta">Официальные курсы здесь используются только как ориентир и не участвуют в выборе маршрута.</div>
+  </div>
 
-    <div class="winner">
-      <div class="small">Сейчас выгоднее</div>
-      <strong id="winner">—</strong>
-      <p id="savings">—</p>
+  <div class="panel">
+    <h2>Bybit / USDT</h2>
+    <div class="grid3">
+      <div><label>Текущая средняя себестоимость USDT</label><div class="input"><input id="usdtRub" type="number" step="0.01" value="86.55"><span class="unit">₽/USDT</span></div></div>
+      <div><label>Курс карты Bybit</label><div class="input"><input id="bybitRate" type="number" step="0.0001" value="2.5802"><span class="unit">₾/$</span></div></div>
+      <div><label>Комиссия / кэшбэк</label><div class="input"><input id="fee" type="number" step="0.1" value="2"><span class="unit">% fee</span></div><div class="input" style="margin-top:6px"><input id="cashback" type="number" step="0.1" value="2"><span class="unit">% back</span></div></div>
     </div>
+    <div class="sep"></div>
+    <div class="small" style="margin-bottom:8px">Средний курс USDT по операциям</div>
+    <div class="ops" id="ops"></div>
+    <div class="actions"><button class="secondary grow" id="addOp">+ Добавить покупку USDT</button><button class="danger" id="clearOps">Очистить</button></div>
+    <div class="status" id="avgInfo">Нет операций — используется значение выше.</div>
+  </div>
 
-    <div class="actions">
-      <button class="primary" id="calc">Пересчитать</button>
-      <button class="secondary" id="reset">Сброс</button>
+  <div class="panel">
+    <h2>Сравнение</h2>
+    <div class="results">
+      <div class="r" id="streetRow"><div><div class="name">Наличные</div><div class="small">RUB → USD → GEL в обменнике</div></div><div class="num" id="street1">—<small>₽ / GEL</small></div><div class="num" id="streetTotal">—<small>₽ за сумму</small></div></div>
+      <div class="r" id="tbcRow"><div><div class="name">TBC</div><div class="small">RUB → USD → GEL в приложении</div></div><div class="num" id="tbc1">—<small>₽ / GEL</small></div><div class="num" id="tbcTotal">—<small>₽ за сумму</small></div></div>
+      <div class="r" id="bybitRow"><div><div class="name">Bybit</div><div class="small">USDT → карта → GEL, fee и cashback</div></div><div class="num" id="bybit1">—<small>₽ / GEL</small></div><div class="num" id="bybitTotal">—<small>₽ за сумму</small></div></div>
     </div>
-    <div class="foot">
-      Формула Bybit V1: сначала учитывается карточный курс, затем 2% foreign fee, затем кэшбэк.
-      Для точного сравнения вводите фактические курсы из свежей операции и TBC.
-    </div>
+    <div class="sep"></div>
+    <div class="winner"><div class="small">Разница</div><strong id="winner">—</strong><p id="savings">—</p></div>
+    <div class="actions"><button class="primary grow" id="calc">Пересчитать</button><button class="secondary" id="reset">Сбросить V5</button></div>
+    <div class="foot">Все расчёты идут от фактической себестоимости денег, а не от «красивого» официального курса. Средняя цена USDT считается взвешенно: общая сумма рублей / общее количество купленных USDT.</div>
   </div>
 </div>
-
 <script>
-const ids = ["cashRub","streetRate","tbcRate","usdtRub","bybitRate","fee","cashback"];
-const $ = id => document.getElementById(id);
-const fmt = (n,d=2)=> Number(n).toLocaleString("ru-RU",{minimumFractionDigits:d,maximumFractionDigits:d});
+const $=id=>document.getElementById(id);
+const ids=["gelAmount","rubBase","rubUsd","streetRate","tbcRate","officialRubUsd","officialUsdGel","officialDate","usdtRub","bybitRate","fee","cashback"];
+const fmt=(n,d=2)=>Number.isFinite(n)?Number(n).toLocaleString("ru-RU",{minimumFractionDigits:d,maximumFractionDigits:d}):"—";
+const val=id=>parseFloat($(id).value)||0;
+let operations=[];
 
-function val(id){ return parseFloat($(id).value) || 0; }
-
+function save(){localStorage.setItem("gelcost-v5",JSON.stringify({fields:Object.fromEntries(ids.map(id=>[id,$(id).value])),operations}));}
+function load(){try{const s=JSON.parse(localStorage.getItem("gelcost-v5")||"{}");if(s.fields)ids.forEach(id=>{if(s.fields[id]!==undefined)$(id).value=s.fields[id]});if(Array.isArray(s.operations))operations=s.operations;}catch(e){}renderOps();calc();}
+function renderOps(){const root=$("ops");root.innerHTML="";operations.forEach((op,i)=>{const row=document.createElement("div");row.className="op";row.innerHTML=`<div><label>Потрачено ₽</label><div class="input"><input data-i="${i}" data-k="rub" type="number" inputmode="decimal" step="1" value="${op.rub??""}"><span class="unit">₽</span></div></div><div><label>Получено USDT</label><div class="input"><input data-i="${i}" data-k="usdt" type="number" inputmode="decimal" step="0.01" value="${op.usdt??""}"><span class="unit">USDT</span></div></div><button class="danger" data-del="${i}">×</button>`;root.appendChild(row);});
+root.querySelectorAll("input[data-i]").forEach(el=>el.addEventListener("input",e=>{const i=+e.target.dataset.i,k=e.target.dataset.k;operations[i][k]=parseFloat(e.target.value)||0;recalcAverage();calc();save();}));
+root.querySelectorAll("button[data-del]").forEach(b=>b.addEventListener("click",()=>{operations.splice(+b.dataset.del,1);renderOps();recalcAverage();calc();save();}));
+recalcAverage();}
+function recalcAverage(){const valid=operations.filter(o=>o.rub>0&&o.usdt>0);if(!valid.length){$("avgInfo").textContent="Нет операций — используется значение выше.";return;}const rub=valid.reduce((s,o)=>s+o.rub,0),usdt=valid.reduce((s,o)=>s+o.usdt,0),avg=rub/usdt;$("usdtRub").value=avg.toFixed(4);$("avgInfo").textContent=`Средняя: ${fmt(avg,2)} ₽/USDT · ${fmt(rub,0)} ₽ / ${fmt(usdt,2)} USDT`;}
 function calc(){
-  const cashRub=val("cashRub"), streetRate=val("streetRate"), tbcRate=val("tbcRate");
-  const usdtRub=val("usdtRub"), bybitRate=val("bybitRate"), fee=val("fee")/100, cashback=val("cashback")/100;
-
-  const street = streetRate>0 ? cashRub/streetRate : Infinity;
-  const tbc = tbcRate>0 ? cashRub/tbcRate : Infinity;
-
-  // 1 USD card operation costs (1+fee), then cashback reduces the final burden by (1-cashback)
-  const effectiveUsdMultiplier = (1+fee)*(1-cashback);
-  const bybitEffectiveRate = bybitRate>0 ? bybitRate/effectiveUsdMultiplier : 0;
-  const bybit = bybitEffectiveRate>0 ? usdtRub/bybitEffectiveRate : Infinity;
-
-  const rows = [
-    {name:"Улица", v:street, row:"streetRow", one:"street1", k:"street1000"},
-    {name:"TBC", v:tbc, row:"tbcRow", one:"tbc1", k:"tbc1000"},
-    {name:"Bybit", v:bybit, row:"bybitRow", one:"bybit1", k:"bybit1000"}
-  ];
-
-  rows.forEach(r=>{
-    $(r.one).innerHTML = `${fmt(r.v)}<small>₽ / GEL</small>`;
-    $(r.k).innerHTML = `${fmt(r.v*1000,0)}<small>₽ / 1000 GEL</small>`;
-    $(r.row).classList.remove("best");
-  });
-
-  const sorted = [...rows].sort((a,b)=>a.v-b.v);
-  const best=sorted[0], second=sorted[1];
-  $(best.row).classList.add("best");
-  $("winner").textContent = `${best.name} — ${fmt(best.v)} ₽/GEL`;
-  const save1000 = (second.v-best.v)*1000;
-  const pct = (second.v/best.v-1)*100;
-  $("savings").textContent = `Экономия против следующего варианта: ≈ ${fmt(save1000,0)} ₽ на 1000 GEL (${fmt(pct,2)}%).`;
-
-  localStorage.setItem("gelcost-v1", JSON.stringify(Object.fromEntries(ids.map(id=>[id,$(id).value]))));
+ const amount=val("gelAmount"),rubUsd=val("rubUsd"),streetRate=val("streetRate"),tbcRate=val("tbcRate"),usdtRub=val("usdtRub"),bybitRate=val("bybitRate"),fee=val("fee")/100,cashback=val("cashback")/100;
+ const street=streetRate>0?rubUsd/streetRate:Infinity;
+ const tbc=tbcRate>0?rubUsd/tbcRate:Infinity;
+ const multiplier=(1+fee)*(1-cashback);
+ const bybitEff=bybitRate>0?bybitRate/multiplier:0;
+ const bybit=bybitEff>0?usdtRub/bybitEff:Infinity;
+ const rows=[{name:"Наличные",v:street,row:"streetRow",one:"street1",total:"streetTotal"},{name:"TBC",v:tbc,row:"tbcRow",one:"tbc1",total:"tbcTotal"},{name:"Bybit",v:bybit,row:"bybitRow",one:"bybit1",total:"bybitTotal"}].filter(r=>Number.isFinite(r.v)&&r.v>0);
+ ["streetRow","tbcRow","bybitRow"].forEach(id=>$(id).classList.remove("best"));
+ rows.forEach(r=>{$(r.one).innerHTML=`${fmt(r.v)}<small>₽ / GEL</small>`;$(r.total).innerHTML=`${fmt(r.v*amount,0)}<small>₽ за ${fmt(amount,0)} GEL</small>`;});
+ if(rows.length){const sorted=[...rows].sort((a,b)=>a.v-b.v),best=sorted[0],second=sorted[1];$(best.row).classList.add("best");$("winner").textContent=`${best.name}: ${fmt(best.v)} ₽/GEL`;$("heroRoute").textContent=best.name;$("heroRub").textContent=`${fmt(best.v*amount,0)} ₽`;$("heroDetail").textContent=`${fmt(amount,0)} GEL × ${fmt(best.v)} ₽ = ${fmt(best.v*amount,0)} ₽`;if(second){const save=(second.v-best.v)*amount,pct=(second.v/best.v-1)*100;$("savings").textContent=`Экономия против следующего варианта: ≈ ${fmt(save,0)} ₽ на ${fmt(amount,0)} GEL (${fmt(pct,2)}%).`;}else $("savings").textContent="Для сравнения заполните ещё один маршрут.";}
+ const oru=val("officialRubUsd"),ogel=val("officialUsdGel");if(oru>0&&ogel>0){const official=oru/ogel;const actual=street;const delta=Number.isFinite(actual)?((actual/official)-1)*100:0;$("officialDelta").textContent=`Официальный ориентир: ${fmt(official,2)} ₽/GEL. Ваш наличный маршрут: ${delta>=0?"дороже":"дешевле"} на ${fmt(Math.abs(delta),2)}%.`;}else $("officialDelta").textContent="Официальные курсы здесь используются только как ориентир и не участвуют в выборе маршрута.";
+ save();
 }
-
-function load(){
-  try{
-    const s=JSON.parse(localStorage.getItem("gelcost-v1")||"{}");
-    ids.forEach(id=>{ if(s[id]!==undefined) $(id).value=s[id]; });
-  }catch(e){}
-  calc();
-}
+$("addOp").addEventListener("click",()=>{operations.push({rub:0,usdt:0});renderOps();save();});
+$("clearOps").addEventListener("click",()=>{operations=[];renderOps();calc();save();});
 $("calc").addEventListener("click",calc);
-$("reset").addEventListener("click",()=>{
-  localStorage.removeItem("gelcost-v1");
-  $("cashRub").value="88"; $("streetRate").value="2.620"; $("tbcRate").value="2.600";
-  $("usdtRub").value="86.55"; $("bybitRate").value="2.5802"; $("fee").value="2"; $("cashback").value="2";
-  calc();
-});
+$("reset").addEventListener("click",()=>{localStorage.removeItem("gelcost-v5");location.reload();});
 ids.forEach(id=>$(id).addEventListener("input",calc));
 load();
 </script>
