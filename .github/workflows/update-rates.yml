@@ -1,0 +1,35 @@
+name: Update official rates
+
+on:
+  schedule:
+    # NBG publishes the next official rate by 17:00 Asia/Tbilisi (13:00 UTC).
+    - cron: "25 14 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: update-official-rates
+  cancel-in-progress: true
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Fetch official rates
+        run: python3 scripts/update_rates.py
+
+      - name: Commit changed rates
+        run: |
+          if git diff --quiet -- rates.json; then
+            echo "Official rates have not changed."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add rates.json
+          git commit -m "Update official exchange rates"
+          git push
