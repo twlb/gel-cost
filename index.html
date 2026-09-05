@@ -55,10 +55,9 @@ button{border:0;border-radius:12px;padding:10px 12px;font-weight:850;cursor:poin
 .row{display:flex;justify-content:space-between;gap:12px;padding:8px 0;border-bottom:1px solid rgba(39,48,58,.55);font-size:12px}
 .row:last-child{border-bottom:0}
 .row .r{color:var(--muted);text-align:right}
-.modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.66);padding:18px;z-index:10;align-items:flex-end;justify-content:center}
-.modal.show{display:flex}
-.sheet{width:min(720px,100%);background:#15191f;border:1px solid var(--line);border-radius:22px;padding:16px;max-height:88vh;overflow:auto}
-.sheet h3{margin:0 0 12px}
+.inline{display:none;margin-top:12px;padding-top:12px;border-top:1px solid var(--line)}
+.inline.show{display:block}
+.inline h3{margin:0 0 12px;font-size:16px}
 .grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 @media(max-width:560px){.grid{grid-template-columns:1fr}.quick{grid-template-columns:1fr}.quickout{text-align:left}}
 label{display:block;color:var(--muted);font-size:12px;margin-bottom:5px}
@@ -74,7 +73,7 @@ label{display:block;color:var(--muted);font-size:12px;margin-bottom:5px}
       <h1>Сколько мне стоит GEL?</h1>
       <div class="sub">Все ваши обмены автоматически сводятся к рублю.</div>
     </div>
-    <div class="badge">V5.1</div>
+    <div class="badge">V5.3</div>
   </div>
 
   <div class="hero">
@@ -84,7 +83,7 @@ label{display:block;color:var(--muted);font-size:12px;margin-bottom:5px}
 
     <div class="quick">
       <div class="input">
-        <input id="quickGel" type="number" step="0.01" value="100" inputmode="decimal">
+        <input id="quickGel" type="text" value="100" inputmode="decimal">
         <span class="unit">GEL</span>
       </div>
       <div class="quickout">
@@ -120,7 +119,7 @@ label{display:block;color:var(--muted);font-size:12px;margin-bottom:5px}
           <div class="price" id="cashPrice">—</div>
         </div>
         <div class="meta">
-          USD куплен в среднем: <b id="cashAvg">—</b><br>
+          <span id="cashAvgLabel">Средняя цена покупок USD за период:</span> <b id="cashAvg">—</b><br>
           Сейчас $1 = <b id="cashGelRate">2,620 GEL</b>
         </div>
         <div class="actions">
@@ -140,7 +139,7 @@ label{display:block;color:var(--muted);font-size:12px;margin-bottom:5px}
           <div class="price" id="bybitPrice">—</div>
         </div>
         <div class="meta">
-          USDT куплен в среднем: <b id="usdtAvg">—</b><br>
+          Средняя цена покупок USDT за период: <b id="usdtAvg">—</b><br>
           Конвертация Bybit: $1 = <b id="bybitGelRate">2,580 GEL</b><br>
           комиссия <b id="feeShow">2%</b> · cashback <b>2%</b>
         </div>
@@ -155,50 +154,13 @@ label{display:block;color:var(--muted);font-size:12px;margin-bottom:5px}
   </div>
 
   <button class="secondary full" onclick="openSettings()">Настройки и данные</button>
-</div>
 
-<div class="modal" id="purchaseModal">
-  <div class="sheet">
-    <h3 id="purchaseTitle">Добавить покупку</h3>
-    <div class="grid">
-      <div>
-        <label>Потратил</label>
-        <div class="input"><input id="purchaseRub" type="number" step="0.01" inputmode="decimal"><span class="unit">₽</span></div>
-      </div>
-      <div>
-        <label>Получил</label>
-        <div class="input"><input id="purchaseQty" type="number" step="0.0001" inputmode="decimal"><span class="unit" id="purchaseUnit">USD</span></div>
-      </div>
-    </div>
-    <div class="note" id="purchasePreview">Курс рассчитается автоматически.</div>
-    <div class="actions">
-      <button class="primary" onclick="savePurchase()">Сохранить</button>
-      <button class="secondary" onclick="closeModal('purchaseModal')">Отмена</button>
-    </div>
-  </div>
-</div>
-
-<div class="modal" id="rateModal">
-  <div class="sheet">
-    <h3 id="rateTitle">Обновить курс</h3>
-    <div>
-      <label id="rateLabel">За $1 дают</label>
-      <div class="input"><input id="rateValue" type="number" step="0.0001" inputmode="decimal"><span class="unit">GEL</span></div>
-    </div>
-    <div class="actions">
-      <button class="primary" onclick="saveRate()">Сохранить</button>
-      <button class="secondary" onclick="closeModal('rateModal')">Отмена</button>
-    </div>
-  </div>
-</div>
-
-<div class="modal" id="settingsModal">
-  <div class="sheet">
+  <div class="inline panel" id="settingsPanel">
     <h3>Настройки и данные</h3>
     <div class="grid">
       <div>
         <label>Комиссия Bybit</label>
-        <div class="input"><input id="feeInput" type="number" step="0.1" value="2"><span class="unit">%</span></div>
+        <div class="input"><input id="feeInput" type="text" inputmode="decimal" value="2"><span class="unit">%</span></div>
       </div>
       <div>
         <label>Cashback Bybit</label>
@@ -211,38 +173,76 @@ label{display:block;color:var(--muted);font-size:12px;margin-bottom:5px}
     <div class="grid" style="margin-top:8px">
       <div>
         <label>Последний USD/RUB — ЦБ РФ</label>
-        <div class="input"><input id="officialRub" type="number" step="0.0001" readonly><span class="unit">₽/$</span></div>
+        <div class="input"><input id="officialRub" type="text" readonly><span class="unit">₽/$</span></div>
       </div>
       <div>
         <label>Последний USD/GEL — НБГ</label>
-        <div class="input"><input id="officialGel" type="number" step="0.0001" readonly><span class="unit">GEL/$</span></div>
+        <div class="input"><input id="officialGel" type="text" readonly><span class="unit">GEL/$</span></div>
       </div>
     </div>
-    <div class="note">Официальный ориентир обновляется автоматически. Если обновление не удалось, показывается только последняя успешно загруженная пара курсов с датой. Тестовые значения не используются.</div>
+    <div class="note">Официальный ориентир обновляется автоматически: сначала из локального rates.json, затем напрямую из ЦБ РФ и НБГ. Если свежие данные недоступны, показывается «нет данных».</div>
 
     <div class="actions">
       <button class="primary" onclick="saveSettings()">Сохранить</button>
       <button class="secondary" onclick="refreshOfficial()">Обновить ориентир</button>
-      <button class="ghost" onclick="closeModal('settingsModal')">Закрыть</button>
+      <button class="ghost" onclick="closeInline('settingsPanel')">Закрыть</button>
     </div>
 
     <div class="sep"></div>
-    <button class="ghost full" onclick="resetPeriod('usd')">Начать новый период USD</button>
-    <button class="ghost full" onclick="resetPeriod('usdt')">Начать новый период USDT</button>
+    <button class="ghost full" onclick="resetPeriod('usd',this)">Начать новый период USD</button>
+    <button class="ghost full" onclick="resetPeriod('usdt',this)">Начать новый период USDT</button>
   </div>
+</div>
+
+<div class="inline" id="purchasePanel">
+    <h3 id="purchaseTitle">Добавить покупку</h3>
+    <div class="grid">
+      <div>
+        <label>Потратил</label>
+        <div class="input"><input id="purchaseRub" type="text" inputmode="decimal"><span class="unit">₽</span></div>
+      </div>
+      <div>
+        <label>Получил</label>
+        <div class="input"><input id="purchaseQty" type="text" inputmode="decimal"><span class="unit" id="purchaseUnit">USD</span></div>
+      </div>
+    </div>
+    <div class="note" id="purchasePreview">Курс рассчитается автоматически.</div>
+    <div class="actions">
+      <button class="primary" onclick="savePurchase()">Сохранить</button>
+      <button class="secondary" onclick="closeInline('purchasePanel')">Закрыть</button>
+    </div>
+</div>
+
+<div class="inline" id="ratePanel">
+    <h3 id="rateTitle">Обновить курс</h3>
+    <div>
+      <label id="rateLabel">За $1 дают</label>
+      <div class="input"><input id="rateValue" type="text" inputmode="decimal"><span class="unit">GEL</span></div>
+    </div>
+    <div class="actions">
+      <button class="primary" onclick="saveRate()">Сохранить</button>
+      <button class="secondary" onclick="closeInline('ratePanel')">Закрыть</button>
+    </div>
 </div>
 
 <script>
 const $=id=>document.getElementById(id);
 const fmt=(n,d=2)=>Number(n).toLocaleString("ru-RU",{minimumFractionDigits:d,maximumFractionDigits:d});
-const state=JSON.parse(localStorage.getItem("gelcost-v5")||"null")||{
-  usdPurchases:[{rub:8800,qty:100,ts:Date.now()-3*86400000}],
+const numberValue=value=>{
+  const normalized=String(value??"").trim().replace(/\s/g,"").replace(",",".");
+  const parsed=Number.parseFloat(normalized);
+  return Number.isFinite(parsed)?parsed:0;
+};
+const defaults={
+  schemaVersion:53,
+  usdPurchases:[],
   usdtPurchases:[
     {rub:3977,qty:46.2980,ts:Date.now()-4*86400000},
     {rub:1190,qty:13.8372,ts:Date.now()-3*86400000},
     {rub:17620,qty:202.8785,ts:Date.now()-2*86400000},
     {rub:3600,qty:41.8604,ts:Date.now()-86400000}
   ],
+  usdEstimate:88,
   cashGelRate:2.620,
   bybitGelRate:2.5802,
   feePct:2,
@@ -252,7 +252,24 @@ const state=JSON.parse(localStorage.getItem("gelcost-v5")||"null")||{
   officialUpdated:null,
   officialSource:null
 };
+let stored=null;
+for(const key of ["gelcost-v5.3","gelcost-v5.2","gelcost-v5"]){
+  try{stored=JSON.parse(localStorage.getItem(key)||"null")}catch(e){stored=null}
+  if(stored)break;
+}
+const storedSchemaVersion=stored?.schemaVersion;
+const state={...defaults,...(stored||{})};
+state.usdPurchases=Array.isArray(state.usdPurchases)?state.usdPurchases:[];
+state.usdtPurchases=Array.isArray(state.usdtPurchases)?state.usdtPurchases:[];
+// V5.1 содержал демонстрационную покупку 100 USD за 8 800 ₽. При миграции
+// она превращается в честную оценку 88 ₽/$, если других USD-операций нет.
+if(!storedSchemaVersion && state.usdPurchases.length===1){
+  const x=state.usdPurchases[0];
+  if(Number(x.rub)===8800 && Number(x.qty)===100){state.usdPurchases=[];state.usdEstimate=88}
+}
+state.schemaVersion=53;
 let purchaseKind="usd", rateKind="cash";
+let officialReady=false, pendingReset=null, resetTimer=null;
 
 function save(){localStorage.setItem("gelcost-v5",JSON.stringify(state))}
 function weighted(list){
@@ -263,15 +280,17 @@ function weighted(list){
 function calc(){
   const usdAvg=weighted(state.usdPurchases);
   const usdtAvg=weighted(state.usdtPurchases);
-  const cash=state.cashGelRate>0?usdAvg/state.cashGelRate:Infinity;
+  const usdCost=Number.isFinite(usdAvg)?usdAvg:Number(state.usdEstimate);
+  const cash=state.cashGelRate>0&&usdCost>0?usdCost/state.cashGelRate:Infinity;
   const mult=(1+state.feePct/100)*(1-state.cashbackPct/100);
   const bybit=state.bybitGelRate>0?usdtAvg*mult/state.bybitGelRate:Infinity;
-  const hasOfficial=Number(state.officialUsdRub)>0 && Number(state.officialUsdGel)>0;
+  const hasOfficial=officialReady && Number(state.officialUsdRub)>0 && Number(state.officialUsdGel)>0;
   const benchmark=hasOfficial?Number(state.officialUsdRub)/Number(state.officialUsdGel):Infinity;
   const best=Math.min(cash,bybit);
   const bestName=cash<=bybit?"Наличный USD":"Bybit / USDT";
 
-  $("cashAvg").textContent=isFinite(usdAvg)?fmt(usdAvg)+" ₽/$":"—";
+  $("cashAvgLabel").textContent=Number.isFinite(usdAvg)?"Средняя цена покупок USD за период:":"Оценка USD (истории нет):";
+  $("cashAvg").textContent=usdCost>0?fmt(usdCost)+" ₽/$":"—";
   $("usdtAvg").textContent=isFinite(usdtAvg)?fmt(usdtAvg)+" ₽/USDT":"—";
   $("cashGelRate").textContent=fmt(state.cashGelRate,3)+" GEL";
   $("bybitGelRate").textContent=fmt(state.bybitGelRate,3)+" GEL";
@@ -284,7 +303,7 @@ function calc(){
   $("cashCard").classList.toggle("best",cash<=bybit);
   $("bybitCard").classList.toggle("best",bybit<cash);
 
-  const q=parseFloat($("quickGel").value)||0;
+  const q=numberValue($("quickGel").value);
   $("quickRub").textContent=isFinite(best)?fmt(q*best,0)+" ₽":"—";
 
   $("marketPrice").textContent=isFinite(benchmark)?fmt(benchmark)+" ₽/GEL":"—";
@@ -316,63 +335,104 @@ function renderHistory(kind){
     return `<div class="row"><div>${fmt(x.rub,0)} ₽ → ${fmt(x.qty,kind==="usd"?2:4)} ${kind.toUpperCase()}</div><div class="r">${fmt(rate,2)} ₽<br>${new Date(x.ts).toLocaleDateString("ru-RU")}</div></div>`;
   }).join(""):'<div class="note">Операций пока нет.</div>';
 }
-function toggleHistory(id){$(id).classList.toggle("show")}
+function closeAllInline(exceptId=""){
+  document.querySelectorAll(".inline.show,.history.show").forEach(el=>{
+    if(el.id!==exceptId)el.classList.remove("show");
+  });
+}
+function closeInline(id){$(id).classList.remove("show")}
+function toggleHistory(id){
+  const box=$(id),willOpen=!box.classList.contains("show");
+  closeAllInline(id);
+  box.classList.toggle("show",willOpen);
+}
 function openPurchase(kind){
+  const panel=$("purchasePanel"),host=$(kind==="usd"?"cashCard":"bybitCard");
+  const willOpen=!panel.classList.contains("show")||panel.parentElement!==host||purchaseKind!==kind;
+  closeAllInline("purchasePanel");
   purchaseKind=kind;
   $("purchaseTitle").textContent=kind==="usd"?"Купил USD":"Купил USDT";
   $("purchaseUnit").textContent=kind.toUpperCase();
   $("purchaseRub").value="";
   $("purchaseQty").value="";
   $("purchasePreview").textContent="Курс рассчитается автоматически.";
-  $("purchaseModal").classList.add("show");
-  setTimeout(()=>$("purchaseRub").focus(),50);
+  host.appendChild(panel);
+  panel.classList.toggle("show",willOpen);
+  if(willOpen)setTimeout(()=>$("purchaseRub").focus(),50);
 }
 function updatePreview(){
-  const r=parseFloat($("purchaseRub").value)||0,q=parseFloat($("purchaseQty").value)||0;
+  const r=numberValue($("purchaseRub").value),q=numberValue($("purchaseQty").value);
   $("purchasePreview").textContent=(r>0&&q>0)?"Курс этой покупки: "+fmt(r/q,2)+" ₽/"+purchaseKind.toUpperCase():"Курс рассчитается автоматически.";
 }
 $("purchaseRub").addEventListener("input",updatePreview);
 $("purchaseQty").addEventListener("input",updatePreview);
 function savePurchase(){
-  const rub=parseFloat($("purchaseRub").value)||0,qty=parseFloat($("purchaseQty").value)||0;
+  const rub=numberValue($("purchaseRub").value),qty=numberValue($("purchaseQty").value);
   if(!(rub>0&&qty>0))return;
   (purchaseKind==="usd"?state.usdPurchases:state.usdtPurchases).push({rub,qty,ts:Date.now()});
-  closeModal("purchaseModal");calc();
+  closeInline("purchasePanel");calc();
 }
 function openRate(kind){
+  const panel=$("ratePanel"),host=$(kind==="cash"?"cashCard":"bybitCard");
+  const willOpen=!panel.classList.contains("show")||panel.parentElement!==host||rateKind!==kind;
+  closeAllInline("ratePanel");
   rateKind=kind;
   $("rateTitle").textContent=kind==="cash"?"Обновить USD → GEL":"Обновить конвертацию Bybit";
   $("rateLabel").textContent=kind==="cash"?"За $1 дают":"Bybit: $1 =";
   $("rateValue").value=kind==="cash"?state.cashGelRate:state.bybitGelRate;
-  $("rateModal").classList.add("show");
-  setTimeout(()=>$("rateValue").focus(),50);
+  host.appendChild(panel);
+  panel.classList.toggle("show",willOpen);
+  if(willOpen)setTimeout(()=>$("rateValue").focus(),50);
 }
 function saveRate(){
-  const v=parseFloat($("rateValue").value)||0;if(v<=0)return;
+  const v=numberValue($("rateValue").value);if(v<=0)return;
   if(rateKind==="cash")state.cashGelRate=v;else state.bybitGelRate=v;
-  closeModal("rateModal");calc();
+  closeInline("ratePanel");calc();
 }
 function openSettings(){
+  const panel=$("settingsPanel"),willOpen=!panel.classList.contains("show");
+  closeAllInline("settingsPanel");
   $("feeInput").value=state.feePct;
-  $("officialRub").value=state.officialUsdRub ?? "";
-  $("officialGel").value=state.officialUsdGel ?? "";
-  $("settingsModal").classList.add("show");
+  $("officialRub").value=officialReady?(state.officialUsdRub??""):"";
+  $("officialGel").value=officialReady?(state.officialUsdGel??""):"";
+  panel.classList.toggle("show",willOpen);
 }
 function saveSettings(){
-  state.feePct=parseFloat($("feeInput").value)||0;
-  closeModal("settingsModal");calc();
+  state.feePct=numberValue($("feeInput").value);
+  closeInline("settingsPanel");calc();
 }
-function closeModal(id){$(id).classList.remove("show")}
-function resetPeriod(kind){
-  if(!confirm("Удалить историю "+kind.toUpperCase()+" и начать новый период?"))return;
+function resetPeriod(kind,button){
+  if(pendingReset!==kind){
+    pendingReset=kind;
+    const original=button.textContent;
+    button.textContent="Нажмите ещё раз для подтверждения";
+    clearTimeout(resetTimer);
+    resetTimer=setTimeout(()=>{pendingReset=null;button.textContent=original},4000);
+    return;
+  }
+  pendingReset=null;clearTimeout(resetTimer);
   if(kind==="usd")state.usdPurchases=[];else state.usdtPurchases=[];
+  button.textContent="Период начат";
+  setTimeout(()=>{button.textContent="Начать новый период "+kind.toUpperCase()},1200);
   calc();
 }
 async function refreshOfficial(){
   $("marketStatus").textContent="обновление…";
-  let rubRate=null, gelRate=null;
+  let rubRate=null,gelRate=null,updatedAt=null,source=null;
 
   try{
+    const r=await fetch("./rates.json",{cache:"no-store"});
+    if(r.ok){
+      const data=await r.json();
+      rubRate=numberValue(data.usdRub??data.officialUsdRub??data?.rates?.USD_RUB);
+      gelRate=numberValue(data.usdGel??data.officialUsdGel??data?.rates?.USD_GEL);
+      updatedAt=Date.parse(data.updatedAt??data.date??data.timestamp)||Date.now();
+      if(rubRate>0&&gelRate>0)source="rates.json";
+    }
+  }catch(e){}
+  if(!(rubRate>0&&gelRate>0)){rubRate=null;gelRate=null;updatedAt=null;source=null}
+
+  if(!(rubRate>0&&gelRate>0))try{
     const r=await fetch("https://www.cbr.ru/scripts/XML_daily.asp",{cache:"no-store"});
     if(r.ok){
       const xml=new DOMParser().parseFromString(await r.text(),"text/xml");
@@ -385,7 +445,7 @@ async function refreshOfficial(){
     }
   }catch(e){}
 
-  try{
+  if(!(rubRate>0&&gelRate>0))try{
     const body=`<?xml version="1.0" encoding="utf-8"?>
       <soap:Envelope xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
         <soap:Body><GetCurrentRates xmlns="http://www.nbg.ge/"><Currencies>USD</Currencies></GetCurrentRates></soap:Body>
@@ -409,24 +469,24 @@ async function refreshOfficial(){
   if(rubRate && gelRate){
     state.officialUsdRub=rubRate;
     state.officialUsdGel=gelRate;
-    state.officialUpdated=Date.now();
-    state.officialSource="CBR+NBG";
+    state.officialUpdated=updatedAt||Date.now();
+    state.officialSource=source||"CBR+NBG";
+    officialReady=true;
+  }else{
+    officialReady=false;
   }
 
   save();
   calc();
-  if($("settingsModal").classList.contains("show")){
-    $("officialRub").value=state.officialUsdRub ?? "";
-    $("officialGel").value=state.officialUsdGel ?? "";
+  if($("settingsPanel").classList.contains("show")){
+    $("officialRub").value=officialReady?(state.officialUsdRub??""):"";
+    $("officialGel").value=officialReady?(state.officialUsdGel??""):"";
   }
 }
 
 $("quickGel").addEventListener("input",calc);
-document.querySelectorAll(".modal").forEach(m=>m.addEventListener("click",e=>{if(e.target===m)m.classList.remove("show")}));
 calc();
-
-// Не чаще одного раза в 12 часов пытаемся освежить официальный ориентир.
-if(!state.officialUpdated || !state.officialUsdRub || !state.officialUsdGel || Date.now()-state.officialUpdated>12*3600*1000){refreshOfficial()}
+refreshOfficial();
 </script>
 </body>
 </html>
