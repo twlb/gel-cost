@@ -1,35 +1,81 @@
-name: Update official rates
+name: Update exchange rates
 
 on:
+  # Check sources on application releases, but never recurse on snapshot commits.
+  push:
+    paths:
+      - "index.html"
+      - "app.js"
+      - "core.js"
+      - "scripts/**"
+      - "tests/**"
+      - ".github/workflows/update-rates.yml"
   schedule:
-    # NBG publishes the next official rate by 17:00 Asia/Tbilisi (13:00 UTC).
-    - cron: "25 14 * * *"
+    # GitHub scheduling is best-effort; the page rejects stale bank snapshots.
+    - cron: "17,47 * * * *"
   workflow_dispatch:
 
 permissions:
   contents: write
+  pages: write
 
 concurrency:
-  group: update-official-rates
-  cancel-in-progress: true
+  group: update-exchange-rates
+  cancel-in-progress: false
 
 jobs:
   update:
+    if: github.ref == format('refs/heads/{0}', github.event.repository.default_branch)
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     steps:
       - uses: actions/checkout@v4
 
+      - name: Validate calculation and collection rules
+        run: |
+          node --test tests/core.test.cjs tests/app.test.cjs
+          python3 -m unittest discover -s tests -p 'test_*.py'
+
       - name: Fetch official rates
+        id: official
+        continue-on-error: true
         run: python3 scripts/update_rates.py
 
+      - name: Fetch bank branch rates
+        id: banks
+        continue-on-error: true
+        run: python3 scripts/update_bank_rates.py
+
       - name: Commit changed rates
+        id: commit
         run: |
-          if git diff --quiet -- rates.json; then
-            echo "Official rates have not changed."
+          git add rates.json market-rates.json
+          if git diff --cached --quiet; then
+            echo "Snapshots have not changed."
             exit 0
           fi
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add rates.json
-          git commit -m "Update official exchange rates"
+          git commit -m "Update verified exchange-rate snapshots"
           git push
+          echo "changed=true" >> "$GITHUB_OUTPUT"
+
+      # GITHUB_TOKEN commits do not trigger a Pages build automatically.
+      # This project uses branch-based Pages; no PAT or additional secret needed.
+      - name: Request GitHub Pages rebuild
+        if: steps.commit.outputs.changed == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          build_type=$(gh api "repos/$GITHUB_REPOSITORY/pages" --jq '.build_type')
+          if [ "$build_type" != "legacy" ]; then
+            echo "Expected branch-based Pages. Configure the snapshot deployment before enabling this schedule."
+            exit 1
+          fi
+          gh api --method POST "repos/$GITHUB_REPOSITORY/pages/builds"
+
+      - name: Report source failures
+        if: always() && (steps.official.outcome == 'failure' || steps.banks.outcome == 'failure')
+        run: |
+          echo "A source failed validation. Its last valid snapshot was retained; check the fetch steps."
+          exit 1

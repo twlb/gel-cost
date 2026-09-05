@@ -1,0 +1,112 @@
+{
+  "schemaVersion": 1,
+  "currency": "USD",
+  "unit": "GEL per USD",
+  "channel": "Branch",
+  "userType": "PhysicalPerson",
+  "queryAmountGel": 1000,
+  "fetchedAt": "2026-09-05T06:41:44.728605Z",
+  "source": {
+    "name": "Банковская витрина НБГ",
+    "url": "https://nbg.gov.ge/en/currency-rates",
+    "api": "https://tariffcompare.nbg.gov.ge/api/Exchanges/get-exchanges"
+  },
+  "offers": [
+    {
+      "id": "6",
+      "bank": "Silk Bank",
+      "buy": 2.61,
+      "sell": 2.622,
+      "sourceUpdatedAt": null
+    },
+    {
+      "id": "5",
+      "bank": "Tera Bank",
+      "buy": 2.61,
+      "sell": 2.616,
+      "sourceUpdatedAt": null
+    },
+    {
+      "id": "13",
+      "bank": "Ziraatbank",
+      "buy": 2.61,
+      "sell": 2.64,
+      "sourceUpdatedAt": null
+    },
+    {
+      "id": "2",
+      "bank": "Credo Bank",
+      "buy": 2.608,
+      "sell": 2.622,
+      "sourceUpdatedAt": null
+    },
+    {
+      "id": "4",
+      "bank": "Khalyk Bank Georgia",
+      "buy": 2.604,
+      "sell": 2.634,
+      "sourceUpdatedAt": null
+    },
+    {
+      "id": "10",
+      "bank": "Basisbank",
+      "buy": 2.598,
+      "sell": 2.628,
+      "sourceUpdatedAt": null
+    },
+    {
+      "id": "16",
+      "bank": "Is Bank",
+      "buy": 2.591,
+      "sell": 2.671,
+      "sourceUpdatedAt": null
+    },
+    {
+      "id": "8",
+      "bank": "Cartu Bank",
+      "buy": 2.585,
+      "sell": 2.635,
+      "sourceUpdatedAt": null
+    },
+    {
+      "id": "9",
+      "bank": "Bank of Georgia",
+      "buy": 2.581,
+      "sell": 2.645,
+      "sourceUpdatedAt": null
+    },
+    {
+      "id": "12",
+      "bank": "Liberty Bank",
+      "buy": 2.565,
+      "sell": 2.665,
+      "sourceUpdatedAt": null
+    },
+    {
+      "id": "3",
+      "bank": "Pasha Bank Georgia",
+      "buy": 2.563,
+      "sell": 2.663,
+      "sourceUpdatedAt": null
+    },
+    {
+      "id": "7",
+      "bank": "Procredit bank",
+      "buy": 2.56,
+      "sell": 2.66,
+      "sourceUpdatedAt": null
+    },
+    {
+      "id": "11",
+      "bank": "TBC Bank",
+      "buy": 2.56,
+      "sell": 2.651,
+      "sourceUpdatedAt": null
+    }
+  ],
+  "quality": {
+    "minimumBanks": 3,
+    "rejectedCount": 0,
+    "officialReferenceChecked": true
+  }
+}

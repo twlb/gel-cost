@@ -78,6 +78,14 @@ label{display:block;color:var(--muted);font-size:13px;margin-bottom:5px}
 .mode{display:none}.mode.show{display:block}
 .benchmark-summary{font-size:13px;line-height:1.45;margin-top:8px}
 .sep{height:1px;background:var(--line);margin:12px 0}
+select{width:100%;color:var(--text);background:#0b0f14;border:1px solid var(--line);border-radius:12px;padding:12px;font-size:15px;min-height:44px}
+a{color:var(--accent)}
+.notice{font-size:13px;line-height:1.5;color:var(--warn);padding:12px;border:1px solid var(--line);border-radius:12px;margin:12px 0}
+[hidden]{display:none!important}
+.hero .route.caution{color:var(--warn)}
+.bank-summary{font-size:13px;color:var(--muted);margin-top:9px}
+button:disabled{opacity:.55;cursor:not-allowed}
+.pathrow>*{min-width:0;overflow-wrap:anywhere}
 @media(max-width:560px){
   .grid{grid-template-columns:1fr}.quick{grid-template-columns:1fr}.quickout{text-align:left;min-width:0}
   .price{font-size:19px}.wrap{padding-left:12px;padding-right:12px}
@@ -91,8 +99,10 @@ label{display:block;color:var(--muted);font-size:13px;margin-bottom:5px}
       <h1>Цена в Грузии — в рублях</h1>
       <div class="sub">Ваш доход в ₽. Считаем реальную стоимость ₾ через наличный USD или USDT.</div>
     </div>
-    <div class="badge">V5.4</div>
+    <div class="badge">V5.5</div>
   </div>
+  <div class="notice" id="storageNotice" role="status" hidden></div>
+  <div class="notice" id="migrationNotice" role="status" hidden>В прежнем расчёте Bybit cashback вычитался автоматически. Теперь учтено полное списание; возврат можно добавить после его получения. Покупки USD и USDT сохранены.</div>
 
   <div class="hero">
     <div class="eyebrow">Сколько стоит покупка</div>
@@ -109,13 +119,14 @@ label{display:block;color:var(--muted);font-size:13px;margin-bottom:5px}
         <div class="k">из вашего рублёвого дохода</div>
       </div>
     </div>
+    <div class="error" id="quickError" role="alert"></div>
     <div class="route" id="heroRoute" aria-live="polite">Добавьте данные хотя бы одного способа</div>
     <div class="detail" id="heroDetail">Итог появится после настройки личной себестоимости и текущего курса.</div>
   </div>
 
   <div class="panel">
-    <h2>Как выгоднее получить лари</h2>
-    <div class="desc">Сравниваем ваши два реальных маршрута. Текущий курс обновляйте чаще, запас USD/USDT — только после покупки.</div>
+    <h2>Наличные или карта — что дешевле</h2>
+    <div class="desc">Оценка по цене ваших покупок USD/USDT и курсу до лари. Это средняя за период, не учёт текущего остатка.</div>
 
     <div class="cards">
       <div class="card" id="cashCard">
@@ -132,10 +143,26 @@ label{display:block;color:var(--muted);font-size:13px;margin-bottom:5px}
           <div class="pathrow"><span>Ваша цена 1 ₾</span><b id="cashExplain">—</b></div>
         </div>
         <div class="freshness stale" id="cashFreshness">Курс USD→₾ ещё не обновлялся</div>
+        <div class="bank-summary" id="cashSource">Курс обмена вводится вручную.</div>
         <div class="actions">
           <button class="primary" onclick="openRate('cash')">Обновить USD→₾</button>
           <button class="secondary" onclick="openPurchase('usd')">Пополнить USD</button>
+          <button class="secondary full history-btn" onclick="openBanks()">Выбрать курс банка автоматически</button>
           <button class="ghost history-btn" onclick="toggleHistory('usdHistory')">История покупок USD</button>
+        </div>
+        <div class="inline" id="bankPanel">
+          <h3>USD → лари в отделении банка</h3>
+          <div class="desc">Вы отдаёте USD, банк выдаёт GEL. Используем курс покупки доллара банком, не продажи.</div>
+          <p class="note" id="bankStatus" role="status">Проверяем банковские курсы…</p>
+          <label for="bankChoice">Банк · сколько дают за 1 USD</label>
+          <select id="bankChoice"><option value="">Выберите банк</option></select>
+          <div class="note" id="bankPreview" aria-live="polite"></div>
+          <div class="note">Источник: <a href="https://nbg.gov.ge/en/currency-rates" target="_blank" rel="noopener noreferrer">банковская витрина НБГ</a>. Отделения, физлица, запрос на 1 000 GEL. Время изменения курса источник не сообщает. Комиссии и условия наличного обмена уточните в банке. Это не полный список обменников.</div>
+          <div class="actions">
+            <button class="primary" id="applyBankButton" onclick="applyBank()" disabled>Использовать этот банк</button>
+            <button class="secondary" onclick="refreshBanks()">Проверить данные</button>
+          </div>
+          <button class="ghost full" style="margin-top:8px" onclick="closeInline('bankPanel')">Закрыть список банков</button>
         </div>
         <div class="history" id="usdHistory"></div>
       </div>
@@ -143,8 +170,8 @@ label{display:block;color:var(--muted);font-size:13px;margin-bottom:5px}
       <div class="card" id="bybitCard">
         <div class="cardhead">
           <div>
-            <div class="name">Bybit / USDT</div>
-            <div class="desc">₽ → USDT → Bybit → ₾</div>
+            <div class="name">Оплата картой Bybit</div>
+            <div class="desc">₽ → USDT → покупка в ₾</div>
           </div>
           <div class="price" id="bybitPrice">—</div>
         </div>
@@ -174,13 +201,20 @@ label{display:block;color:var(--muted);font-size:13px;margin-bottom:5px}
       <div class="status" id="marketStatus">ориентир</div>
     </div>
     <div class="benchmark-summary" id="marketNote">Официальный курс нужен только для сравнения с вашими реальными затратами.</div>
+    <button class="ghost full" style="margin-top:10px" onclick="refreshOfficial()">Проверить официальный курс</button>
   </div>
 
   <button class="secondary full" onclick="openSettings()">Настройки и данные</button>
 
   <div class="inline panel" id="settingsPanel">
     <h3>Настройки и данные</h3>
-    <div class="desc">Cashback Bybit: <b>2%</b>. Комиссия учитывается точнее через фактическую сумму списания в операции.</div>
+    <div class="desc">Для режима «Ввести курс» можно задать предполагаемые комиссию и cashback. Оба процента считаются от базовой стоимости. Для режима «По операции» эти проценты не применяются.</div>
+    <div class="grid" style="margin-top:10px">
+      <div><label for="feePct">Комиссия в прогнозе, %</label><div class="input"><input id="feePct" type="text" inputmode="decimal" value="0"></div></div>
+      <div><label for="cashbackPct">Ожидаемый cashback, %</label><div class="input"><input id="cashbackPct" type="text" inputmode="decimal" value="0"></div></div>
+    </div>
+    <div class="error" id="settingsError" role="alert"></div>
+    <button class="secondary full" style="margin-top:10px" onclick="saveSettings()">Сохранить условия прогноза</button>
 
     <div class="sep"></div>
     <div class="desc">Официальный ориентир</div>
@@ -194,13 +228,16 @@ label{display:block;color:var(--muted);font-size:13px;margin-bottom:5px}
         <div class="input"><input id="officialGel" type="text" readonly><span class="unit">GEL/$</span></div>
       </div>
     </div>
-    <div class="note">Официальные данные обновляются автоматически и не меняют вашу личную себестоимость.</div>
+    <div class="note">Официальные данные — справочный ориентир, не предложение обмена. Даты каждого источника показываются отдельно.</div>
 
     <div class="actions">
       <button class="primary" onclick="refreshOfficial()">Обновить официальный курс</button>
       <button class="ghost" onclick="closeInline('settingsPanel')">Закрыть</button>
     </div>
 
+    <div class="sep"></div>
+    <button class="secondary full" onclick="exportData()">Скачать резервную копию покупок</button>
+    <div class="note">Данные хранятся только в этом браузере и не отправляются банкам. Очистка данных браузера удалит историю — сохраните копию перед этим.</div>
     <div class="sep"></div>
     <button class="ghost full" onclick="resetPeriod('usd',this)">Очистить покупки USD</button>
     <button class="ghost full" onclick="resetPeriod('usdt',this)">Очистить покупки USDT</button>
@@ -248,7 +285,8 @@ label{display:block;color:var(--muted);font-size:13px;margin-bottom:5px}
           <div class="input"><input id="actualUsdt" type="text" inputmode="decimal"><span class="unit">USDT</span></div>
         </div>
       </div>
-      <div class="note">Комиссия уже входит в списание. Cashback 2% вычитается автоматически.</div>
+      <div style="margin-top:10px"><label for="actualReward">Уже полученный cashback за эту покупку</label><div class="input"><input id="actualReward" type="text" inputmode="decimal" placeholder="0"><span class="unit">USDT</span></div></div>
+      <div class="note">Комиссия уже входит в списание. Если cashback ещё не пришёл или начислен баллами, оставьте 0. Укажите только подтверждённый возврат в USDT за эту операцию.</div>
     </div>
     <div class="note" id="ratePreview" aria-live="polite"></div>
     <div class="error" id="rateError" role="alert"></div>
@@ -258,269 +296,7 @@ label{display:block;color:var(--muted);font-size:13px;margin-bottom:5px}
     </div>
 </div>
 
-<script type="text/plain" id="legacyScript">
-const $=id=>document.getElementById(id);
-const fmt=(n,d=2)=>Number(n).toLocaleString("ru-RU",{minimumFractionDigits:d,maximumFractionDigits:d});
-const numberValue=value=>{
-  const normalized=String(value??"").trim().replace(/\s/g,"").replace(",",".");
-  const parsed=Number.parseFloat(normalized);
-  return Number.isFinite(parsed)?parsed:0;
-};
-const defaults={
-  schemaVersion:53,
-  usdPurchases:[],
-  usdtPurchases:[
-    {rub:3977,qty:46.2980,ts:Date.now()-4*86400000},
-    {rub:1190,qty:13.8372,ts:Date.now()-3*86400000},
-    {rub:17620,qty:202.8785,ts:Date.now()-2*86400000},
-    {rub:3600,qty:41.8604,ts:Date.now()-86400000}
-  ],
-  usdEstimate:88,
-  cashGelRate:2.620,
-  bybitGelRate:2.5802,
-  feePct:2,
-  cashbackPct:2,
-  officialUsdRub:null,
-  officialUsdGel:null,
-  officialUpdated:null,
-  officialSource:null
-};
-let stored=null;
-for(const key of ["gelcost-v5.3","gelcost-v5.2","gelcost-v5"]){
-  try{stored=JSON.parse(localStorage.getItem(key)||"null")}catch(e){stored=null}
-  if(stored)break;
-}
-const storedSchemaVersion=stored?.schemaVersion;
-const state={...defaults,...(stored||{})};
-state.usdPurchases=Array.isArray(state.usdPurchases)?state.usdPurchases:[];
-state.usdtPurchases=Array.isArray(state.usdtPurchases)?state.usdtPurchases:[];
-// V5.1 содержал демонстрационную покупку 100 USD за 8 800 ₽. При миграции
-// она превращается в честную оценку 88 ₽/$, если других USD-операций нет.
-if(!storedSchemaVersion && state.usdPurchases.length===1){
-  const x=state.usdPurchases[0];
-  if(Number(x.rub)===8800 && Number(x.qty)===100){state.usdPurchases=[];state.usdEstimate=88}
-}
-state.schemaVersion=53;
-let purchaseKind="usd", rateKind="cash";
-let officialReady=false, pendingReset=null, resetTimer=null;
-
-function save(){localStorage.setItem("gelcost-v5",JSON.stringify(state))}
-function weighted(list){
-  const rub=list.reduce((s,x)=>s+Number(x.rub||0),0);
-  const qty=list.reduce((s,x)=>s+Number(x.qty||0),0);
-  return qty>0?rub/qty:NaN;
-}
-function calc(){
-  const usdAvg=weighted(state.usdPurchases);
-  const usdtAvg=weighted(state.usdtPurchases);
-  const usdCost=Number.isFinite(usdAvg)?usdAvg:Number(state.usdEstimate);
-  const cash=state.cashGelRate>0&&usdCost>0?usdCost/state.cashGelRate:Infinity;
-  const mult=(1+state.feePct/100)*(1-state.cashbackPct/100);
-  const bybit=state.bybitGelRate>0?usdtAvg*mult/state.bybitGelRate:Infinity;
-  const hasOfficial=officialReady && Number(state.officialUsdRub)>0 && Number(state.officialUsdGel)>0;
-  const benchmark=hasOfficial?Number(state.officialUsdRub)/Number(state.officialUsdGel):Infinity;
-  const best=Math.min(cash,bybit);
-  const bestName=cash<=bybit?"Наличный USD":"Bybit / USDT";
-
-  $("cashAvgLabel").textContent=Number.isFinite(usdAvg)?"Средняя цена покупок USD за период:":"Оценка USD (истории нет):";
-  $("cashAvg").textContent=usdCost>0?fmt(usdCost)+" ₽/$":"—";
-  $("usdtAvg").textContent=isFinite(usdtAvg)?fmt(usdtAvg)+" ₽/USDT":"—";
-  $("cashGelRate").textContent=fmt(state.cashGelRate,3)+" GEL";
-  $("bybitGelRate").textContent=fmt(state.bybitGelRate,3)+" GEL";
-  $("feeShow").textContent=fmt(state.feePct,1)+"%";
-  $("cashPrice").textContent=isFinite(cash)?fmt(cash)+" ₽/GEL":"—";
-  $("bybitPrice").textContent=isFinite(bybit)?fmt(bybit)+" ₽/GEL":"—";
-  $("heroPrice").textContent=isFinite(best)?fmt(best)+" ₽/GEL":"—";
-  $("heroRoute").textContent=bestName;
-
-  $("cashCard").classList.toggle("best",cash<=bybit);
-  $("bybitCard").classList.toggle("best",bybit<cash);
-
-  const q=numberValue($("quickGel").value);
-  $("quickRub").textContent=isFinite(best)?fmt(q*best,0)+" ₽":"—";
-
-  $("marketPrice").textContent=isFinite(benchmark)?fmt(benchmark)+" ₽/GEL":"—";
-  if(state.officialUpdated && isFinite(benchmark)){
-    const d=new Date(state.officialUpdated), now=new Date();
-    const sameDay=d.getFullYear()===now.getFullYear() && d.getMonth()===now.getMonth() && d.getDate()===now.getDate();
-    $("marketStamp").textContent=(sameDay?"обновлено сегодня ":"данные от ")+d.toLocaleString("ru-RU",{day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit"});
-    $("marketStatus").textContent=isFinite(best)
-      ?((best/benchmark-1)*100>=0?"+":"")+fmt((best/benchmark-1)*100,1)+"%"
-      :"официальный";
-    $("marketNote").textContent=sameDay
-      ?"Свежий официальный кросс-ориентир ЦБ РФ + НБГ. Он не участвует в расчёте вашей себестоимости."
-      :"Официальный ориентир устарел. Для вашей себестоимости используются только реальные операции; ориентир показан с датой.";
-  }else{
-    $("marketStamp").textContent="нет успешно загруженных официальных данных";
-    $("marketStatus").textContent="нет данных";
-    $("marketNote").textContent="Официальный ориентир не показывается, пока приложение не получит реальные данные от ЦБ РФ и НБГ.";
-  }
-
-  renderHistory("usd");
-  renderHistory("usdt");
-  save();
-}
-function renderHistory(kind){
-  const box=$(kind+"History");
-  const list=(kind==="usd"?state.usdPurchases:state.usdtPurchases).slice().reverse();
-  box.innerHTML=list.length?list.map(x=>{
-    const rate=x.qty?x.rub/x.qty:0;
-    return `<div class="row"><div>${fmt(x.rub,0)} ₽ → ${fmt(x.qty,kind==="usd"?2:4)} ${kind.toUpperCase()}</div><div class="r">${fmt(rate,2)} ₽<br>${new Date(x.ts).toLocaleDateString("ru-RU")}</div></div>`;
-  }).join(""):'<div class="note">Операций пока нет.</div>';
-}
-function closeAllInline(exceptId=""){
-  document.querySelectorAll(".inline.show,.history.show").forEach(el=>{
-    if(el.id!==exceptId)el.classList.remove("show");
-  });
-}
-function closeInline(id){$(id).classList.remove("show")}
-function toggleHistory(id){
-  const box=$(id),willOpen=!box.classList.contains("show");
-  closeAllInline(id);
-  box.classList.toggle("show",willOpen);
-}
-function openPurchase(kind){
-  const panel=$("purchasePanel"),host=$(kind==="usd"?"cashCard":"bybitCard");
-  const willOpen=!panel.classList.contains("show")||panel.parentElement!==host||purchaseKind!==kind;
-  closeAllInline("purchasePanel");
-  purchaseKind=kind;
-  $("purchaseTitle").textContent=kind==="usd"?"Купил USD":"Купил USDT";
-  $("purchaseUnit").textContent=kind.toUpperCase();
-  $("purchaseRub").value="";
-  $("purchaseQty").value="";
-  $("purchasePreview").textContent="Курс рассчитается автоматически.";
-  host.appendChild(panel);
-  panel.classList.toggle("show",willOpen);
-  if(willOpen)setTimeout(()=>$("purchaseRub").focus(),50);
-}
-function updatePreview(){
-  const r=numberValue($("purchaseRub").value),q=numberValue($("purchaseQty").value);
-  $("purchasePreview").textContent=(r>0&&q>0)?"Курс этой покупки: "+fmt(r/q,2)+" ₽/"+purchaseKind.toUpperCase():"Курс рассчитается автоматически.";
-}
-$("purchaseRub").addEventListener("input",updatePreview);
-$("purchaseQty").addEventListener("input",updatePreview);
-function savePurchase(){
-  const rub=numberValue($("purchaseRub").value),qty=numberValue($("purchaseQty").value);
-  if(!(rub>0&&qty>0))return;
-  (purchaseKind==="usd"?state.usdPurchases:state.usdtPurchases).push({rub,qty,ts:Date.now()});
-  closeInline("purchasePanel");calc();
-}
-function openRate(kind){
-  const panel=$("ratePanel"),host=$(kind==="cash"?"cashCard":"bybitCard");
-  const willOpen=!panel.classList.contains("show")||panel.parentElement!==host||rateKind!==kind;
-  closeAllInline("ratePanel");
-  rateKind=kind;
-  $("rateTitle").textContent=kind==="cash"?"Обновить USD → GEL":"Обновить конвертацию Bybit";
-  $("rateLabel").textContent=kind==="cash"?"За $1 дают":"Bybit: $1 =";
-  $("rateValue").value=kind==="cash"?state.cashGelRate:state.bybitGelRate;
-  host.appendChild(panel);
-  panel.classList.toggle("show",willOpen);
-  if(willOpen)setTimeout(()=>$("rateValue").focus(),50);
-}
-function saveRate(){
-  const v=numberValue($("rateValue").value);if(v<=0)return;
-  if(rateKind==="cash")state.cashGelRate=v;else state.bybitGelRate=v;
-  closeInline("ratePanel");calc();
-}
-function openSettings(){
-  const panel=$("settingsPanel"),willOpen=!panel.classList.contains("show");
-  closeAllInline("settingsPanel");
-  $("feeInput").value=state.feePct;
-  $("officialRub").value=officialReady?(state.officialUsdRub??""):"";
-  $("officialGel").value=officialReady?(state.officialUsdGel??""):"";
-  panel.classList.toggle("show",willOpen);
-}
-function saveSettings(){
-  state.feePct=numberValue($("feeInput").value);
-  closeInline("settingsPanel");calc();
-}
-function resetPeriod(kind,button){
-  if(pendingReset!==kind){
-    pendingReset=kind;
-    const original=button.textContent;
-    button.textContent="Нажмите ещё раз для подтверждения";
-    clearTimeout(resetTimer);
-    resetTimer=setTimeout(()=>{pendingReset=null;button.textContent=original},4000);
-    return;
-  }
-  pendingReset=null;clearTimeout(resetTimer);
-  if(kind==="usd")state.usdPurchases=[];else state.usdtPurchases=[];
-  button.textContent="Период начат";
-  setTimeout(()=>{button.textContent="Начать новый период "+kind.toUpperCase()},1200);
-  calc();
-}
-async function refreshOfficial(){
-  $("marketStatus").textContent="обновление…";
-  let rubRate=null,gelRate=null,updatedAt=null,source=null;
-
-  try{
-    const r=await fetch("./rates.json",{cache:"no-store"});
-    if(r.ok){
-      const data=await r.json();
-      rubRate=numberValue(data.usdRub??data.officialUsdRub??data?.rates?.USD_RUB);
-      gelRate=numberValue(data.usdGel??data.officialUsdGel??data?.rates?.USD_GEL);
-      updatedAt=Date.parse(data.updatedAt??data.date??data.timestamp)||Date.now();
-      if(rubRate>0&&gelRate>0)source="rates.json";
-    }
-  }catch(e){}
-  if(!(rubRate>0&&gelRate>0)){rubRate=null;gelRate=null;updatedAt=null;source=null}
-
-  if(!(rubRate>0&&gelRate>0))try{
-    const r=await fetch("https://www.cbr.ru/scripts/XML_daily.asp",{cache:"no-store"});
-    if(r.ok){
-      const xml=new DOMParser().parseFromString(await r.text(),"text/xml");
-      const usd=[...xml.querySelectorAll("Valute")].find(n=>n.querySelector("CharCode")?.textContent==="USD");
-      if(usd){
-        const v=parseFloat(usd.querySelector("Value").textContent.replace(",","."));
-        const nominal=parseFloat(usd.querySelector("Nominal").textContent)||1;
-        if(v>0) rubRate=v/nominal;
-      }
-    }
-  }catch(e){}
-
-  if(!(rubRate>0&&gelRate>0))try{
-    const body=`<?xml version="1.0" encoding="utf-8"?>
-      <soap:Envelope xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
-        <soap:Body><GetCurrentRates xmlns="http://www.nbg.ge/"><Currencies>USD</Currencies></GetCurrentRates></soap:Body>
-      </soap:Envelope>`;
-    const r=await fetch("https://services.nbg.gov.ge/Rates/Service.asmx",{
-      method:"POST",
-      headers:{"Content-Type":"text/xml; charset=utf-8","SOAPAction":"http://www.nbg.ge/GetCurrentRates"},
-      body
-    });
-    if(r.ok){
-      const xml=new DOMParser().parseFromString(await r.text(),"text/xml");
-      const cr=[...xml.getElementsByTagName("*")].find(n=>n.localName==="CurrencyRate" && [...n.children].some(c=>c.localName==="Code" && c.textContent==="USD"));
-      if(cr){
-        const rate=parseFloat([...cr.children].find(c=>c.localName==="Rate")?.textContent);
-        const qty=parseFloat([...cr.children].find(c=>c.localName==="Quantity")?.textContent)||1;
-        if(rate>0) gelRate=rate/qty;
-      }
-    }
-  }catch(e){}
-
-  if(rubRate && gelRate){
-    state.officialUsdRub=rubRate;
-    state.officialUsdGel=gelRate;
-    state.officialUpdated=updatedAt||Date.now();
-    state.officialSource=source||"CBR+NBG";
-    officialReady=true;
-  }else{
-    officialReady=false;
-  }
-
-  save();
-  calc();
-  if($("settingsPanel").classList.contains("show")){
-    $("officialRub").value=officialReady?(state.officialUsdRub??""):"";
-    $("officialGel").value=officialReady?(state.officialUsdGel??""):"";
-  }
-}
-
-$("quickGel").addEventListener("input",calc);
-calc();
-refreshOfficial();
-</script>
-<script src="app.js"></script>
+<script src="core.js?v=5.5-sync1"></script>
+<script src="app.js?v=5.5-sync1"></script>
 </body>
 </html>

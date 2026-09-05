@@ -4,11 +4,15 @@
 from __future__ import annotations
 
 import json
+import math
+import os
 import sys
+import tempfile
 import urllib.request
 import xml.etree.ElementTree as ET
 from datetime import datetime, timezone
 from pathlib import Path
+from zoneinfo import ZoneInfo
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -21,8 +25,26 @@ USER_AGENT = "gel-cost-rates/1.0 (+https://github.com/twlb/gel-cost)"
 def request(url: str, *, data: bytes | None = None, headers: dict[str, str] | None = None) -> bytes:
     merged = {"User-Agent": USER_AGENT, **(headers or {})}
     req = urllib.request.Request(url, data=data, headers=merged)
-    with urllib.request.urlopen(req, timeout=30) as response:
-        return response.read()
+    with urllib.request.urlopen(req, timeout=20) as response:
+        body = response.read(2_000_001)
+        if len(body) > 2_000_000:
+            raise ValueError("Source response exceeds the size limit")
+        return body
+
+
+def write_json_atomic(path: Path, payload: dict) -> None:
+    """Replace a snapshot only after collection and validation succeeded."""
+    encoded = json.dumps(payload, ensure_ascii=False, indent=2, allow_nan=False) + "\n"
+    with tempfile.NamedTemporaryFile(mode="w", encoding="utf-8", dir=path.parent, delete=False) as output:
+        temporary = Path(output.name)
+        try:
+            output.write(encoded)
+            output.flush()
+            os.fsync(output.fileno())
+            output.close()
+            temporary.replace(path)
+        finally:
+            temporary.unlink(missing_ok=True)
 
 
 def iso_date(value: str) -> str:
@@ -36,7 +58,9 @@ def iso_date(value: str) -> str:
 
 
 def fetch_cbr() -> tuple[float, str]:
-    root = ET.fromstring(request(CBR_URL))
+    # Request the effective local date explicitly, not a future published rate.
+    date = datetime.now(ZoneInfo("Europe/Moscow")).strftime("%d/%m/%Y")
+    root = ET.fromstring(request(CBR_URL + "?date_req=" + date))
     for item in root.findall("Valute"):
         if item.findtext("CharCode") == "USD":
             nominal = float(item.findtext("Nominal", "1"))
@@ -50,9 +74,9 @@ def fetch_nbg() -> tuple[float, str]:
     body = b'''<?xml version="1.0" encoding="utf-8"?>
 <soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
   <soap:Body>
-    <GetLastRates xmlns="http://www.nbg.ge/">
+    <GetCurrentRates xmlns="http://www.nbg.ge/">
       <Currencies>USD</Currencies>
-    </GetLastRates>
+    </GetCurrentRates>
   </soap:Body>
 </soap:Envelope>'''
     xml = request(
@@ -60,7 +84,7 @@ def fetch_nbg() -> tuple[float, str]:
         data=body,
         headers={
             "Content-Type": "text/xml; charset=utf-8",
-            "SOAPAction": "http://www.nbg.ge/GetLastRates",
+            "SOAPAction": "http://www.nbg.ge/GetCurrentRates",
         },
     )
     root = ET.fromstring(xml)
@@ -75,21 +99,35 @@ def fetch_nbg() -> tuple[float, str]:
     raise RuntimeError("USD is missing from the NBG response")
 
 
-def main() -> int:
-    usd_rub, cbr_date = fetch_cbr()
-    usd_gel, nbg_date = fetch_nbg()
-    updated_at = max(cbr_date, nbg_date)
+def make_payload(usd_rub: float, cbr_date: str, usd_gel: float, nbg_date: str, now: datetime) -> dict:
+    if not (math.isfinite(usd_rub) and math.isfinite(usd_gel) and 1 <= usd_rub <= 1000 and 0.5 <= usd_gel <= 10):
+        raise ValueError("Official rate is outside validation limits")
+    today = now.astimezone(ZoneInfo("Asia/Tbilisi")).date()
+    for source_date in (cbr_date, nbg_date):
+        effective = datetime.fromisoformat(source_date.replace("Z", "+00:00")).date()
+        if effective > today or (today - effective).days > 14:
+            raise ValueError("Official source date is invalid, future, or too old")
+    # Preserve both effective dates; never label both sources with the newer one.
+    updated_at = min(cbr_date, nbg_date)
     payload = {
         "usdRub": round(usd_rub, 6),
         "usdGel": round(usd_gel, 6),
         "updatedAt": updated_at,
+        "fetchedAt": now.isoformat().replace("+00:00", "Z"),
         "sources": {
             "usdRub": {"name": "Банк России", "url": CBR_URL, "date": cbr_date},
             "usdGel": {"name": "Национальный банк Грузии", "url": NBG_URL, "date": nbg_date},
         },
     }
-    OUTPUT.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
-    print(f"USD/RUB={usd_rub:.4f}; USD/GEL={usd_gel:.4f}; date={updated_at}")
+    return payload
+
+
+def main() -> int:
+    usd_rub, cbr_date = fetch_cbr()
+    usd_gel, nbg_date = fetch_nbg()
+    payload = make_payload(usd_rub, cbr_date, usd_gel, nbg_date, datetime.now(timezone.utc))
+    write_json_atomic(OUTPUT, payload)
+    print(f"USD/RUB={usd_rub:.4f}; USD/GEL={usd_gel:.4f}; dates={cbr_date}, {nbg_date}")
     return 0
 
 
