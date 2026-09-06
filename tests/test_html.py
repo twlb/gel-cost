@@ -32,8 +32,19 @@ class HTMLTests(unittest.TestCase):
         self.assertEqual(p.stack,[])
         self.assertTrue(all(n == 1 for n in Counter(p.ids).values()))
         self.assertTrue(all(i in p.labels for i in p.inputs))
-        self.assertEqual(p.scripts,["core.js?v=5.6","app.js?v=5.6-rate4"])
+        self.assertEqual(p.scripts,["core.js?v=5.6","app.js?v=5.6-simple"])
         source=(ROOT/"app.js").read_text(encoding="utf-8")
         for handler in p.handlers:
             self.assertRegex(source,r"function\s+"+re.escape(handler)+r"\(")
         self.assertIn("<title>GEL Cost</title>",(ROOT/"index.html").read_text(encoding="utf-8"))
+
+    def test_exchange_starts_first_and_optional_details_are_collapsed(self):
+        source=(ROOT/"index.html").read_text(encoding="utf-8")
+        self.assertIn('<section id="purchaseView" hidden', source)
+        self.assertIn('<section id="exchangeView" aria-labelledby=', source)
+        nav=source.split('<nav class="bottom-nav"')[1].split('</nav>')[0]
+        self.assertLess(nav.index('id="exchangeNav"'), nav.index('id="purchaseNav"'))
+        self.assertIn('id="exchangeNav" aria-current="page"', nav)
+        self.assertIn('>Цена в рублях</button>', nav)
+        self.assertIn('<details class="disclosure" id="comparisonDetails">', source)
+        self.assertIn('<details class="disclosure" id="paymentSetup">', source)

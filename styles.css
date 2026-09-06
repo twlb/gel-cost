@@ -9,3 +9,20 @@
 h1{font-size:28px}.subtitle{margin-bottom:20px}.amount{margin-bottom:16px}.amount input{font-size:32px}.method{padding:0}.method-head{padding:20px 16px 16px}.method-head h2{font-size:17px}.method-head p{font-size:13px}.method-footer{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:0 16px;border-top:1px solid var(--border);min-height:44px}.method-note{font-size:12px;margin:7px 0;min-width:0}.method-footer .text-button{font-size:12px;flex-shrink:0;white-space:nowrap}.method.best .total{color:var(--text)}.decision{margin:20px 2px}.decision .note{font-size:13px}.disclosure>summary{font-size:15px}.offer-row[aria-pressed=true]{background:#10232e}.exchange-result strong{color:var(--text);font-size:46px}.city{margin-bottom:16px}#exchangeHeading{font-size:23px;letter-spacing:-.55px;margin-top:0}#exchangeView .subtitle{margin:6px 0 18px}#exchangeView .amount{margin-bottom:20px}.exchange-result{padding-bottom:16px;margin-bottom:16px}.offer-row{padding:12px}.offer-row small{font-size:11px}.offer-list{margin-bottom:18px}.offer-detail{margin-top:4px}.offer-detail .actions{margin-top:0}
 @media(max-width:370px){.app{padding-left:16px;padding-right:16px}.method-head{padding-left:12px;padding-right:12px}.method-footer{padding-left:12px;padding-right:12px;gap:6px}.method-head h2{font-size:16px}.method-head p{font-size:12px}.method-footer .text-button{font-size:11px}.method-note{font-size:11px}#exchangeHeading{font-size:21px}.total{font-size:22px}.exchange-result strong{font-size:40px}}
 header{min-height:66px}.amount{min-height:64px}.amount input{height:62px;line-height:1.1}.method-head{padding-top:18px;padding-bottom:12px}#purchaseView .disclosure{margin:12px 0}#purchaseView .disclosure>summary{padding:12px 0}#exchangeView .subtitle{display:none}#exchangeHeading{margin-bottom:22px}.offer-row small{font-size:12px}.exchange-result{border-bottom:0;margin-bottom:10px;padding-bottom:8px}.exchange-result .note{margin-bottom:0}
+/* Ruble view follows the same input → answer hierarchy as the exchange view. */
+.field-label{color:#bdc3cc;font-size:13px;margin:0 0 8px}
+.payment-switch{display:flex;gap:4px;padding:4px;background:var(--surface);border:1px solid var(--border);border-radius:12px;margin-bottom:22px}
+.payment-switch button{flex:1;background:transparent;color:var(--muted);padding:10px 8px;font-size:14px}
+.payment-switch button[aria-pressed=true]{background:#163448;color:#edf8ff;box-shadow:inset 0 0 0 1px #41728f}
+.rubles-result{margin:0 0 16px}
+.rubles-result>p:first-child{color:var(--muted);font-size:14px;margin:0 0 6px}
+.rubles-result>strong{display:block;font-size:46px;line-height:1.2;letter-spacing:-1px;overflow-wrap:anywhere;font-variant-numeric:tabular-nums}
+.personal-rate{font-size:14px;margin:12px 0 0;font-variant-numeric:tabular-nums}
+.rubles-result .note{font-size:13px;margin-top:8px}
+.setup-steps{padding:0;list-style-position:inside;margin:16px 0 0;counter-reset:setup}
+.setup-steps li{list-style:none;counter-increment:setup;border-left:2px solid var(--border);padding:0 0 12px 14px;margin:14px 0;font-size:14px}
+.setup-steps b::before{content:counter(setup) ". ";color:var(--muted)}
+.setup-steps .note{margin:6px 0}.setup-steps .text-button{font-size:13px}
+#purchaseView #comparisonDetails{margin-top:8px}
+#rublesEditorHost .inline{margin-top:0}
+@media(max-width:370px){.rubles-result>strong{font-size:40px}#purchaseHeading{font-size:25px}.personal-rate{font-size:13px}.payment-switch button{font-size:13px}}

@@ -307,11 +307,71 @@ test('older bank cache in another tab cannot replace a more recent selected quot
   shared.flush();assert.equal(b.state().cashGelRate,2.63);
 });
 
-test('home shows both RUB totals, comparison and no winner for one route',async()=>{
+test('optional comparison shows both RUB totals and no winner for one route',async()=>{
   const a=await app();await purchase(a,'usd',8800,100);await cash(a,2.62);
   assert.equal(a.els.cashCard.classes.has('best'),false);assert.equal(a.els.bybitTotal.textContent,'— ₽');
   await purchase(a,'usdt',8655,100);a.run('openRate("bybit")');a.els.actualGel.value='100';a.els.actualUsdt.value='38';await a.run('saveRate()');
   assert.match(a.els.cashTotal.textContent,/3\s359/);assert.match(a.els.bybitTotal.textContent,/3\s289/);assert.match(a.els.heroRoute.textContent,/Bybit дешевле/);
+});
+test('exchange is the initial view and changing payment never writes personal data',async()=>{
+  const a=await app();assert.equal(a.run('currentView'),'exchange');
+  const before=JSON.stringify(a.writes);
+  a.run('showView("purchase");setPayment("bybit")');
+  assert.equal(a.els.bybitPaymentButton.attrs['aria-pressed'],'true');
+  assert.equal(a.els.cashPaymentButton.attrs['aria-pressed'],'false');
+  a.run('showView("exchange");showView("purchase")');
+  assert.equal(a.run('selectedPayment'),'bybit');assert.equal(JSON.stringify(a.writes),before);
+});
+test('first-use guidance leads from a real USD purchase to choosing an exchange quote',async()=>{
+  const a=await app();a.run('showView("purchase")');
+  assert.equal(a.els.rublesResult.textContent,'— ₽');assert.equal(a.els.rublesNextAction.textContent,'Указать покупку USD');
+  a.run('continueRublesSetup()');assert.equal(a.run('purchaseKind'),'usd');assert.equal(a.els.purchasePanel.classes.has('show'),true);
+  await purchase(a,'usd',8800,100);
+  assert.equal(a.els.rublesNextAction.textContent,'Выбрать курс обмена');
+  a.run('continueRublesSetup()');assert.equal(a.run('currentView'),'exchange');
+  a.run('selectOffer("office:mjc")');await a.run('applyOffer()');
+  assert.equal(a.run('currentView'),'purchase');assert.equal(a.run('selectedPayment'),'cash');
+  assert.equal(a.els.rublesNextAction.hidden,true);assert.match(a.els.rublesResult.textContent,/^≈ 3\s368 ₽$/);
+  assert.match(a.els.rublesRate.textContent,/33,6778/);near(a.run('routeValues().cash'),88/2.613);
+});
+test('single answer uses the selected method, not the cheaper or stale alternative',async()=>{
+  const a=await app();await purchase(a,'usd',8800,100);await cash(a,2.62);
+  await purchase(a,'usdt',8655,100);a.run('openRate("bybit")');a.els.actualGel.value='100';a.els.actualUsdt.value='38';await a.run('saveRate()');
+  a.run('state.bybitGelUpdated=0;setPayment("cash")');
+  assert.match(a.els.rublesResult.textContent,/3\s359/);assert.equal(a.els.rublesStatus.classes.has('stale'),false);
+  assert.equal(a.els.rublesNextAction.hidden,true);
+  a.run('setPayment("bybit")');assert.match(a.els.rublesResult.textContent,/3\s289/);
+  assert.equal(a.els.rublesStatus.classes.has('stale'),true);assert.equal(a.els.rublesNextAction.textContent,'Указать списание Bybit');
+});
+test('Bybit setup opens a visible editor without requiring the optional comparison',async()=>{
+  const a=await app();a.run('showView("purchase");setPayment("bybit");continueRublesSetup()');
+  assert.equal(a.run('purchaseKind'),'usdt');await purchase(a,'usdt',8655,100);
+  a.run('continueRublesSetup()');assert.equal(a.run('rateKind'),'bybit');
+  assert.equal(a.els.ratePanel.parentElement,a.els.rublesEditorHost);assert.equal(a.els.ratePanel.classes.has('show'),true);
+  a.els.actualGel.value='100';a.els.actualUsdt.value='38.75';await a.run('saveRate()');
+  assert.equal(a.els.rublesNextAction.hidden,true);assert.match(a.els.rublesResult.textContent,/3\s354/);
+  a.els.quickGel.value='12,50';a.run('calc()');assert.equal(a.els.rublesResult.textContent,'≈ 419 ₽');
+});
+test('estimated dollar cost is labelled and never presented as an actual purchase',async()=>{
+  const old={...C.defaults(),usdEstimate:88,cashGelRate:2.62,cashGelUpdated:Date.now()};
+  const a=await app({[C.STORAGE_KEY]:JSON.stringify(old)});
+  assert.match(a.els.rublesStatus.textContent,/оценки, не из покупок/);
+  assert.equal(a.els.rublesNextAction.textContent,'Указать покупку USD');assert.equal(a.state().usdPurchases.length,0);
+});
+test('invalid price removes the single answer and keeps currencies separate',async()=>{
+  const a=await app();await purchase(a,'usd',8800,100);await cash(a,2.62);
+  for(const value of ['', '0', '-1', '12abc', '1000000001']){
+    a.els.quickGel.value=value;a.run('calc()');assert.equal(a.els.rublesResult.textContent,'— ₽');
+    assert.equal(a.els.quickGel.attrs['aria-invalid'],'true');assert.equal(a.els.rublesNextAction.hidden,true);
+  }
+  a.els.quickGel.value='100';a.run('setPayment("bybit")');assert.equal(a.els.rublesResult.textContent,'— ₽');
+  assert.equal(a.els.rublesNextAction.textContent,'Указать покупку USDT');
+});
+test('applying a bank returns to cash even when the previous payment was Bybit',async()=>{
+  const a=await app();await purchase(a,'usd',8800,100);a.run('setPayment("bybit");openBanks()');
+  a.els.bankChoice.value='2';await a.run('applyBank()');
+  assert.equal(a.run('currentView'),'purchase');assert.equal(a.run('selectedPayment'),'cash');
+  assert.match(a.els.rublesRate.textContent,/33,7165/);
 });
 test('office selection persists, refreshes quote only, and manual override detaches it',async()=>{
   const a=await app();await purchase(a,'usd',8800,100);a.run('selectOffer("office:mjc")');await a.run('applyOffer()');

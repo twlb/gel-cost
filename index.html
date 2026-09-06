@@ -7,23 +7,42 @@
 <meta name="description" content="Стоимость покупок в Грузии в ваших рублях: наличные через USD и карта Bybit через USDT. Курсы обменников и банков.">
 <title>GEL Cost</title>
 <link rel="icon" href="data:,">
-<link rel="stylesheet" href="styles.css?v=5.6">
+<link rel="stylesheet" href="styles.css?v=5.6-simple">
 </head>
 <body>
 <a class="skip" href="#main">К расчёту</a>
 <div class="app">
-<header><a class="brand" href="#purchase" onclick="showView('purchase')">GEL Cost <span class="badge">V5.6</span></a><button class="text-button" id="dataNav" onclick="showView('data')">Данные</button></header>
+<header><a class="brand" href="#exchange" onclick="showView('exchange')">GEL Cost <span class="badge">V5.6</span></a><button class="text-button" id="dataNav" onclick="showView('data')">Мои данные</button></header>
 <main id="main">
 <noscript><p class="notice">Для расчётов включите JavaScript в браузере.</p></noscript>
 <div class="notice" id="storageNotice" role="status" hidden></div>
 <div class="notice" id="migrationNotice" hidden>Курс из V5.4 пересчитан без неподтверждённого cashback. История покупок сохранена. При необходимости обновите Bybit по операции.</div>
 <div id="actionStatus" class="action-status" role="status" aria-live="polite"></div>
-<section id="purchaseView" aria-labelledby="purchaseHeading">
-<h1 id="purchaseHeading" tabindex="-1">Покупка в рублях</h1>
-<p class="subtitle">Одна цена — два способа оплаты</p>
+<section id="purchaseView" hidden aria-labelledby="purchaseHeading">
+<h1 id="purchaseHeading" tabindex="-1">Сколько это в рублях?</h1>
+<p class="subtitle">Введите цену с ценника, меню или счёта.</p>
 <label for="quickGel">Цена в лари</label>
 <div class="input amount"><input id="quickGel" type="text" inputmode="decimal" value="100" autocomplete="off" maxlength="18" aria-describedby="quickError"><span class="unit">₾</span></div>
 <div class="error" id="quickError" role="alert"></div>
+<p class="field-label" id="paymentLabel">Как будете платить?</p>
+<div class="payment-switch" role="group" aria-labelledby="paymentLabel">
+<button id="cashPaymentButton" aria-pressed="true" onclick="setPayment('cash')">Наличными</button>
+<button id="bybitPaymentButton" aria-pressed="false" onclick="setPayment('bybit')">Картой Bybit</button>
+</div>
+<div class="rubles-result" aria-live="polite" aria-atomic="true">
+<p id="rublesResultLabel">Для вас это примерно</p><strong id="rublesResult">— ₽</strong>
+<p id="rublesRate" class="personal-rate"></p><p id="rublesStatus" class="note"></p>
+</div>
+<button class="primary full" id="rublesNextAction" onclick="continueRublesSetup()" hidden>Добавить данные</button>
+<div id="rublesEditorHost"></div>
+<details class="disclosure" id="paymentSetup"><summary id="paymentSetupTitle">Мои данные для этого расчёта</summary>
+<p class="note" id="paymentSetupHelp"></p>
+<ol class="setup-steps">
+<li><div><b id="basisStepTitle">За сколько купили доллары</b><p class="note" id="basisStepValue"></p></div><button class="text-button" id="basisStepButton" onclick="editPaymentBasis()">Добавить покупку USD</button></li>
+<li><div><b id="rateStepTitle">Сколько лари дают за доллар</b><p class="note" id="rateStepValue"></p></div><button class="text-button" id="rateStepButton" onclick="editPaymentRate()">Выбрать курс обмена</button></li>
+</ol>
+</details>
+<details class="disclosure" id="comparisonDetails"><summary>Сравнить с другим способом оплаты</summary>
 <div class="comparison" aria-label="Стоимость покупки по способам оплаты">
 <article class="method" id="bybitCard">
 <div class="method-head"><div><h2>Карта Bybit</h2><p>Через купленный USDT</p></div><strong class="total" id="bybitTotal">— ₽</strong></div>
@@ -37,6 +56,7 @@
 </article>
 </div>
 <div class="decision" aria-live="polite" aria-atomic="true"><p id="heroRoute">Добавьте данные для расчёта</p><p id="heroDetail" class="note"></p></div>
+</details>
 <details class="disclosure" id="calculationDetails"><summary>Как посчитали</summary>
 <p class="note">Считаем по средней цене ваших покупок за период. Это не учёт остатка кошелька. Примерная цена, не гарантия списания или обмена.</p>
 <h3>Наличные: ₽ → USD → ₾</h3>
@@ -55,12 +75,12 @@
 <p class="note">Она не означает, что оба курса актуальны. Проверяйте предупреждения выше.</p>
 </details>
 <div id="purchaseHomeHost">
-<button class="primary full" id="buyCurrencyButton" aria-expanded="false" onclick="togglePurchaseChooser()">Купил валюту</button>
+<button class="text-button full" id="buyCurrencyButton" aria-expanded="false" onclick="togglePurchaseChooser()">Добавить покупку валюты</button>
 <div id="purchaseChooser" class="chooser" hidden><p>Что купили за рубли?</p><div class="actions"><button class="secondary" onclick="openPurchase('usd')">Наличные USD</button><button class="secondary" onclick="openPurchase('usdt')">USDT</button></div></div>
 </div>
-<p class="footnote">Средняя цена и история покупок — в «Данных».</p>
+<p class="footnote">Это пересчёт цены, не платёж. История покупок — в «Моих данных».</p>
 </section>
-<section id="exchangeView" hidden aria-labelledby="exchangeHeading">
+<section id="exchangeView" aria-labelledby="exchangeHeading">
 <div class="city"><label for="exchangeCity">Город</label><select id="exchangeCity"><option value="tbilisi">Тбилиси</option><option value="batumi">Батуми</option><option value="all">Все города</option></select></div>
 <h1 id="exchangeHeading" tabindex="-1">Сколько дадут за доллары?</h1>
 <p class="subtitle">Наличные USD → лари</p>
@@ -71,7 +91,7 @@
 <div class="section-head"><h2>Где обменять</h2><span class="note">За вашу сумму</span></div>
 <p class="note" id="offerStatus"></p>
 <div class="offer-list" id="offerList" aria-label="Предложения обмена"></div>
-<button class="primary full" id="applyOfferButton" onclick="applyOffer()" disabled>Использовать курс для покупок</button>
+<button class="primary full" id="applyOfferButton" onclick="applyOffer()" disabled>Выбрать курс для пересчёта в ₽</button>
 <p class="footnote">Без гарантии наличия валюты и возможных комиссий. Перед поездкой уточните условия.</p>
 <button class="text-button full" id="moreOffers" onclick="toggleAllOffers()">Показать все предложения</button>
 <div class="offer-detail"><p class="note" id="selectedOfferDetail"></p><div class="actions"><a id="selectedSource" target="_blank" rel="noopener noreferrer" hidden>Источник курса</a><a id="selectedBranches" target="_blank" rel="noopener noreferrer" hidden>Отделения</a></div></div>
@@ -114,7 +134,7 @@
 <details class="disclosure"><summary>Начать новый период</summary><p class="note">Удаляет покупки выбранной валюты из этого браузера. Сначала скачайте копию. Нужны два нажатия в течение четырёх секунд.</p><button class="danger full" onclick="resetPeriod('usd',this)">Очистить покупки USD</button><button class="danger full" onclick="resetPeriod('usdt',this)">Очистить покупки USDT</button></details>
 </section>
 </main>
-<nav class="bottom-nav" aria-label="Разделы"><button id="purchaseNav" aria-current="page" onclick="showView('purchase')">Покупка</button><button id="exchangeNav" onclick="showView('exchange')">Обмен</button></nav>
+<nav class="bottom-nav" aria-label="Разделы"><button id="exchangeNav" aria-current="page" onclick="showView('exchange')">Обмен</button><button id="purchaseNav" onclick="showView('purchase')">Цена в рублях</button></nav>
 </div>
 <form class="inline" id="purchasePanel" onsubmit="event.preventDefault();savePurchase()">
 <h3 id="purchaseTitle">Купил валюту</h3>
@@ -131,6 +151,6 @@
 <div class="actions"><button type="submit" class="primary">Сохранить курс</button><button type="button" class="secondary" onclick="closeInline('ratePanel')">Закрыть</button></div>
 </form>
 <script src="core.js?v=5.6"></script>
-<script src="app.js?v=5.6-rate4"></script>
+<script src="app.js?v=5.6-simple"></script>
 </body>
 </html>
