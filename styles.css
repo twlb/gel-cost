@@ -11,6 +11,14 @@ h1{font-size:28px}.subtitle{margin-bottom:20px}.amount{margin-bottom:16px}.amoun
 header{min-height:66px}.amount{min-height:64px}.amount input{height:62px;line-height:1.1}.method-head{padding-top:18px;padding-bottom:12px}#purchaseView .disclosure{margin:12px 0}#purchaseView .disclosure>summary{padding:12px 0}#exchangeView .subtitle{display:none}#exchangeHeading{margin-bottom:22px}.offer-row small{font-size:12px}.exchange-result{border-bottom:0;margin-bottom:10px;padding-bottom:8px}.exchange-result .note{margin-bottom:0}
 /* Ruble view follows the same input → answer hierarchy as the exchange view. */
 .field-label{color:#bdc3cc;font-size:13px;margin:0 0 8px}
+/* Focus belongs to the whole amount/rate field, including its currency suffix. */
+.input:focus-within{outline:2px solid var(--accent);outline-offset:2px}
+.input input:focus-visible{outline:none}
+.input input[aria-invalid=true]{outline:2px solid var(--warning);outline-offset:-2px}
+/* Align field bottoms even when a label wraps; stack the settings on phones. */
+.settings-grid{align-items:end}
+.official-fields{display:grid;gap:20px;padding:4px 0}
+@media(max-width:600px){.settings-grid{grid-template-columns:minmax(0,1fr);gap:16px}}
 .payment-switch{display:flex;gap:4px;padding:4px;background:var(--surface);border:1px solid var(--border);border-radius:12px;margin-bottom:22px}
 .payment-switch button{flex:1;background:transparent;color:var(--muted);padding:10px 8px;font-size:14px}
 .payment-switch button[aria-pressed=true]{background:#163448;color:#edf8ff;box-shadow:inset 0 0 0 1px #41728f}
@@ -27,3 +35,37 @@ header{min-height:66px}.amount{min-height:64px}.amount input{height:62px;line-he
 #purchaseView #comparisonDetails{margin-top:8px}
 #rublesEditorHost .inline{margin-top:0}
 @media(max-width:370px){.rubles-result>strong{font-size:40px}#purchaseHeading{font-size:25px}.personal-rate{font-size:13px}.payment-switch button{font-size:13px}}
+/* Keep the existing visual style; let content determine safe mobile wrapping. */
+html{scroll-padding-top:16px;scroll-padding-bottom:110px}
+.app{padding-bottom:calc(120px + env(safe-area-inset-bottom,0px))}
+.grid{grid-template-columns:repeat(2,minmax(0,1fr));align-items:end}
+.grid>div,.actions>*,.pathrow>*,.row>*,.offer-top>*{min-width:0}
+.inline{scroll-margin-top:16px}
+#rublesEditorHost .inline{margin-top:12px}
+.inline .actions>button{flex:1 1 150px}
+.pathrow{flex-wrap:wrap;align-items:baseline;column-gap:12px;row-gap:4px}
+.pathrow b{max-width:100%;overflow-wrap:anywhere;margin-left:auto}
+.row{flex-wrap:wrap;align-items:baseline}
+.row>div{max-width:100%;overflow-wrap:anywhere}
+.row .r{margin-left:auto}
+.note,.personal-rate,.decision p{overflow-wrap:anywhere}
+.method-footer{flex-wrap:wrap;gap:0 12px;padding-top:6px;padding-bottom:6px}
+.method-footer .method-note{flex:1 1 170px}
+.method-footer .text-button{white-space:normal;text-align:left}
+.offer-top{flex-wrap:wrap;align-items:baseline;gap:4px 12px}
+.offer-top b{margin-left:auto;white-space:normal;overflow-wrap:anywhere;max-width:100%}
+.bottom-nav button{min-width:0;font-size:14px;padding:12px 6px;white-space:nowrap}
+.rubles-result>strong[data-money-size=medium]{font-size:32px;letter-spacing:-.5px}
+.rubles-result>strong[data-money-size=long]{font-size:24px;letter-spacing:0}
+.rubles-result>strong[data-money-size=extra-long]{font-size:20px;letter-spacing:0}
+.total[data-money-size=long],.total[data-money-size=extra-long]{font-size:20px;letter-spacing:0}
+@media(max-width:600px){
+  .grid{grid-template-columns:minmax(0,1fr);gap:16px}
+  .inline .input .unit{padding-left:8px}
+  .inline .actions>button{flex-basis:100%}
+}
+@media(max-width:370px){
+  .rubles-result>strong[data-money-size=medium]{font-size:28px}
+  .rubles-result>strong[data-money-size=long]{font-size:22px}
+  .rubles-result>strong[data-money-size=extra-long]{font-size:18px}
+}

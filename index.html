@@ -7,7 +7,7 @@
 <meta name="description" content="Стоимость покупок в Грузии в ваших рублях: наличные через USD и карта Bybit через USDT. Курсы обменников и банков.">
 <title>GEL Cost</title>
 <link rel="icon" href="data:,">
-<link rel="stylesheet" href="styles.css?v=5.6-kopecks">
+<link rel="stylesheet" href="styles.css?v=5.6-layout-repair-3">
 </head>
 <body>
 <a class="skip" href="#main">К расчёту</a>
@@ -47,12 +47,12 @@
 <article class="method" id="bybitCard">
 <div class="method-head"><div><h2>Карта Bybit</h2><p>Через купленный USDT</p></div><strong class="total" id="bybitTotal">— ₽</strong></div>
 <div class="method-footer"><p class="method-note" id="bybitSummary">Добавьте покупку USDT и курс</p>
-<button class="text-button" onclick="openRate('bybit')">Обновить Bybit</button></div>
+<button class="text-button" id="bybitCompareAction" onclick="editComparison('bybit')">Обновить Bybit</button></div>
 </article>
 <article class="method" id="cashCard">
 <div class="method-head"><div><h2>Наличные</h2><p>Через купленный USD</p></div><strong class="total" id="cashTotal">— ₽</strong></div>
 <div class="method-footer"><p class="method-note" id="cashSummary">Добавьте покупку USD и курс</p>
-<button class="text-button" onclick="openBanks()">Выбрать курс</button></div>
+<button class="text-button" id="cashCompareAction" onclick="editComparison('cash')">Изменить курс</button></div>
 </article>
 </div>
 <div class="decision" aria-live="polite" aria-atomic="true"><p id="heroRoute">Добавьте данные для расчёта</p><p id="heroDetail" class="note"></p></div>
@@ -125,10 +125,15 @@
 <button class="secondary full" onclick="openSettings()">Условия прогноза Bybit</button>
 <div class="inline" id="settingsPanel">
 <h3>Проценты для прогноза</h3><p class="note">Только для режима «Ввести курс». Оба процента от базовой стоимости. В расчёте по операции повторно их не учитываем.</p>
-<div class="grid"><div><label for="feePct">Комиссия, %</label><input id="feePct" type="text" inputmode="decimal" value="0"></div><div><label for="cashbackPct">Ожидаемый cashback, %</label><input id="cashbackPct" type="text" inputmode="decimal" value="0"></div></div>
+<div class="grid settings-grid"><div><label for="feePct">Комиссия, %</label><input id="feePct" type="text" inputmode="decimal" value="0"></div><div><label for="cashbackPct">Ожидаемый cashback, %</label><input id="cashbackPct" type="text" inputmode="decimal" value="0"></div></div>
 <div class="error" id="settingsError" role="alert"></div>
 <div class="actions"><button class="primary" onclick="saveSettings()">Сохранить условия</button><button class="secondary" onclick="closeInline('settingsPanel')">Закрыть</button></div>
-<details><summary>Исходные официальные курсы</summary><label for="officialRub">USD/RUB — ЦБ РФ</label><input id="officialRub" type="text" readonly><label for="officialGel">USD/GEL — НБГ</label><input id="officialGel" type="text" readonly></details>
+<details><summary>Исходные официальные курсы</summary>
+<div class="official-fields">
+<div><label for="officialRub">USD/RUB — ЦБ РФ</label><input id="officialRub" type="text" readonly></div>
+<div><label for="officialGel">USD/GEL — НБГ</label><input id="officialGel" type="text" readonly></div>
+</div>
+</details>
 </div>
 <div class="data-group"><button class="text-button" onclick="exportData()">Скачать резервную копию</button><p class="note">Покупки хранятся только в этом браузере. Они не отправляются банкам или обменникам. Перед очисткой браузера сохраните копию.</p><p class="note">После перехода на V5.6 вносите покупки здесь: старая открытая V5.5 хранится отдельно, изменения из неё повторно не переносятся.</p></div>
 <details class="disclosure"><summary>Начать новый период</summary><p class="note">Удаляет покупки выбранной валюты из этого браузера. Сначала скачайте копию. Нужны два нажатия в течение четырёх секунд.</p><button class="danger full" onclick="resetPeriod('usd',this)">Очистить покупки USD</button><button class="danger full" onclick="resetPeriod('usdt',this)">Очистить покупки USDT</button></details>
@@ -146,11 +151,11 @@
 <h3 id="rateTitle">Обновить курс</h3>
 <div class="mode-switch" id="bybitModeSwitch"><button type="button" id="actualModeButton" onclick="setRateMode('actual')">По операции</button><button type="button" id="quoteModeButton" onclick="setRateMode('quote')">Ввести курс</button></div>
 <div class="mode" id="quoteMode"><label id="rateLabel" for="rateValue">За 1 USD дают</label><div class="input"><input id="rateValue" type="text" inputmode="decimal" maxlength="18"><span class="unit">₾</span></div><p class="note" id="quoteHelp">Базовый курс до комиссии и cashback. Проценты — в «Данных».</p></div>
-<div class="mode" id="actualMode"><p class="note">Откройте последнюю покупку в Bybit и перенесите две суммы. Так комиссия уже попадёт в расчёт.</p><div class="grid"><div><label for="actualGel">Сумма покупки</label><div class="input"><input id="actualGel" type="text" inputmode="decimal" maxlength="18"><span class="unit">₾</span></div></div><div><label for="actualUsdt">Списано Bybit</label><div class="input"><input id="actualUsdt" type="text" inputmode="decimal" maxlength="18"><span class="unit">USDT</span></div></div></div><details><summary>Уже получил cashback за эту покупку</summary><label for="actualReward">Подтверждённый возврат, USDT</label><input id="actualReward" type="text" inputmode="decimal" placeholder="0" maxlength="18"><p class="note">Только полученные USDT. Баллы и ожидаемый cashback не вычитаем. Если возврата нет, оставьте 0.</p></details></div>
+<div class="mode" id="actualMode"><p class="note">Откройте последнюю покупку в Bybit и перенесите две суммы. Так комиссия уже попадёт в расчёт.</p><div class="grid"><div><label for="actualGel">Сумма покупки</label><div class="input"><input id="actualGel" type="text" inputmode="decimal" maxlength="18"><span class="unit">₾</span></div></div><div><label for="actualUsdt">Списано Bybit</label><div class="input"><input id="actualUsdt" type="text" inputmode="decimal" maxlength="18"><span class="unit">USDT</span></div></div></div><details id="rewardDetails"><summary>Уже получил cashback за эту покупку</summary><label for="actualReward">Подтверждённый возврат, USDT</label><input id="actualReward" type="text" inputmode="decimal" placeholder="0" maxlength="18"><p class="note">Только полученные USDT. Баллы и ожидаемый cashback не вычитаем. Если возврата нет, оставьте 0.</p></details></div>
 <p class="note" id="ratePreview" aria-live="polite"></p><div class="error" id="rateError" role="alert"></div>
 <div class="actions"><button type="submit" class="primary">Сохранить курс</button><button type="button" class="secondary" onclick="closeInline('ratePanel')">Закрыть</button></div>
 </form>
-<script src="core.js?v=5.6"></script>
-<script src="app.js?v=5.6-kopecks"></script>
+<script src="core.js?v=5.6-exact-money"></script>
+<script src="app.js?v=5.6-editor-repair-2"></script>
 </body>
 </html>

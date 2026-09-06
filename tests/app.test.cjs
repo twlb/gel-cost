@@ -32,7 +32,7 @@ function sharedBrowser(saved={}){
 }
 async function app(saved={},blocked=false,options={}){
   const html=fs.readFileSync(path.join(root,'index.html'),'utf8');
-  const els={};for(const id of html.matchAll(/\bid="([^"]+)"/g))els[id[1]]=new Element();
+  const els={};for(const id of html.matchAll(/\bid="([^"]+)"/g)){els[id[1]]=new Element();els[id[1]].id=id[1];}
   els.quickGel.value='100';els.exchangeAmount.value='100';els.exchangeCity.value='tbilisi';
   const responses={'./rates.json':official(),'./market-rates.json':bankData(),'./exchange-rates.json':officeData()};
   const shared=options.shared||sharedBrowser(saved);
@@ -50,7 +50,7 @@ async function app(saved={},blocked=false,options={}){
     console,Intl,Date:Clock,Number,Math,JSON,Promise,AbortController,Blob,URL,Option:class{constructor(text,value){this.text=text;this.value=value;}},
     localStorage:store,navigator:{locks:options.noLocks?undefined:shared.locks},
     addEventListener:(name,fn)=>events[name]=fn,
-    document:{getElementById:id=>els[id],hidden:false,addEventListener:(name,fn)=>documentEvents[name]=fn,createElement:tag=>{const e=new Element();if(tag==='a')downloads.push(e);return e;},querySelectorAll:()=>Object.values(els).filter(e=>e.classes.has('show'))},
+    document:{getElementById:id=>els[id],hidden:false,addEventListener:(name,fn)=>documentEvents[name]=fn,createElement:tag=>{const e=new Element();if(tag==='a')downloads.push(e);return e;},querySelectorAll:()=>['purchasePanel','ratePanel','settingsPanel','usdHistory','usdtHistory'].map(id=>els[id]).filter(e=>e.classes.has('show'))},
     setTimeout:(fn,ms)=>{const id=++tid;timers.set(id,{fn,ms});return id;},clearTimeout:id=>timers.delete(id),setInterval:(fn,ms)=>timers.set(++tid,{fn,ms,interval:true}),
     fetch:async(url,options)=>{requests.push(url);if(responses[url] instanceof Error)throw responses[url];if(responses[url]==='hang')return new Promise((resolve,reject)=>options.signal.addEventListener('abort',()=>reject(Error('aborted'))));const data=await responses[url];return {ok:Boolean(data),json:async()=>structuredClone(data)};},
   });
@@ -446,4 +446,161 @@ test('public provider labels cannot inject markup and links use trusted metadata
   await a.run('refreshBanks()');a.run('selectOffer("bank:1")');
   assert.equal(a.els.selectedSource.href,'https://nbg.gov.ge/en/currency-rates');
   assert.equal(a.els.offerList.children.every(row=>row.innerHTML===''),true);
+});
+
+test('manual exchange previews and saves without a RUB purchase or a view change',async()=>{
+  const a=await app();a.run('openRate("cash")');a.els.rateValue.value='3,0000';a.run('updateRatePreview()');
+  assert.match(a.els.ratePreview.textContent,/100,00 USD.*300,00 ₾/);
+  assert.equal(a.state().cashGelRate,null,'the preview does not save a draft');
+  await a.run('saveRate()');assert.equal(a.run('currentView'),'exchange');
+  assert.equal(a.els.exchangeReceive.textContent,'≈ 300,00 ₾');
+  assert.equal(a.els.exchangeResultLabel.textContent,'Мой курс · 3,0000 ₾/$');
+  assert.equal(a.els.selectedSource.hidden,true);assert.equal(a.els.selectedBranches.hidden,true);
+  assert.equal(a.els.applyOfferButton.disabled,false);
+  assert.equal(a.run('offersForCity().filter(row=>row.kind==="manual").length'),1);
+  assert.match(a.els.offerStatus.textContent,/Проверено предложений: 5/,'manual is not counted as a verified public offer');
+});
+test('manual exchange remains usable without providers, on reload and after refresh',async()=>{
+  const a=await app();await cash(a,3);const saved=a.writes[C.STORAGE_KEY];
+  const b=await app(a.writes);assert.equal(b.els.exchangeReceive.textContent,'≈ 300,00 ₾');
+  b.run('banks=null;offices=null;bankFailed=true;officeFailed=true;renderOffers()');
+  assert.equal(b.els.exchangeReceive.textContent,'≈ 300,00 ₾');
+  assert.equal(b.els.applyOfferButton.disabled,false);
+  b.els.exchangeAmount.value='125,50';b.run('renderOffers()');assert.equal(b.els.exchangeReceive.textContent,'≈ 376,50 ₾');
+  b.els.exchangeCity.value='batumi';b.els.exchangeCity.events.change();assert.equal(b.run('selectedOffer'),'manual');
+  await b.run('refreshAllRates()');assert.equal(b.els.exchangeReceive.textContent,'≈ 376,50 ₾');assert.equal(b.writes[C.STORAGE_KEY],saved);
+});
+test('editing the exchange amount updates the open manual preview; cancel and invalid input never replace a saved rate',async()=>{
+  const a=await app();await cash(a,3);const before=a.writes[C.STORAGE_KEY];
+  a.run('openRate("cash")');a.els.rateValue.value='2,5000';a.els.exchangeAmount.value='200';a.els.exchangeAmount.events.input();
+  assert.match(a.els.ratePreview.textContent,/500,00 ₾/);assert.equal(a.els.exchangeReceive.textContent,'≈ 600,00 ₾');
+  a.run('closeInline("ratePanel")');assert.equal(a.writes[C.STORAGE_KEY],before);
+  await cash(a,'bad');assert.equal(a.run('currentView'),'exchange');assert.equal(a.writes[C.STORAGE_KEY],before);
+});
+test('a stale manual quote opens RUB calculation with a warning and without extending its timestamp',async()=>{
+  const a=await app();await purchase(a,'usd',8800,100);await cash(a,3);a.advance(2*C.DAY);a.run('showView("exchange")');
+  const stamp=a.state().cashGelUpdated,saved=a.writes[C.STORAGE_KEY];
+  assert.match(a.els.exchangeResultLabel.textContent,/нужна проверка/);
+  await a.run('applyOffer()');assert.equal(a.run('currentView'),'purchase');
+  assert.match(a.els.rublesStatus.textContent,/сохранённому/);assert.match(a.els.rublesStatus.textContent,/мой ручной курс/);
+  assert.equal(a.state().cashGelUpdated,stamp);assert.equal(a.writes[C.STORAGE_KEY],saved);
+});
+test('manual to provider to manual selection preserves history and follows the saved source on reload',async()=>{
+  const a=await app();await purchase(a,'usd',8800,100);await cash(a,3);const history=JSON.stringify(a.state().usdPurchases);
+  a.run('selectOffer("office:mjc")');assert.equal(a.state().cashGelRate,3,'browsing is only a preview');
+  a.run('selectOffer("manual")');assert.equal(a.els.exchangeReceive.textContent,'≈ 300,00 ₾');
+  a.els.bankChoice.value='2';await a.run('applyBank()');a.run('showView("exchange")');
+  assert.equal(a.run('selectedOffer'),'bank:2');assert.equal(a.state().cashGelRate,2.61);
+  assert.equal(a.run('offersForCity().some(row=>row.kind==="manual")'),false);
+  const b=await app(a.writes);assert.equal(b.run('selectedOffer'),'bank:2');
+  await cash(b,2.7);assert.equal(b.run('selectedOffer'),'manual');assert.equal(b.state().cashBankId,null);
+  assert.equal(JSON.stringify(b.state().usdPurchases),history);
+});
+test('a saved source is selected after its asynchronous public snapshot arrives',async()=>{
+  const a=await app();a.run('selectOffer("bank:2")');await a.run('applyOffer()');
+  // Simulate an early partial load followed by the bank response.
+  a.run('showView("exchange");banks=null;offerSelectionExplicit=false;renderOffers()');
+  await a.run('refreshBanks()');assert.equal(a.run('selectedOffer'),'bank:2');
+});
+test('saving a rate started on Exchange does not hijack a later navigation',async()=>{
+  const a=await app();a.run('openRate("cash")');a.els.rateValue.value='3';
+  const saving=a.run('saveRate()');a.run('showView("data")');await saving;
+  assert.equal(a.run('currentView'),'data');assert.equal(a.state().cashGelRate,3);
+});
+test('half-kopeck rounding is exact across cash, Bybit, comparison, official and USD basis totals',async()=>{
+  const a=await app();await purchase(a,'usd',8005,100);await cash(a,2.5);await purchase(a,'usdt',8000,100);
+  a.run('openRate("bybit");setRateMode("quote")');a.els.rateValue.value='2.5';await a.run('saveRate()');
+  a.els.quickGel.value='0,25';a.run('setPayment("cash")');
+  assert.equal(a.els.rublesResult.textContent,'≈ 8,01 ₽');assert.equal(a.els.cashTotal.textContent,'≈ 8,01 ₽');
+  assert.match(a.els.heroRoute.textContent,/Bybit дешевле примерно на 0,01 ₽/);
+  a.responses['./rates.json'].usdRub=80.05;a.responses['./rates.json'].usdGel=2.5;await a.run('refreshOfficial()');
+  assert.match(a.els.marketNote.textContent,/≈ 8,01 ₽/);
+  a.els.exchangeAmount.value='0,1';a.run('showView("exchange")');assert.match(a.els.exchangeBasis.textContent,/8,01 ₽/);
+  const b=await app();await purchase(b,'usdt',8005,100);b.run('openRate("bybit");setRateMode("quote")');b.els.rateValue.value='2.5';await b.run('saveRate()');
+  b.els.quickGel.value='0,25';b.run('calc()');assert.equal(b.els.rublesResult.textContent,'≈ 8,01 ₽');
+  b.run('openRate("bybit");setRateMode("actual")');b.els.actualGel.value='0.25';b.els.actualUsdt.value='0.1';await b.run('saveRate()');
+  assert.equal(b.els.rublesResult.textContent,'≈ 8,01 ₽');assert.equal(b.els.bybitTotal.textContent,'≈ 8,01 ₽');
+});
+test('very small decimal quotes round-trip through the editor without exponent notation',async()=>{
+  const a=await app();await cash(a,'0,00000001');a.run('openRate("cash")');
+  assert.equal(a.els.rateValue.value,'0,00000001');await a.run('saveRate()');assert.equal(a.state().cashGelRate,0.00000001);
+});
+
+test('switching payment hides an incompatible rate editor but retains its exact draft',async()=>{
+  const a=await app();a.run('openRate("bybit");setRateMode("quote")');
+  a.els.rateValue.value='2,65001234';const before=a.writes[C.STORAGE_KEY];
+  a.run('setPayment("cash")');assert.equal(a.els.ratePanel.classes.has('show'),false);
+  a.run('openRate("bybit")');assert.equal(a.run('rateMode'),'quote');
+  assert.equal(a.els.rateValue.value,'2,65001234');assert.equal(a.run('selectedPayment'),'bybit');
+  assert.equal(a.writes[C.STORAGE_KEY],before);
+});
+test('USD and USDT purchase drafts never mix when switching the selected payment',async()=>{
+  const a=await app();a.run('openPurchase("usd")');a.els.purchaseRub.value='8 800,37';a.els.purchaseQty.value='100';
+  a.run('setPayment("bybit")');assert.equal(a.els.purchasePanel.classes.has('show'),false);
+  a.run('openPurchase("usdt")');assert.equal(a.els.purchaseRub.value,'');
+  a.els.purchaseRub.value='8655';a.els.purchaseQty.value='100,50';
+  a.run('openPurchase("usd")');assert.equal(a.els.purchaseRub.value,'8 800,37');assert.equal(a.els.purchaseQty.value,'100');
+  assert.equal(a.run('selectedPayment'),'cash');
+  a.run('openPurchase("usdt")');assert.equal(a.els.purchaseQty.value,'100,50');assert.equal(a.run('selectedPayment'),'bybit');
+  assert.equal(a.state().usdPurchases.length,0);assert.equal(a.state().usdtPurchases.length,0);
+});
+test('closing and toggling a purchase form preserves a draft; saving starts the next purchase empty',async()=>{
+  const a=await app();a.run('openPurchase("usd")');a.els.purchaseRub.value='8800';a.els.purchaseQty.value='100';
+  a.run('openPurchase("usd")');assert.equal(a.els.purchasePanel.classes.has('show'),false);
+  a.run('openPurchase("usd")');assert.equal(a.els.purchaseRub.value,'8800');
+  a.run('closeInline("purchasePanel");openPurchase("usd")');assert.equal(a.els.purchaseQty.value,'100');
+  await a.run('savePurchase()');a.run('openPurchase("usd")');
+  assert.equal(a.els.purchaseRub.value,'');assert.equal(a.els.purchaseQty.value,'');assert.equal(a.state().usdPurchases.length,1);
+});
+test('rate drafts survive close and reopen, without changing the active calculation until saved',async()=>{
+  const a=await app();await purchase(a,'usd',8800,100);await cash(a,2.62);const before=a.writes[C.STORAGE_KEY];
+  a.run('openRate("cash")');a.els.rateValue.value='3,0123';a.run('openRate("cash")');
+  assert.equal(a.els.ratePanel.classes.has('show'),false);
+  a.run('openRate("cash")');assert.equal(a.els.rateValue.value,'3,0123');assert.equal(a.writes[C.STORAGE_KEY],before);
+  await a.run('saveRate()');a.run('openRate("cash")');assert.equal(a.els.rateValue.value,'3,0123');assert.equal(a.state().cashGelRate,3.0123);
+});
+test('actual Bybit draft and cashback disclosure survive a visit to cash editing',async()=>{
+  const a=await app();a.run('openRate("bybit")');a.els.actualGel.value='50';a.els.actualUsdt.value='19,78';a.els.actualReward.value='0,30';a.els.rewardDetails.open=true;
+  a.run('openRate("cash")');a.els.rateValue.value='2,6200';
+  a.run('openRate("bybit")');assert.equal(a.run('rateMode'),'actual');assert.equal(a.els.actualGel.value,'50');assert.equal(a.els.actualUsdt.value,'19,78');assert.equal(a.els.actualReward.value,'0,30');assert.equal(a.els.rewardDetails.open,true);
+  a.run('openRate("cash")');assert.equal(a.els.rateValue.value,'2,6200');assert.equal(a.run('rateMode'),'quote');
+});
+test('saved Bybit forecast reopens in quote mode including after reload',async()=>{
+  const a=await app();await purchase(a,'usdt',8655,100);a.run('openRate("bybit");setRateMode("quote")');a.els.rateValue.value='2,65123456';await a.run('saveRate()');
+  for(const tab of [a,await app(a.writes)]){
+    tab.run('openRate("bybit")');assert.equal(tab.run('rateMode'),'quote');assert.equal(tab.els.rateValue.value,'2,65123456');
+    assert.equal(tab.els.quoteModeButton.attrs['aria-pressed'],'true');
+  }
+});
+test('unchanged closed rate forms do not become stale drafts after an external rate change',async()=>{
+  const a=await app();await cash(a,2.62);a.run('openRate("cash");closeInline("ratePanel")');
+  a.els.bankChoice.value='2';await a.run('applyBank()');a.run('openRate("cash")');
+  assert.equal(a.els.rateValue.value,'2,6100');
+});
+test('manual rate can be changed directly from the ruble screen without losing its entered price',async()=>{
+  const a=await app();await purchase(a,'usd',8800,100);await cash(a,2.62);
+  a.els.quickGel.value='12,50';a.run('showView("purchase");setPayment("cash");editPaymentRate()');
+  assert.equal(a.run('currentView'),'purchase');assert.equal(a.els.ratePanel.parentElement,a.els.rublesEditorHost);
+  a.els.rateValue.value='2,5';await a.run('saveRate()');assert.equal(a.els.rublesResult.textContent,'≈ 440,00 ₽');assert.equal(a.els.quickGel.value,'12,50');
+});
+test('comparison actions request the missing purchase first and then the rate',async()=>{
+  const a=await app();a.run('showView("purchase");editComparison("bybit")');
+  assert.equal(a.els.purchasePanel.classes.has('show'),true);assert.equal(a.run('purchaseKind'),'usdt');
+  assert.equal(a.els.bybitCompareAction.textContent,'Добавить покупку USDT');
+  a.els.purchaseRub.value='8655';a.els.purchaseQty.value='100';await a.run('savePurchase()');
+  a.run('editComparison("bybit")');assert.equal(a.els.ratePanel.classes.has('show'),true);assert.equal(a.run('rateKind'),'bybit');
+  a.run('editComparison("cash")');assert.equal(a.run('purchaseKind'),'usd');assert.equal(a.run('selectedPayment'),'cash');
+});
+test('long result typography preserves all digits and resets when returning to a small price',async()=>{
+  const a=await app();await purchase(a,'usd',8800,100);await cash(a,2.62);
+  a.els.quickGel.value='1000000';a.run('calc()');assert.equal(a.els.rublesResult.dataset.moneySize,'medium');
+  assert.match(a.els.rublesResult.textContent,/33\s587\s786,26 ₽/);
+  a.els.quickGel.value='1';a.run('calc()');assert.equal(a.els.rublesResult.dataset.moneySize,'normal');assert.equal(a.els.rublesResult.textContent,'≈ 33,59 ₽');
+});
+test('delayed editor focus cannot steal focus after navigating or closing the form',async()=>{
+  const a=await app();let focused=0;a.els.purchaseRub.focus=()=>focused++;
+  a.run('openPurchase("usd")');a.run('showView("exchange")');
+  for(const timer of a.timers.values())if(timer.ms===50)timer.fn();assert.equal(focused,0);
+  a.run('showView("purchase");closeInline("purchasePanel")');
+  for(const timer of a.timers.values())if(timer.ms===50)timer.fn();assert.equal(focused,0);
 });

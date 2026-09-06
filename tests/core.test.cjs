@@ -77,3 +77,47 @@ test('corrupt authoritative V5.5 storage cannot be silently replaced by an older
   const values={'gelcost-v5.5-personal':'broken','gelcost-v5.3':JSON.stringify({usdEstimate:88})};
   assert.equal(C.load({getItem:key=>values[key]}).readBlocked,true);
 });
+
+test('decimal money operations round only the final result, including ties and very large totals',()=>{
+  const D=C.decimal;
+  assert.equal(D.format(D.div(1601,200)),'8,01');
+  assert.equal(D.format('0,0049999999999999'),'0,00');
+  assert.equal(D.format('0,005'),'0,01');
+  assert.equal(D.format(D.sub(0,'0,005')),'−0,01');
+  assert.equal(D.format(D.add('0,1','0,2')),'0,30');
+  assert.equal(D.format(D.mul('999999999999,99',1000)),'999\u00a0999\u00a0999\u00a0999\u00a0990,00');
+  assert.equal(D.format(D.mul(1e-8,1e8)),'1,00');
+  assert.equal(D.div(1,0),null);assert.equal(D.mul(null,3),null);assert.equal(D.format(NaN),'—');
+  assert.equal(D.compare(D.div(1,3),D.div(2,6)),0);
+});
+
+const exactCentsText=(numerator,denominator)=>{
+  const cents=(2n*numerator+denominator)/(2n*denominator);
+  return String(cents/100n)+','+String(cents%100n).padStart(2,'0');
+};
+test('3,000 route money totals agree with an independent integer-rational oracle',()=>{
+  for(let i=1;i<=1000;i++){
+    const rubC=BigInt(880003+i*127),qtyC=BigInt(10001+i*13),gelC=BigInt(1250+i*173),rate4=BigInt(25000+i%3000);
+    const state={...C.defaults(),usdPurchases:[{rub:Number(rubC)/100,qty:Number(qtyC)/100}],usdtPurchases:[{rub:Number(rubC)/100,qty:Number(qtyC)/100}],cashGelRate:Number(rate4)/10000,bybitGelRate:Number(rate4)/10000,bybitRateMode:'quote',feePct:2,cashbackPct:1};
+    const result=C.routes(state).exact;
+    const format=value=>C.decimal.format(C.decimal.mul(value,Number(gelC)/100)).replace(/\s/g,'');
+    assert.equal(format(result.cash),exactCentsText(gelC*rubC*10000n,qtyC*rate4),'cash '+i);
+    assert.equal(format(result.bybit),exactCentsText(gelC*rubC*10100n,qtyC*rate4),'quote '+i);
+    state.bybitRateMode='actual';state.bybitActual={gel:50,charged:19.78,reward:0.3};
+    assert.equal(format(C.routes(state).exact.bybit),exactCentsText(gelC*rubC*1948n,qtyC*5000n),'actual '+i);
+  }
+});
+test('6,800 exact half-kopeck cash totals never round down due to binary representation',()=>{
+  let cases=0;
+  for(let cents=8000;cents<=10000;cents++){
+    const state={...C.defaults(),usdPurchases:[{rub:cents,qty:100}],cashGelRate:2.5};
+    const rate=C.routes(state).exact.cash;
+    for(let gelCents=1;gelCents<=500;gelCents++){
+      if(cents*gelCents%250!==125)continue;
+      cases++;
+      const actual=C.decimal.format(C.decimal.mul(rate,gelCents/100)).replace(/\s/g,'');
+      assert.equal(actual,exactCentsText(BigInt(cents)*BigInt(gelCents),250n),`${cents}/${gelCents}`);
+    }
+  }
+  assert.equal(cases,6800);
+});

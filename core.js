@@ -18,6 +18,53 @@
     return Number.isFinite(result)?result:NaN;
   }
   const positive=value=>Number.isFinite(number(value))&&number(value)>0;
+  // Exact decimal fractions for money. Never round rates or intermediate costs.
+  // Numbers already stored by older versions retain their decimal representation.
+  function fraction(n,d=1n){
+    if(d===0n)return null;
+    if(d<0n){n=-n;d=-d;}
+    let a=n<0n?-n:n,b=d;
+    while(b){const r=a%b;a=b;b=r;}
+    return {n:n/a,d:d/a};
+  }
+  function decimalFrom(value){
+    if(value&&typeof value.n==="bigint"&&typeof value.d==="bigint")return fraction(value.n,value.d);
+    if(!Number.isFinite(number(value)))return null;
+    const text=typeof value==="number"?String(value):value.trim().replace(/\s/g,"").replace(",",".");
+    const match=/^(-?)(\d*)(?:\.(\d*))?(?:e([+-]?\d+))?$/i.exec(text);
+    if(!match)return null;
+    const digits=(match[2]||"0")+(match[3]||"");
+    const scale=(match[3]||"").length-Number(match[4]||0);
+    const n=BigInt(digits)*(match[1]? -1n:1n);
+    return scale>=0?fraction(n,10n**BigInt(scale)):fraction(n*10n**BigInt(-scale));
+  }
+  function decimalOperation(a,b,operation){
+    a=decimalFrom(a);b=decimalFrom(b);
+    if(!a||!b)return null;
+    if(operation==="add")return fraction(a.n*b.d+b.n*a.d,a.d*b.d);
+    if(operation==="sub")return fraction(a.n*b.d-b.n*a.d,a.d*b.d);
+    if(operation==="mul")return fraction(a.n*b.n,a.d*b.d);
+    return fraction(a.n*b.d,a.d*b.n);
+  }
+  const decimal={
+    from:decimalFrom,
+    add:(a,b)=>decimalOperation(a,b,"add"),sub:(a,b)=>decimalOperation(a,b,"sub"),
+    mul:(a,b)=>decimalOperation(a,b,"mul"),div:(a,b)=>decimalOperation(a,b,"div"),
+    compare:(a,b)=>{a=decimalFrom(a);b=decimalFrom(b);if(!a||!b)return NaN;const n=a.n*b.d-b.n*a.d;return n<0n?-1:n>0n?1:0;},
+    abs:value=>{const a=decimalFrom(value);return a?fraction(a.n<0n?-a.n:a.n,a.d):null;},
+    format:value=>{
+      const a=decimalFrom(value);if(!a)return "—";
+      // Round half away from zero exactly once, at the kopeck/tetri boundary.
+      const n=a.n<0n?-a.n:a.n,cents=(n*200n+a.d)/(2n*a.d);
+      const whole=String(cents/100n).replace(/\B(?=(\d{3})+(?!\d))/g,"\u00a0");
+      return (a.n<0n&&cents>0n?"−":"")+whole+","+String(cents%100n).padStart(2,"0");
+    }
+  };
+  function weightedDecimal(list){
+    const valid=(Array.isArray(list)?list:[]).filter(item=>item&&positive(item.rub)&&positive(item.qty));
+    if(!valid.length)return null;
+    return decimal.div(valid.reduce((sum,item)=>decimal.add(sum,item.rub),0),valid.reduce((sum,item)=>decimal.add(sum,item.qty),0));
+  }
   const timestamp=value=>typeof value==="number"?value:Date.parse(value);
   function fresh(value,ttl=DAY,now=Date.now()){
     const time=timestamp(value);
@@ -95,7 +142,14 @@
     const cash=positive(usdCost)&&positive(state.cashGelRate)?usdCost/number(state.cashGelRate):Infinity;
     const bybit=positive(usdtAvg)&&positive(bybitRate)&&mult>0
       ?usdtAvg/bybitRate*(state.bybitRateMode==="actual"?1:mult):Infinity;
-    return {usdAvg,usdtAvg,usdCost,cash,bybit,bybitRate,mult};
+    const usdBasis=weightedDecimal(state.usdPurchases)||(positive(state.usdEstimate)?decimalFrom(state.usdEstimate):null);
+    const usdtBasis=weightedDecimal(state.usdtPurchases);
+    const actual=state.bybitActual;
+    const exactBybit=state.bybitRateMode==="actual"
+      ?(actual?decimal.mul(usdtBasis,decimal.div(decimal.sub(actual.charged,actual.reward??0),actual.gel)):decimal.div(usdtBasis,state.bybitActualGelRate))
+      :decimal.mul(decimal.div(usdtBasis,state.bybitGelRate),decimal.add(1,decimal.div(decimal.sub(state.feePct,state.cashbackPct),100)));
+    const exact={usdCost:usdBasis,cash:Number.isFinite(cash)?decimal.div(usdBasis,state.cashGelRate):null,bybit:Number.isFinite(bybit)?exactBybit:null};
+    return {usdAvg,usdtAvg,usdCost,cash,bybit,bybitRate,mult,exact};
   }
   function official(data,now=Date.now()){
     if(!data||!positive(data.usdRub)||!positive(data.usdGel))throw Error("Некорректные официальные курсы");
@@ -136,7 +190,7 @@
     if(Object.keys(OFFICES).some(id=>!ids.has(id)&&!data.failures.includes(id)))throw Error("Пропущен статус источника");
     return {...data,offers:data.offers.map(row=>({...row,buy:number(row.buy),sell:number(row.sell)}))};
   }
-  const api={DAY,STORAGE_KEY,CACHE_KEYS,OFFICES,number,positive,fresh,weighted,defaults,migrate,load,personal,actualRate,routes,official,bankSnapshot,officeSnapshot};
+  const api={DAY,STORAGE_KEY,CACHE_KEYS,OFFICES,number,positive,decimal,fresh,weighted,defaults,migrate,load,personal,actualRate,routes,official,bankSnapshot,officeSnapshot};
   if(typeof module!=="undefined"&&module.exports)module.exports=api;
   else root.GelCore=api;
 })(typeof window!=="undefined"?window:this);
