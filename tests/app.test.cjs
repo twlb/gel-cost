@@ -9,8 +9,9 @@ const root=path.join(__dirname,'..');
 const day=new Date().toISOString().slice(0,10)+'T00:00:00Z';
 const official=()=>({usdRub:88,usdGel:2.62,updatedAt:day,fetchedAt:new Date().toISOString(),sources:{usdRub:{date:day},usdGel:{date:day}}});
 const bankData=()=>({schemaVersion:1,currency:'USD',unit:'GEL per USD',channel:'Branch',userType:'PhysicalPerson',queryAmountGel:1000,fetchedAt:new Date().toISOString(),offers:[{id:'1',bank:'A',buy:2.6,sell:2.7},{id:'2',bank:'B',buy:2.61,sell:2.7},{id:'3',bank:'C',buy:2.62,sell:2.7}]});
+const officeData=()=>{const stamp=new Date().toISOString();return {schemaVersion:1,currency:'USD',unit:'GEL per USD',channel:'Cash',side:'buy',fetchedAt:stamp,offers:[{id:'mjc',buy:2.613,sell:2.616,nominal:1,checkedAt:stamp,sourceUpdatedAt:null},{id:'rico',buy:2.61,sell:2.615,nominal:1,checkedAt:stamp,sourceUpdatedAt:null}],failures:[]};};
 class Element{
-  constructor(){this.value='';this.textContent='';this.hidden=false;this.innerHTML='';this.children=[];this.events={};this.attrs={};this.classes=new Set();this.classList={contains:k=>this.classes.has(k),add:k=>this.classes.add(k),remove:k=>this.classes.delete(k),toggle:(k,on)=>{if(on===undefined)on=!this.classes.has(k);on?this.classes.add(k):this.classes.delete(k);}};}
+  constructor(){this.dataset={};this.value='';this.textContent='';this.hidden=false;this.innerHTML='';this.children=[];this.events={};this.attrs={};this.classes=new Set();this.classList={contains:k=>this.classes.has(k),add:k=>this.classes.add(k),remove:k=>this.classes.delete(k),toggle:(k,on)=>{if(on===undefined)on=!this.classes.has(k);on?this.classes.add(k):this.classes.delete(k);}};}
   setAttribute(k,v){this.attrs[k]=v;}
   addEventListener(k,fn){this.events[k]=fn;}
   appendChild(node){node.parentElement=this;this.children.push(node);}
@@ -32,8 +33,8 @@ function sharedBrowser(saved={}){
 async function app(saved={},blocked=false,options={}){
   const html=fs.readFileSync(path.join(root,'index.html'),'utf8');
   const els={};for(const id of html.matchAll(/\bid="([^"]+)"/g))els[id[1]]=new Element();
-  els.quickGel.value='100';
-  const responses={'./rates.json':official(),'./market-rates.json':bankData()};
+  els.quickGel.value='100';els.exchangeAmount.value='100';els.exchangeCity.value='tbilisi';
+  const responses={'./rates.json':official(),'./market-rates.json':bankData(),'./exchange-rates.json':officeData()};
   const shared=options.shared||sharedBrowser(saved);
   const timers=new Map();let tid=0,now=Date.now();const writes=shared.writes,downloads=[],requests=[];
   const events={},documentEvents={};
@@ -49,7 +50,7 @@ async function app(saved={},blocked=false,options={}){
     console,Intl,Date:Clock,Number,Math,JSON,Promise,AbortController,Blob,URL,Option:class{constructor(text,value){this.text=text;this.value=value;}},
     localStorage:store,navigator:{locks:options.noLocks?undefined:shared.locks},
     addEventListener:(name,fn)=>events[name]=fn,
-    document:{getElementById:id=>els[id],hidden:false,addEventListener:(name,fn)=>documentEvents[name]=fn,createElement:()=>{const e=new Element();downloads.push(e);return e;},querySelectorAll:()=>Object.values(els).filter(e=>e.classes.has('show'))},
+    document:{getElementById:id=>els[id],hidden:false,addEventListener:(name,fn)=>documentEvents[name]=fn,createElement:tag=>{const e=new Element();if(tag==='a')downloads.push(e);return e;},querySelectorAll:()=>Object.values(els).filter(e=>e.classes.has('show'))},
     setTimeout:(fn,ms)=>{const id=++tid;timers.set(id,{fn,ms});return id;},clearTimeout:id=>timers.delete(id),setInterval:(fn,ms)=>timers.set(++tid,{fn,ms,interval:true}),
     fetch:async(url,options)=>{requests.push(url);if(responses[url] instanceof Error)throw responses[url];if(responses[url]==='hang')return new Promise((resolve,reject)=>options.signal.addEventListener('abort',()=>reject(Error('aborted'))));const data=await responses[url];return {ok:Boolean(data),json:async()=>structuredClone(data)};},
   });
@@ -234,28 +235,28 @@ test('regression: active tab fetches both sources every five minutes without wri
   const a=await app();await purchase(a,'usd',8800,100);a.els.bankChoice.value='2';await a.run('applyBank()');
   const saved=a.writes[C.STORAGE_KEY],timer=[...a.timers.values()].find(t=>t.interval);
   for(let minute=1;minute<5;minute++){a.advance(60000);await timer.fn();}
-  assert.equal(a.requests.length,2);
+  assert.equal(a.requests.length,3);
   a.advance(60000);
   for(const data of Object.values(a.responses))data.fetchedAt=new Date(a.run('Date.now()')).toISOString();
   a.responses['./market-rates.json'].offers[1].buy=2.63;
-  await timer.fn();assert.equal(a.requests.length,4);assert.equal(a.state().cashGelRate,2.63);
+  await timer.fn();assert.equal(a.requests.length,6);assert.equal(a.state().cashGelRate,2.63);
   assert.equal(a.writes[C.STORAGE_KEY],saved);
-  await timer.fn();assert.equal(a.requests.length,4);
-  a.advance(5*60000);await timer.fn();assert.equal(a.requests.length,6);
+  await timer.fn();assert.equal(a.requests.length,6);
+  a.advance(5*60000);await timer.fn();assert.equal(a.requests.length,9);
 });
 test('hidden tab skips polling, then refreshes on return without repeated requests',async()=>{
   const a=await app(),timer=[...a.timers.values()].find(t=>t.interval);
-  a.run('document.hidden=true');a.advance(10*60000);await timer.fn();assert.equal(a.requests.length,2);
-  a.run('document.hidden=false');a.documentEvents.visibilitychange();await a.settle();assert.equal(a.requests.length,4);
-  a.documentEvents.visibilitychange();await a.settle();assert.equal(a.requests.length,4);
+  a.run('document.hidden=true');a.advance(10*60000);await timer.fn();assert.equal(a.requests.length,3);
+  a.run('document.hidden=false');a.documentEvents.visibilitychange();await a.settle();assert.equal(a.requests.length,6);
+  a.documentEvents.visibilitychange();await a.settle();assert.equal(a.requests.length,6);
 });
 test('network recovery retries immediately and busy requests are not duplicated',async()=>{
-  const a=await app();a.responses['./rates.json']='hang';a.responses['./market-rates.json']='hang';
-  const pending=a.events.online();await a.settle();assert.equal(a.requests.length,4);
-  a.advance(5*60000);await [...a.timers.values()].find(t=>t.interval).fn();assert.equal(a.requests.length,4);
+  const a=await app();a.responses['./rates.json']='hang';a.responses['./market-rates.json']='hang';a.responses['./exchange-rates.json']='hang';
+  const pending=a.events.online();await a.settle();assert.equal(a.requests.length,6);
+  a.advance(5*60000);await [...a.timers.values()].find(t=>t.interval).fn();assert.equal(a.requests.length,6);
   for(const timer of [...a.timers.values()].filter(t=>t.ms===10000))timer.fn();await pending;
-  a.responses['./rates.json']=official();a.responses['./market-rates.json']=bankData();
-  await a.events.online();assert.equal(a.requests.length,6);assert.equal(a.els.marketStatus.textContent,'ориентир');
+  a.responses['./rates.json']=official();a.responses['./market-rates.json']=bankData();a.responses['./exchange-rates.json']=officeData();
+  await a.events.online();assert.equal(a.requests.length,9);assert.equal(a.els.marketStatus.textContent,'ориентир');
 });
 test('export waits for pending personal saves and includes the latest purchase',async()=>{
   const a=await app();
@@ -271,4 +272,62 @@ test('older bank cache in another tab cannot replace a more recent selected quot
   a.responses['./market-rates.json'].offers[1].buy=2.63;
   await a.run('refreshBanks()');a.els.bankChoice.value='2';await a.run('applyBank()');
   shared.flush();assert.equal(b.state().cashGelRate,2.63);
+});
+
+test('home shows both RUB totals, comparison and no winner for one route',async()=>{
+  const a=await app();await purchase(a,'usd',8800,100);await cash(a,2.62);
+  assert.equal(a.els.cashCard.classes.has('best'),false);assert.equal(a.els.bybitTotal.textContent,'— ₽');
+  await purchase(a,'usdt',8655,100);a.run('openRate("bybit")');a.els.actualGel.value='100';a.els.actualUsdt.value='38';await a.run('saveRate()');
+  assert.match(a.els.cashTotal.textContent,/3\s359/);assert.match(a.els.bybitTotal.textContent,/3\s289/);assert.match(a.els.heroRoute.textContent,/Bybit дешевле/);
+});
+test('office selection persists, refreshes quote only, and manual override detaches it',async()=>{
+  const a=await app();await purchase(a,'usd',8800,100);a.run('selectOffer("office:mjc")');await a.run('applyOffer()');
+  assert.equal(a.state().cashOfficeId,'mjc');assert.equal(a.state().cashBankId,null);near(a.run('routeValues().cash'),88/2.613);
+  const saved=a.writes[C.STORAGE_KEY];a.responses['./exchange-rates.json'].offers[0].buy=2.614;
+  await a.run('refreshOffices()');assert.equal(a.state().cashGelRate,2.614);assert.equal(a.writes[C.STORAGE_KEY],saved);
+  const b=await app(a.writes);assert.equal(b.state().cashOfficeId,'mjc');
+  await cash(a,2.62);assert.equal(a.state().cashOfficeId,null);await a.run('refreshOffices()');assert.equal(a.state().cashGelRate,2.62);
+});
+test('failure of one office disables only its quote, even with a new snapshot date',async()=>{
+  const a=await app();await purchase(a,'usd',8800,100);a.run('selectOffer("office:mjc")');await a.run('applyOffer()');
+  a.responses['./exchange-rates.json'].failures=['mjc'];await a.run('refreshOffices()');
+  a.run('selectOffer("office:mjc")');assert.equal(a.els.applyOfferButton.disabled,true);assert.match(a.els.heroRoute.textContent,/сохранённым/);
+  assert.equal(a.run('officeFresh("rico")'),true);
+  a.run('selectOffer("office:rico")');assert.equal(a.els.applyOfferButton.disabled,false);
+});
+test('stale provider time is not refreshed by a newer bundle timestamp',async()=>{
+  const a=await app();a.responses['./exchange-rates.json'].offers[0].checkedAt=new Date(Date.now()-3*3600000).toISOString();
+  // A backwards provider timestamp is rejected, even if another provider is fresh.
+  await a.run('refreshOffices()');a.run('selectOffer("office:mjc")');assert.equal(a.els.applyOfferButton.disabled,true);
+  assert.equal(a.state().usdPurchases.length,0);
+});
+test('city filtering hides offices without verified branches, but labels banks as unscoped',async()=>{
+  const a=await app();a.els.exchangeCity.value='batumi';a.run('renderOffers()');
+  assert.equal(a.run('offersForCity().some(o=>o.id==="mjc")'),false);assert.equal(a.run('offersForCity().some(o=>o.id==="rico")'),true);
+  assert.equal(a.run('offersForCity().filter(o=>o.kind==="bank").length'),3);assert.ok(a.els.offerList.children.some(row=>row.children[1].textContent.includes('город уточните')));
+});
+test('exchange preview uses BUY times USD quantity; personal basis is optional',async()=>{
+  const a=await app();a.run('selectOffer("office:mjc")');assert.match(a.els.exchangeReceive.textContent,/261,30/);
+  assert.match(a.els.exchangeBasis.textContent,/Добавьте покупку/);
+  await purchase(a,'usd',8800,100);a.els.exchangeAmount.value='200,5';a.run('renderOffers()');
+  assert.match(a.els.exchangeReceive.textContent,/523,91/);assert.match(a.els.exchangeBasis.textContent,/17\s644/);
+  a.els.exchangeAmount.value='abc';a.run('renderOffers()');assert.equal(a.els.applyOfferButton.disabled,true);await a.run('applyOffer()');assert.equal(a.state().cashOfficeId,null);
+});
+test('navigation preserves a draft and forms never move into a hidden home card from Data',async()=>{
+  const a=await app();a.run('showView("data");openPurchase("usd")');a.els.purchaseRub.value='9012';
+  assert.equal(a.els.purchasePanel.parentElement,a.els.purchaseDataHost);
+  a.run('showView("exchange");showView("data")');assert.equal(a.els.purchaseRub.value,'9012');assert.equal(a.els.purchasePanel.classes.has('show'),true);
+  assert.equal(a.els.dataView.hidden,false);assert.equal(a.els.purchaseView.hidden,true);
+});
+test('V5.5 canonical history and Bybit actual rate migrate without a second reward adjustment',async()=>{
+  const old={...C.defaults(),cashOfficeId:undefined,usdPurchases:[{rub:8800,qty:100}],bybitActualGelRate:2.62,cashbackPct:2};
+  const saved=JSON.stringify(old);const a=await app({'gelcost-v5.5-personal':saved});
+  assert.equal(a.state().bybitActualGelRate,2.62);await purchase(a,'usd',9000,100);
+  assert.equal(a.writes['gelcost-v5.5-personal'],saved);assert.equal(JSON.parse(a.writes[C.STORAGE_KEY]).usdPurchases.length,2);
+});
+test('public provider labels cannot inject markup and links use trusted metadata',async()=>{
+  const a=await app();a.responses['./market-rates.json'].offers[0].bank='<img src=x onerror=alert(1)>';
+  await a.run('refreshBanks()');a.run('selectOffer("bank:1")');
+  assert.equal(a.els.selectedSource.href,'https://nbg.gov.ge/en/currency-rates');
+  assert.equal(a.els.offerList.children.every(row=>row.innerHTML===''),true);
 });

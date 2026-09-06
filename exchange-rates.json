@@ -1,0 +1,27 @@
+{
+  "schemaVersion": 1,
+  "currency": "USD",
+  "unit": "GEL per USD",
+  "channel": "Cash",
+  "side": "buy",
+  "fetchedAt": "2026-09-06T04:21:06.866911Z",
+  "offers": [
+    {
+      "id": "mjc",
+      "buy": 2.613,
+      "sell": 2.616,
+      "nominal": 1,
+      "checkedAt": "2026-09-06T04:21:06.866911Z",
+      "sourceUpdatedAt": null
+    },
+    {
+      "id": "rico",
+      "buy": 2.61,
+      "sell": 2.615,
+      "nominal": 1,
+      "checkedAt": "2026-09-06T04:21:06.866911Z",
+      "sourceUpdatedAt": null
+    }
+  ],
+  "failures": []
+}

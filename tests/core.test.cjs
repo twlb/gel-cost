@@ -64,3 +64,16 @@ test('bank snapshots validate side, channel, sample size, duplicates and spread'
     const s=banks();edit(s);assert.throws(()=>C.bankSnapshot(s));
   }
 });
+
+test('office snapshots require known identities, explicit failures, correct units and individual dates',()=>{
+  const stamp=new Date().toISOString();
+  const valid={schemaVersion:1,currency:'USD',unit:'GEL per USD',channel:'Cash',side:'buy',fetchedAt:stamp,offers:[{id:'mjc',buy:2.613,sell:2.616,nominal:1,checkedAt:stamp,sourceUpdatedAt:null}],failures:['rico']};
+  assert.equal(C.officeSnapshot(valid).offers[0].buy,2.613);
+  for(const edit of [s=>s.currency='RUB',s=>s.side='sell',s=>s.offers[0].id='constructor',s=>s.offers[0].nominal=100,s=>s.offers[0].buy=3,s=>s.offers[0].checkedAt='bad',s=>s.failures=[],s=>s.offers.push({...s.offers[0]})]){
+    const s=structuredClone(valid);edit(s);assert.throws(()=>C.officeSnapshot(s));
+  }
+});
+test('corrupt authoritative V5.5 storage cannot be silently replaced by an older fallback',()=>{
+  const values={'gelcost-v5.5-personal':'broken','gelcost-v5.3':JSON.stringify({usdEstimate:88})};
+  assert.equal(C.load({getItem:key=>values[key]}).readBlocked,true);
+});

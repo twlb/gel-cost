@@ -6,6 +6,7 @@ on:
     paths:
       - "index.html"
       - "app.js"
+      - "styles.css"
       - "core.js"
       - "scripts/**"
       - "tests/**"
@@ -46,10 +47,15 @@ jobs:
         continue-on-error: true
         run: python3 scripts/update_bank_rates.py
 
+      - name: Fetch cash exchange offices
+        id: offices
+        continue-on-error: true
+        run: python3 scripts/update_exchange_rates.py
+
       - name: Commit changed rates
         id: commit
         run: |
-          git add rates.json market-rates.json
+          git add rates.json market-rates.json exchange-rates.json
           if git diff --cached --quiet; then
             echo "Snapshots have not changed."
             exit 0
@@ -75,7 +81,7 @@ jobs:
           gh api --method POST "repos/$GITHUB_REPOSITORY/pages/builds"
 
       - name: Report source failures
-        if: always() && (steps.official.outcome == 'failure' || steps.banks.outcome == 'failure')
+        if: always() && (steps.official.outcome == 'failure' || steps.banks.outcome == 'failure' || steps.offices.outcome == 'failure')
         run: |
           echo "A source failed validation. Its last valid snapshot was retained; check the fetch steps."
           exit 1

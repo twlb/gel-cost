@@ -1,302 +1,136 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="ru">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<meta name="theme-color" content="#0b0d10">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#111316">
+<meta name="description" content="Стоимость покупок в Грузии в ваших рублях: наличные через USD и карта Bybit через USDT. Курсы обменников и банков.">
 <title>GEL Cost</title>
-<style>
-:root{
-  --bg:#0b0d10;--card:#15191f;--card2:#0f1318;--text:#f5f7fa;--muted:#8f99a5;
-  --line:#27303a;--accent:#29b6f6;--good:#2bd18b;--warn:#ffb020;--bad:#ff6b78
-}
-*{box-sizing:border-box}
-body{margin:0;background:linear-gradient(180deg,#090b0e,#0d1116);color:var(--text);
-font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif}
-.wrap{max-width:760px;margin:0 auto;padding:16px 14px 44px}
-.top{display:flex;justify-content:space-between;gap:12px;align-items:flex-start}
-h1{font-size:27px;line-height:1.08;margin:0 0 6px}
-.sub{font-size:13px;color:var(--muted);line-height:1.45;max-width:560px}
-.badge{background:var(--accent);color:#061018;font-size:12px;font-weight:900;padding:7px 10px;border-radius:999px}
-.hero{margin:14px 0;background:linear-gradient(135deg,rgba(41,182,246,.16),rgba(43,209,139,.10));
-border:1px solid rgba(41,182,246,.28);border-radius:22px;padding:17px}
-.hero .eyebrow{font-size:13px;color:var(--muted);margin-bottom:6px}
-.hero .route{color:var(--good);font-weight:850;margin-top:12px;line-height:1.35}
-.hero .detail{color:var(--muted);font-size:13px;margin-top:5px;line-height:1.4}
-.quick{display:grid;grid-template-columns:1fr auto;gap:10px}
-.input{display:flex;align-items:center;background:#0b0f14;border:1px solid var(--line);border-radius:14px;padding:0 12px}
-input{width:100%;background:transparent;border:0;outline:0;color:var(--text);font-size:20px;padding:13px 0;font-variant-numeric:tabular-nums}
-.input:focus-within{border-color:var(--accent);box-shadow:0 0 0 3px rgba(41,182,246,.18)}
-.unit{font-size:13px;color:var(--muted);margin-left:8px;white-space:nowrap}
-.quickout{min-width:162px;background:#0f1318;border:1px solid var(--line);border-radius:14px;padding:10px 12px;text-align:right}
-.quickout .v{font-size:24px;font-weight:900}
-.quickout .k{font-size:12px;color:var(--muted);margin-top:2px}
-.panel{background:rgba(21,25,31,.96);border:1px solid var(--line);border-radius:20px;padding:15px;margin:12px 0}
-.panel h2{font-size:17px;margin:0 0 5px}
-.desc{font-size:13px;color:var(--muted);line-height:1.45}
-.cards{display:grid;gap:10px;margin-top:12px}
-.card{background:var(--card2);border:1px solid var(--line);border-radius:17px;padding:13px}
-.card.best{border-color:rgba(43,209,139,.62);box-shadow:inset 0 0 0 1px rgba(43,209,139,.12)}
-.cardhead{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}
-.name{font-weight:850}
-.price{font-size:21px;font-weight:900;text-align:right;white-space:nowrap}
-.path{margin-top:11px;border-top:1px solid rgba(39,48,58,.7);border-bottom:1px solid rgba(39,48,58,.7)}
-.pathrow{display:flex;justify-content:space-between;gap:12px;padding:8px 0;font-size:13px}
-.pathrow+.pathrow{border-top:1px solid rgba(39,48,58,.45)}
-.pathrow span{color:var(--muted)}
-.pathrow b{text-align:right}
-.freshness{font-size:12px;color:var(--muted);margin-top:8px}
-.freshness.stale{color:var(--warn)}
-.actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:11px}
-button{border:0;border-radius:12px;min-height:44px;padding:10px 12px;font-weight:850;cursor:pointer}
-button:focus-visible{outline:3px solid rgba(41,182,246,.72);outline-offset:2px}
-.primary{background:var(--accent);color:#061018}
-.secondary{background:#1a2027;color:var(--text);border:1px solid var(--line)}
-.ghost{background:transparent;color:var(--muted);border:1px solid var(--line)}
-.history-btn{grid-column:1/-1;min-height:38px;padding:7px 9px}
-.full{width:100%}
-.market{display:flex;justify-content:space-between;gap:12px;align-items:center}
-.market .mprice{font-weight:900;font-size:19px}
-.market .stamp{font-size:12px;color:var(--muted);margin-top:3px}
-.status{font-size:12px;padding:5px 8px;border-radius:999px;background:#101820;color:var(--muted)}
-.history{display:none;margin-top:10px;border-top:1px solid var(--line);padding-top:8px}
-.history.show{display:block}
-.row{display:flex;justify-content:space-between;gap:12px;padding:8px 0;border-bottom:1px solid rgba(39,48,58,.55);font-size:13px}
-.row:last-child{border-bottom:0}
-.row .r{color:var(--muted);text-align:right}
-.inline{display:none;margin-top:12px;padding-top:12px;border-top:1px solid var(--line)}
-.inline.show{display:block}
-.inline h3{margin:0 0 12px;font-size:16px}
-.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-label{display:block;color:var(--muted);font-size:13px;margin-bottom:5px}
-.note{font-size:12px;color:var(--muted);line-height:1.45;margin-top:9px}
-.error{display:none;color:var(--bad);font-size:13px;line-height:1.4;margin-top:9px}
-.error.show{display:block}
-.mode-switch{display:grid;grid-template-columns:1fr 1fr;gap:6px;background:#0b0f14;border:1px solid var(--line);padding:4px;border-radius:14px;margin-bottom:12px}
-.mode-switch button{min-height:38px;background:transparent;color:var(--muted);padding:7px 8px}
-.mode-switch button.active{background:#1f2a33;color:var(--text)}
-.mode{display:none}.mode.show{display:block}
-.benchmark-summary{font-size:13px;line-height:1.45;margin-top:8px}
-.sep{height:1px;background:var(--line);margin:12px 0}
-select{width:100%;color:var(--text);background:#0b0f14;border:1px solid var(--line);border-radius:12px;padding:12px;font-size:15px;min-height:44px}
-a{color:var(--accent)}
-.notice{font-size:13px;line-height:1.5;color:var(--warn);padding:12px;border:1px solid var(--line);border-radius:12px;margin:12px 0}
-[hidden]{display:none!important}
-.hero .route.caution{color:var(--warn)}
-.bank-summary{font-size:13px;color:var(--muted);margin-top:9px}
-button:disabled{opacity:.55;cursor:not-allowed}
-.pathrow>*{min-width:0;overflow-wrap:anywhere}
-@media(max-width:560px){
-  .grid{grid-template-columns:1fr}.quick{grid-template-columns:1fr}.quickout{text-align:left;min-width:0}
-  .price{font-size:19px}.wrap{padding-left:12px;padding-right:12px}
-}
-</style>
+<link rel="icon" href="data:,">
+<link rel="stylesheet" href="styles.css?v=5.6">
 </head>
 <body>
-<div class="wrap">
-  <div class="top">
-    <div>
-      <h1>Цена в Грузии — в рублях</h1>
-      <div class="sub">Ваш доход в ₽. Считаем реальную стоимость ₾ через наличный USD или USDT.</div>
-    </div>
-    <div class="badge">V5.5</div>
-  </div>
-  <div class="notice" id="storageNotice" role="status" hidden></div>
-  <div class="notice" id="migrationNotice" role="status" hidden>В прежнем расчёте Bybit cashback вычитался автоматически. Теперь учтено полное списание; возврат можно добавить после его получения. Покупки USD и USDT сохранены.</div>
-
-  <div class="hero">
-    <div class="eyebrow">Сколько стоит покупка</div>
-    <div class="quick">
-      <div>
-        <label for="quickGel">Цена в лари</label>
-        <div class="input">
-          <input id="quickGel" type="text" value="100" inputmode="decimal" aria-describedby="heroDetail">
-          <span class="unit">₾</span>
-        </div>
-      </div>
-      <div class="quickout">
-        <div class="v" id="quickRub" aria-live="polite">— ₽</div>
-        <div class="k">из вашего рублёвого дохода</div>
-      </div>
-    </div>
-    <div class="error" id="quickError" role="alert"></div>
-    <div class="route" id="heroRoute" aria-live="polite">Добавьте данные хотя бы одного способа</div>
-    <div class="detail" id="heroDetail">Итог появится после настройки личной себестоимости и текущего курса.</div>
-  </div>
-
-  <div class="panel">
-    <h2>Наличные или карта — что дешевле</h2>
-    <div class="desc">Оценка по цене ваших покупок USD/USDT и курсу до лари. Это средняя за период, не учёт текущего остатка.</div>
-
-    <div class="cards">
-      <div class="card" id="cashCard">
-        <div class="cardhead">
-          <div>
-            <div class="name">Наличный USD</div>
-            <div class="desc">₽ → наличный USD → ₾</div>
-          </div>
-          <div class="price" id="cashPrice">—</div>
-        </div>
-        <div class="path">
-          <div class="pathrow"><span id="cashAvgLabel">Ваш доллар</span><b id="cashAvg">—</b></div>
-          <div class="pathrow"><span>Сейчас за $1 дают</span><b id="cashGelRate">— ₾</b></div>
-          <div class="pathrow"><span>Ваша цена 1 ₾</span><b id="cashExplain">—</b></div>
-        </div>
-        <div class="freshness stale" id="cashFreshness">Курс USD→₾ ещё не обновлялся</div>
-        <div class="bank-summary" id="cashSource">Курс обмена вводится вручную.</div>
-        <div class="actions">
-          <button class="primary" onclick="openRate('cash')">Обновить USD→₾</button>
-          <button class="secondary" onclick="openPurchase('usd')">Пополнить USD</button>
-          <button class="secondary full history-btn" onclick="openBanks()">Выбрать курс банка автоматически</button>
-          <button class="ghost history-btn" onclick="toggleHistory('usdHistory')">История покупок USD</button>
-        </div>
-        <div class="inline" id="bankPanel">
-          <h3>USD → лари в отделении банка</h3>
-          <div class="desc">Вы отдаёте USD, банк выдаёт GEL. Используем курс покупки доллара банком, не продажи.</div>
-          <p class="note" id="bankStatus" role="status">Проверяем банковские курсы…</p>
-          <label for="bankChoice">Банк · сколько дают за 1 USD</label>
-          <select id="bankChoice"><option value="">Выберите банк</option></select>
-          <div class="note" id="bankPreview" aria-live="polite"></div>
-          <div class="note">Источник: <a href="https://nbg.gov.ge/en/currency-rates" target="_blank" rel="noopener noreferrer">банковская витрина НБГ</a>. Отделения, физлица, запрос на 1 000 GEL. Время изменения курса источник не сообщает. Комиссии и условия наличного обмена уточните в банке. Это не полный список обменников.</div>
-          <div class="actions">
-            <button class="primary" id="applyBankButton" onclick="applyBank()" disabled>Использовать этот банк</button>
-            <button class="secondary" onclick="refreshBanks()">Проверить данные</button>
-          </div>
-          <button class="ghost full" style="margin-top:8px" onclick="closeInline('bankPanel')">Закрыть список банков</button>
-        </div>
-        <div class="history" id="usdHistory"></div>
-      </div>
-
-      <div class="card" id="bybitCard">
-        <div class="cardhead">
-          <div>
-            <div class="name">Оплата картой Bybit</div>
-            <div class="desc">₽ → USDT → покупка в ₾</div>
-          </div>
-          <div class="price" id="bybitPrice">—</div>
-        </div>
-        <div class="path">
-          <div class="pathrow"><span>Ваш USDT</span><b id="usdtAvg">—</b></div>
-          <div class="pathrow"><span id="bybitRateLabel">Bybit за 1 USDT</span><b id="bybitGelRate">— ₾</b></div>
-          <div class="pathrow"><span>Ваша цена 1 ₾</span><b id="bybitExplain">—</b></div>
-        </div>
-        <div class="freshness stale" id="bybitFreshness">Курс Bybit ещё не обновлялся</div>
-        <div class="actions">
-          <button class="primary" onclick="openRate('bybit')">Обновить Bybit→₾</button>
-          <button class="secondary" onclick="openPurchase('usdt')">Пополнить USDT</button>
-          <button class="ghost history-btn" onclick="toggleHistory('usdtHistory')">История покупок USDT</button>
-        </div>
-        <div class="history" id="usdtHistory"></div>
-      </div>
-    </div>
-  </div>
-
-  <div class="panel">
-    <div class="market">
-      <div>
-        <div class="desc">Официальный ориентир</div>
-        <div class="mprice" id="marketPrice">— ₽/₾</div>
-        <div class="stamp" id="marketStamp">загрузка официальных данных</div>
-      </div>
-      <div class="status" id="marketStatus">ориентир</div>
-    </div>
-    <div class="benchmark-summary" id="marketNote">Официальный курс нужен только для сравнения с вашими реальными затратами.</div>
-    <button class="ghost full" style="margin-top:10px" onclick="refreshOfficial()">Проверить официальный курс</button>
-  </div>
-
-  <button class="secondary full" onclick="openSettings()">Настройки и данные</button>
-
-  <div class="inline panel" id="settingsPanel">
-    <h3>Настройки и данные</h3>
-    <div class="desc">Для режима «Ввести курс» можно задать предполагаемые комиссию и cashback. Оба процента считаются от базовой стоимости. Для режима «По операции» эти проценты не применяются.</div>
-    <div class="grid" style="margin-top:10px">
-      <div><label for="feePct">Комиссия в прогнозе, %</label><div class="input"><input id="feePct" type="text" inputmode="decimal" value="0"></div></div>
-      <div><label for="cashbackPct">Ожидаемый cashback, %</label><div class="input"><input id="cashbackPct" type="text" inputmode="decimal" value="0"></div></div>
-    </div>
-    <div class="error" id="settingsError" role="alert"></div>
-    <button class="secondary full" style="margin-top:10px" onclick="saveSettings()">Сохранить условия прогноза</button>
-
-    <div class="sep"></div>
-    <div class="desc">Официальный ориентир</div>
-    <div class="grid" style="margin-top:8px">
-      <div>
-        <label for="officialRub">USD/RUB — ЦБ РФ</label>
-        <div class="input"><input id="officialRub" type="text" readonly><span class="unit">₽/$</span></div>
-      </div>
-      <div>
-        <label for="officialGel">USD/GEL — НБГ</label>
-        <div class="input"><input id="officialGel" type="text" readonly><span class="unit">GEL/$</span></div>
-      </div>
-    </div>
-    <div class="note">Официальные данные — справочный ориентир, не предложение обмена. Даты каждого источника показываются отдельно.</div>
-
-    <div class="actions">
-      <button class="primary" onclick="refreshOfficial()">Обновить официальный курс</button>
-      <button class="ghost" onclick="closeInline('settingsPanel')">Закрыть</button>
-    </div>
-
-    <div class="sep"></div>
-    <button class="secondary full" onclick="exportData()">Скачать резервную копию покупок</button>
-    <div class="note">Данные хранятся только в этом браузере и не отправляются банкам. Очистка данных браузера удалит историю — сохраните копию перед этим.</div>
-    <div class="sep"></div>
-    <button class="ghost full" onclick="resetPeriod('usd',this)">Очистить покупки USD</button>
-    <button class="ghost full" onclick="resetPeriod('usdt',this)">Очистить покупки USDT</button>
-  </div>
+<a class="skip" href="#main">К расчёту</a>
+<div class="app">
+<header><a class="brand" href="#purchase" onclick="showView('purchase')">GEL Cost <span class="badge">V5.6</span></a><button class="text-button" id="dataNav" onclick="showView('data')">Данные</button></header>
+<main id="main">
+<noscript><p class="notice">Для расчётов включите JavaScript в браузере.</p></noscript>
+<div class="notice" id="storageNotice" role="status" hidden></div>
+<div class="notice" id="migrationNotice" hidden>Курс из V5.4 пересчитан без неподтверждённого cashback. История покупок сохранена. При необходимости обновите Bybit по операции.</div>
+<div id="actionStatus" class="action-status" role="status" aria-live="polite"></div>
+<section id="purchaseView" aria-labelledby="purchaseHeading">
+<h1 id="purchaseHeading" tabindex="-1">Покупка в рублях</h1>
+<p class="subtitle">Одна цена — два способа оплаты</p>
+<label for="quickGel">Цена в лари</label>
+<div class="input amount"><input id="quickGel" type="text" inputmode="decimal" value="100" autocomplete="off" maxlength="18" aria-describedby="quickError"><span class="unit">₾</span></div>
+<div class="error" id="quickError" role="alert"></div>
+<div class="comparison" aria-label="Стоимость покупки по способам оплаты">
+<article class="method" id="bybitCard">
+<div class="method-head"><div><h2>Карта Bybit</h2><p>Через купленный USDT</p></div><strong class="total" id="bybitTotal">— ₽</strong></div>
+<div class="method-footer"><p class="method-note" id="bybitSummary">Добавьте покупку USDT и курс</p>
+<button class="text-button" onclick="openRate('bybit')">Обновить Bybit</button></div>
+</article>
+<article class="method" id="cashCard">
+<div class="method-head"><div><h2>Наличные</h2><p>Через купленный USD</p></div><strong class="total" id="cashTotal">— ₽</strong></div>
+<div class="method-footer"><p class="method-note" id="cashSummary">Добавьте покупку USD и курс</p>
+<button class="text-button" onclick="openBanks()">Выбрать курс</button></div>
+</article>
 </div>
-
-<div class="inline" id="purchasePanel">
-    <h3 id="purchaseTitle">Пополнить запас</h3>
-    <div class="grid">
-      <div>
-        <label for="purchaseRub">Потратил рублей</label>
-        <div class="input"><input id="purchaseRub" type="text" inputmode="decimal"><span class="unit">₽</span></div>
-      </div>
-      <div>
-        <label for="purchaseQty">Получил валюты</label>
-        <div class="input"><input id="purchaseQty" type="text" inputmode="decimal"><span class="unit" id="purchaseUnit">USD</span></div>
-      </div>
-    </div>
-    <div class="note" id="purchasePreview" aria-live="polite">Цена покупки рассчитается автоматически.</div>
-    <div class="error" id="purchaseError" role="alert"></div>
-    <div class="actions">
-      <button class="primary" onclick="savePurchase()">Сохранить</button>
-      <button class="secondary" onclick="closeInline('purchasePanel')">Закрыть</button>
-    </div>
+<div class="decision" aria-live="polite" aria-atomic="true"><p id="heroRoute">Добавьте данные для расчёта</p><p id="heroDetail" class="note"></p></div>
+<details class="disclosure" id="calculationDetails"><summary>Как посчитали</summary>
+<p class="note">Считаем по средней цене ваших покупок за период. Это не учёт остатка кошелька. Примерная цена, не гарантия списания или обмена.</p>
+<h3>Наличные: ₽ → USD → ₾</h3>
+<div class="pathrow"><span id="cashAvgLabel">Средняя покупок USD</span><b id="cashAvg">—</b></div>
+<div class="pathrow"><span>За 1 USD дают</span><b id="cashGelRate">—</b></div>
+<div class="pathrow"><span>Ваш 1 ₾</span><b id="cashPrice">—</b></div>
+<p class="note">Цена USD ÷ курс USD→GEL = <span id="cashExplain">—</span> за лари.</p>
+<p class="note" id="cashFreshness"></p><p class="note" id="cashSource"></p>
+<h3>Карта: ₽ → USDT → покупка в ₾</h3>
+<div class="pathrow"><span>Средняя покупок USDT</span><b id="usdtAvg">—</b></div>
+<div class="pathrow"><span id="bybitRateLabel">За 1 USDT</span><b id="bybitGelRate">—</b></div>
+<div class="pathrow"><span>Ваш 1 ₾</span><b id="bybitPrice">—</b></div>
+<p class="note">Цена USDT ÷ эффективный курс = <span id="bybitExplain">—</span> за лари. В прогнозе дополнительно учитываем указанные проценты.</p>
+<p class="note" id="bybitFreshness"></p>
+<div class="pathrow"><span>Меньшая из оценок покупки</span><b id="quickRub">— ₽</b></div>
+<p class="note">Она не означает, что оба курса актуальны. Проверяйте предупреждения выше.</p>
+</details>
+<div id="purchaseHomeHost">
+<button class="primary full" id="buyCurrencyButton" aria-expanded="false" onclick="togglePurchaseChooser()">Купил валюту</button>
+<div id="purchaseChooser" class="chooser" hidden><p>Что купили за рубли?</p><div class="actions"><button class="secondary" onclick="openPurchase('usd')">Наличные USD</button><button class="secondary" onclick="openPurchase('usdt')">USDT</button></div></div>
 </div>
-
-<div class="inline" id="ratePanel">
-    <h3 id="rateTitle">Обновить курс</h3>
-    <div class="mode-switch" id="bybitModeSwitch">
-      <button id="actualModeButton" class="active" onclick="setRateMode('actual')">По операции</button>
-      <button id="quoteModeButton" onclick="setRateMode('quote')">Ввести курс</button>
-    </div>
-    <div class="mode show" id="quoteMode">
-      <label id="rateLabel" for="rateValue">За 1 USD дают</label>
-      <div class="input"><input id="rateValue" type="text" inputmode="decimal"><span class="unit" id="rateUnit">₾</span></div>
-    </div>
-    <div class="mode" id="actualMode">
-      <div class="grid">
-        <div>
-          <label for="actualGel">Сумма покупки</label>
-          <div class="input"><input id="actualGel" type="text" inputmode="decimal"><span class="unit">₾</span></div>
-        </div>
-        <div>
-          <label for="actualUsdt">Списано Bybit</label>
-          <div class="input"><input id="actualUsdt" type="text" inputmode="decimal"><span class="unit">USDT</span></div>
-        </div>
-      </div>
-      <div style="margin-top:10px"><label for="actualReward">Уже полученный cashback за эту покупку</label><div class="input"><input id="actualReward" type="text" inputmode="decimal" placeholder="0"><span class="unit">USDT</span></div></div>
-      <div class="note">Комиссия уже входит в списание. Если cashback ещё не пришёл или начислен баллами, оставьте 0. Укажите только подтверждённый возврат в USDT за эту операцию.</div>
-    </div>
-    <div class="note" id="ratePreview" aria-live="polite"></div>
-    <div class="error" id="rateError" role="alert"></div>
-    <div class="actions">
-      <button class="primary" onclick="saveRate()">Сохранить</button>
-      <button class="secondary" onclick="closeInline('ratePanel')">Закрыть</button>
-    </div>
+<p class="footnote">Средняя цена и история покупок — в «Данных».</p>
+</section>
+<section id="exchangeView" hidden aria-labelledby="exchangeHeading">
+<div class="city"><label for="exchangeCity">Город</label><select id="exchangeCity"><option value="tbilisi">Тбилиси</option><option value="batumi">Батуми</option><option value="all">Все города</option></select></div>
+<h1 id="exchangeHeading" tabindex="-1">Сколько дадут за доллары?</h1>
+<p class="subtitle">Наличные USD → лари</p>
+<label for="exchangeAmount">Отдаю доллары</label>
+<div class="input amount"><input id="exchangeAmount" type="text" inputmode="decimal" value="100" maxlength="18" autocomplete="off" aria-describedby="exchangeError"><span class="unit">USD</span></div>
+<div class="error" id="exchangeError" role="alert"></div>
+<div class="exchange-result" aria-live="polite"><p id="exchangeResultLabel">По выбранному предложению</p><strong id="exchangeReceive">— ₾</strong><p id="exchangeBasis" class="note"></p></div>
+<div class="section-head"><h2>Где обменять</h2><span class="note">За вашу сумму</span></div>
+<p class="note" id="offerStatus"></p>
+<div class="offer-list" id="offerList" aria-label="Предложения обмена"></div>
+<button class="primary full" id="applyOfferButton" onclick="applyOffer()" disabled>Использовать курс для покупок</button>
+<p class="footnote">Без гарантии наличия валюты и возможных комиссий. Перед поездкой уточните условия.</p>
+<button class="text-button full" id="moreOffers" onclick="toggleAllOffers()">Показать все предложения</button>
+<div class="offer-detail"><p class="note" id="selectedOfferDetail"></p><div class="actions"><a id="selectedSource" target="_blank" rel="noopener noreferrer" hidden>Источник курса</a><a id="selectedBranches" target="_blank" rel="noopener noreferrer" hidden>Отделения</a></div></div>
+<div id="bankPanel">
+<details class="disclosure"><summary>Выбрать банк из полного списка</summary>
+<p class="note" id="bankStatus"></p>
+<label for="bankChoice">Банк · курс покупки USD</label><select id="bankChoice"><option value="">Выберите банк</option></select>
+<p class="note" id="bankPreview"></p>
+<button class="secondary full" id="applyBankButton" onclick="applyBank()" disabled>Использовать курс банка</button>
+</details>
 </div>
-
-<script src="core.js?v=5.5-sync1"></script>
-<script src="app.js?v=5.5-sync1"></script>
+<details class="disclosure"><summary>Мой курс и ограничения данных</summary>
+<p class="note">Обменники: публичный курс сети, не конкретной кассы. Банки: отделения, запрос на 1 000 GEL в витрине НБГ; город и наличный обмен для вашей суммы нужно уточнить. Список не охватывает весь рынок.</p>
+<p class="note">Проверяем опубликованные данные в фоне. Если проверка не удалась или курсам больше двух часов, выбор отключается. Время проверки — не время изменения курса на стороне обменника.</p>
+<p class="note">USDT → наличные здесь пока не подключено. Карту Bybit считаем отдельно, по вашему списанию или прогнозному курсу.</p>
+<button class="secondary full" onclick="openRate('cash')">Ввести свой USD → GEL</button>
+<button class="text-button full" onclick="refreshAllRates()">Повторить проверку курсов</button>
+</details>
+<div id="cashRateHost"></div>
+</section>
+<section id="dataView" hidden aria-labelledby="dataHeading">
+<h1 id="dataHeading" tabindex="-1">Ваши данные</h1><p class="subtitle">По какой цене вы купили валюту</p>
+<p class="note">Средняя взвешена по суммам покупок за период. Расходы не уменьшают её; остаток здесь не учитывается.</p>
+<div class="data-group"><div class="pathrow"><h2>Наличные USD</h2><b id="dataUsdAvg">—</b></div><button class="text-button" onclick="openPurchase('usd')">Добавить покупку USD</button><details><summary>История покупок USD</summary><div id="usdHistory"></div></details></div>
+<div class="data-group"><div class="pathrow"><h2>USDT</h2><b id="dataUsdtAvg">—</b></div><button class="text-button" onclick="openPurchase('usdt')">Добавить покупку USDT</button><details><summary>История покупок USDT</summary><div id="usdtHistory"></div></details></div>
+<div id="purchaseDataHost"></div>
+<details class="disclosure"><summary>Официальный ориентир</summary>
+<div class="pathrow"><b id="marketPrice">—</b><span class="note" id="marketStatus">загрузка</span></div><p class="note" id="marketStamp"></p><p class="note" id="marketNote"></p>
+<p class="note">ЦБ РФ и НБГ — только для сравнения. По этому курсу нельзя гарантированно обменять деньги.</p>
+</details>
+<button class="secondary full" onclick="openSettings()">Условия прогноза Bybit</button>
+<div class="inline" id="settingsPanel">
+<h3>Проценты для прогноза</h3><p class="note">Только для режима «Ввести курс». Оба процента от базовой стоимости. В расчёте по операции повторно их не учитываем.</p>
+<div class="grid"><div><label for="feePct">Комиссия, %</label><input id="feePct" type="text" inputmode="decimal" value="0"></div><div><label for="cashbackPct">Ожидаемый cashback, %</label><input id="cashbackPct" type="text" inputmode="decimal" value="0"></div></div>
+<div class="error" id="settingsError" role="alert"></div>
+<div class="actions"><button class="primary" onclick="saveSettings()">Сохранить условия</button><button class="secondary" onclick="closeInline('settingsPanel')">Закрыть</button></div>
+<details><summary>Исходные официальные курсы</summary><label for="officialRub">USD/RUB — ЦБ РФ</label><input id="officialRub" type="text" readonly><label for="officialGel">USD/GEL — НБГ</label><input id="officialGel" type="text" readonly></details>
+</div>
+<div class="data-group"><button class="text-button" onclick="exportData()">Скачать резервную копию</button><p class="note">Покупки хранятся только в этом браузере. Они не отправляются банкам или обменникам. Перед очисткой браузера сохраните копию.</p><p class="note">После перехода на V5.6 вносите покупки здесь: старая открытая V5.5 хранится отдельно, изменения из неё повторно не переносятся.</p></div>
+<details class="disclosure"><summary>Начать новый период</summary><p class="note">Удаляет покупки выбранной валюты из этого браузера. Сначала скачайте копию. Нужны два нажатия в течение четырёх секунд.</p><button class="danger full" onclick="resetPeriod('usd',this)">Очистить покупки USD</button><button class="danger full" onclick="resetPeriod('usdt',this)">Очистить покупки USDT</button></details>
+</section>
+</main>
+<nav class="bottom-nav" aria-label="Разделы"><button id="purchaseNav" aria-current="page" onclick="showView('purchase')">Покупка</button><button id="exchangeNav" onclick="showView('exchange')">Обмен</button></nav>
+</div>
+<form class="inline" id="purchasePanel" onsubmit="event.preventDefault();savePurchase()">
+<h3 id="purchaseTitle">Купил валюту</h3>
+<div class="grid"><div><label for="purchaseRub">Потратил рублей</label><div class="input"><input id="purchaseRub" type="text" inputmode="decimal" maxlength="18"><span class="unit">₽</span></div></div><div><label for="purchaseQty">Получил валюты</label><div class="input"><input id="purchaseQty" type="text" inputmode="decimal" maxlength="18"><span class="unit" id="purchaseUnit">USD</span></div></div></div>
+<p class="note" id="purchasePreview" aria-live="polite"></p><div class="error" id="purchaseError" role="alert"></div>
+<div class="actions"><button class="primary" type="submit">Сохранить покупку</button><button class="secondary" type="button" onclick="closeInline('purchasePanel')">Закрыть</button></div>
+</form>
+<form class="inline" id="ratePanel" onsubmit="event.preventDefault();saveRate()">
+<h3 id="rateTitle">Обновить курс</h3>
+<div class="mode-switch" id="bybitModeSwitch"><button type="button" id="actualModeButton" onclick="setRateMode('actual')">По операции</button><button type="button" id="quoteModeButton" onclick="setRateMode('quote')">Ввести курс</button></div>
+<div class="mode" id="quoteMode"><label id="rateLabel" for="rateValue">За 1 USD дают</label><div class="input"><input id="rateValue" type="text" inputmode="decimal" maxlength="18"><span class="unit">₾</span></div><p class="note" id="quoteHelp">Базовый курс до комиссии и cashback. Проценты — в «Данных».</p></div>
+<div class="mode" id="actualMode"><p class="note">Откройте последнюю покупку в Bybit и перенесите две суммы. Так комиссия уже попадёт в расчёт.</p><div class="grid"><div><label for="actualGel">Сумма покупки</label><div class="input"><input id="actualGel" type="text" inputmode="decimal" maxlength="18"><span class="unit">₾</span></div></div><div><label for="actualUsdt">Списано Bybit</label><div class="input"><input id="actualUsdt" type="text" inputmode="decimal" maxlength="18"><span class="unit">USDT</span></div></div></div><details><summary>Уже получил cashback за эту покупку</summary><label for="actualReward">Подтверждённый возврат, USDT</label><input id="actualReward" type="text" inputmode="decimal" placeholder="0" maxlength="18"><p class="note">Только полученные USDT. Баллы и ожидаемый cashback не вычитаем. Если возврата нет, оставьте 0.</p></details></div>
+<p class="note" id="ratePreview" aria-live="polite"></p><div class="error" id="rateError" role="alert"></div>
+<div class="actions"><button type="submit" class="primary">Сохранить курс</button><button type="button" class="secondary" onclick="closeInline('ratePanel')">Закрыть</button></div>
+</form>
+<script src="core.js?v=5.6"></script>
+<script src="app.js?v=5.6"></script>
 </body>
 </html>

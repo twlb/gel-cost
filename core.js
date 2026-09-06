@@ -3,8 +3,12 @@
   "use strict";
   const DAY=86400000;
   // A separate key also protects this history from an already-open older build.
-  const STORAGE_KEY="gelcost-v5.5-personal";
-  const CACHE_KEYS={official:"gelcost-v5.5-official",banks:"gelcost-v5.5-banks"};
+  const STORAGE_KEY="gelcost-v5.6-personal";
+  const CACHE_KEYS={official:"gelcost-v5.5-official",banks:"gelcost-v5.5-banks",offices:"gelcost-v5.6-offices"};
+  const OFFICES={
+    mjc:{name:"MJC",cities:["tbilisi","rustavi"],url:"https://mjc.ge/rates",branches:"https://mjc.ge/contact"},
+    rico:{name:"Rico",cities:["tbilisi","batumi"],url:"https://www.rico.ge/en/",branches:"https://www.rico.ge/en/branches/"}
+  };
   function number(value){
     if(typeof value==="number")return Number.isFinite(value)?value:NaN;
     if(typeof value!=="string")return NaN;
@@ -28,6 +32,7 @@
   function defaults(){return {
     schemaVersion:55,usdPurchases:[],usdtPurchases:[],usdEstimate:null,
     cashGelRate:null,cashGelUpdated:null,cashBankId:null,cashBankName:null,
+    cashOfficeId:null,
     bybitGelRate:null,bybitActualGelRate:null,bybitActual:null,
     bybitRateMode:"actual",bybitGelUpdated:null,feePct:0,cashbackPct:0,
     officialSnapshot:null,legacyActualAdjusted:false
@@ -56,7 +61,7 @@
   }
   function load(storage){
     const found={},errors=[];let warning="";
-    for(const key of [STORAGE_KEY,"gelcost-v5.5","gelcost-v5","gelcost-v5.4","gelcost-v5.3","gelcost-v5.2"]){
+    for(const key of [STORAGE_KEY,"gelcost-v5.5-personal","gelcost-v5.5","gelcost-v5","gelcost-v5.4","gelcost-v5.3","gelcost-v5.2"]){
       try{
         const raw=storage.getItem(key);
         if(raw){const item=JSON.parse(raw);if(!item||typeof item!=="object"||Array.isArray(item))throw Error();found[key]=item;}
@@ -64,11 +69,11 @@
     }
     // V5.4's actual writer used the generic key, even when a versioned key existed.
     const generic=found["gelcost-v5"];
-    const stored=found[STORAGE_KEY]||found["gelcost-v5.5"]||(generic?.schemaVersion>=54?generic:null)||found["gelcost-v5.4"]||found["gelcost-v5.3"]||found["gelcost-v5.2"]||generic;
+    const stored=found[STORAGE_KEY]||found["gelcost-v5.5-personal"]||found["gelcost-v5.5"]||(generic?.schemaVersion>=54?generic:null)||found["gelcost-v5.4"]||found["gelcost-v5.3"]||found["gelcost-v5.2"]||generic;
     const state=migrate(stored);
     const invalid=[...state.usdPurchases,...state.usdtPurchases].some(item=>!item||!positive(item.rub)||!positive(item.qty));
     if(invalid)warning+=" Некорректные записи покупок сохранены в резервных данных, но не участвуют в средней.";
-    return {state,warning,readBlocked:errors.includes(STORAGE_KEY)||(!stored&&errors.length>0)};
+    return {state,warning,readBlocked:errors.includes(STORAGE_KEY)||(!found[STORAGE_KEY]&&errors.includes("gelcost-v5.5-personal"))||(!stored&&errors.length>0)};
   }
   function personal(state){
     const fields=Object.keys(defaults()).filter(key=>key!=="officialSnapshot");
@@ -118,7 +123,20 @@
     if(sorted.some(value=>Math.abs(value/median-1)>0.15))throw Error("Выброс в банковских курсах");
     return {...data,offers:data.offers.map(item=>({...item,buy:number(item.buy),sell:number(item.sell)})).sort((a,b)=>b.buy-a.buy||a.bank.localeCompare(b.bank))};
   }
-  const api={DAY,STORAGE_KEY,CACHE_KEYS,number,positive,fresh,weighted,defaults,migrate,load,personal,actualRate,routes,official,bankSnapshot};
+  function officeSnapshot(data,now=Date.now()){
+    if(data?.schemaVersion!==1||data.currency!=="USD"||data.unit!=="GEL per USD"||data.channel!=="Cash"||data.side!=="buy")throw Error("Неизвестный формат обменников");
+    if(!fresh(data.fetchedAt,Infinity,now)||!Array.isArray(data.offers)||data.offers.length>2||!Array.isArray(data.failures)||data.failures.some(id=>!Object.hasOwn(OFFICES,id))||new Set(data.failures).size!==data.failures.length)throw Error("Некорректный набор обменников");
+    const ids=new Set();
+    for(const row of data.offers){
+      if(!row||!Object.hasOwn(OFFICES,row.id)||ids.has(row.id)||row.nominal!==1||row.sourceUpdatedAt!==null)throw Error("Неизвестная котировка");
+      ids.add(row.id);
+      if(!(number(row.buy)>=0.5&&number(row.buy)<=number(row.sell)&&number(row.sell)<=10&&number(row.sell)/number(row.buy)<=1.3))throw Error("Некорректный курс обменника");
+      if(!fresh(row.checkedAt,Infinity,now)||timestamp(row.checkedAt)>timestamp(data.fetchedAt))throw Error("Некорректная дата обменника");
+    }
+    if(Object.keys(OFFICES).some(id=>!ids.has(id)&&!data.failures.includes(id)))throw Error("Пропущен статус источника");
+    return {...data,offers:data.offers.map(row=>({...row,buy:number(row.buy),sell:number(row.sell)}))};
+  }
+  const api={DAY,STORAGE_KEY,CACHE_KEYS,OFFICES,number,positive,fresh,weighted,defaults,migrate,load,personal,actualRate,routes,official,bankSnapshot,officeSnapshot};
   if(typeof module!=="undefined"&&module.exports)module.exports=api;
   else root.GelCore=api;
 })(typeof window!=="undefined"?window:this);
