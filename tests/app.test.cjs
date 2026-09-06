@@ -56,6 +56,7 @@ async function app(saved={},blocked=false,options={}){
   });
   ctx.window=ctx;
   vm.runInContext(fs.readFileSync(path.join(root,'core.js'),'utf8'),ctx);
+  if(!options.noLocations)vm.runInContext(fs.readFileSync(path.join(root,'locations.js'),'utf8'),ctx);
   vm.runInContext(fs.readFileSync(path.join(root,'app.js'),'utf8'),ctx);
   const run=code=>vm.runInContext(code,ctx);
   const settle=()=>new Promise(resolve=>setImmediate(resolve));await settle();
@@ -69,6 +70,130 @@ const near=(a,b)=>assert.ok(Math.abs(a-b)<1e-9,`${a} != ${b}`);
 test('fresh profile has no invented purchases and both sources load',async()=>{
   const a=await app();assert.equal(a.state().usdPurchases.length,0);assert.equal(a.state().usdtPurchases.length,0);
   assert.equal(a.els.quickRub.textContent,'— ₽');assert.match(a.els.marketPrice.textContent,/33,5878/);assert.match(a.els.bankStatus.textContent,/3 банков/);
+});
+
+test('clicking an offer opens inline addresses; closing does not save a quote',async()=>{
+  const a=await app(),before=JSON.stringify(a.state());
+  assert.equal(a.els.offerLocationPanel.hidden,true);
+  a.run('selectOffer("office:mjc")');
+  assert.equal(a.els.offerLocationPanel.hidden,false);
+  assert.match(a.els.branchAddress.textContent,/Тбилиси, 89\/91/);
+  assert.equal(a.els.branchChoiceGroup.hidden,true);
+  const index=a.els.offerList.children.findIndex(e=>e.dataset.offerKey==='office:mjc');
+  assert.equal(a.els.offerList.children[index+1],a.els.offerLocationPanel);
+  assert.equal(a.els.offerList.children[index].attrs['aria-expanded'],'true');
+  assert.equal(a.els.branchSource.href,'https://mjc.ge/contact');
+  assert.match(a.els.branchNotice.textContent,/не подтверждение курса/);
+  a.run('closeOfferLocation()');assert.equal(a.els.offerLocationPanel.hidden,true);
+  assert.equal(JSON.stringify(a.state()),before);assert.equal(a.writes[C.STORAGE_KEY],undefined);
+});
+test('branch selection survives amount changes and refreshes without changing purchases or the rate',async()=>{
+  const a=await app();await purchase(a,'usd',8800,100);await cash(a,3);
+  const before=a.writes[C.STORAGE_KEY];a.run('toggleAllOffers();selectOffer("office:rico")');
+  assert.equal(a.els.branchChoiceGroup.hidden,false);
+  a.els.branchChoice.value='rico:tbilisi:1';a.run('selectBranch()');
+  assert.match(a.els.branchAddress.textContent,/12 Ilia Chavchavadze/);
+  const destination=new URL(a.els.branchGoogle.href).searchParams.get('query');
+  assert.equal(destination,'12 Ilia Chavchavadze Avenue, Tbilisi, Georgia');
+  a.els.exchangeAmount.value='200,50';a.run('renderOffers()');await a.run('refreshOffices()');
+  assert.equal(a.els.branchChoice.value,'rico:tbilisi:1');
+  assert.equal(new URL(a.els.branchApple.href).searchParams.get('q'),destination);
+  assert.equal(new URL(a.els.branchYandex.href).searchParams.get('text'),destination);
+  assert.equal(a.writes[C.STORAGE_KEY],before);
+  a.run('selectOffer("office:rico")');assert.equal(a.els.offerLocationPanel.hidden,true);
+  a.run('selectOffer("office:rico")');assert.equal(a.els.branchChoice.value,'rico:tbilisi:1');
+});
+test('city changes close the old panel and cannot reuse an address from another city',async()=>{
+  const a=await app();a.run('selectOffer("office:rico")');
+  a.els.branchChoice.value='rico:tbilisi:1';a.run('selectBranch()');
+  a.els.exchangeCity.value='batumi';a.els.exchangeCity.events.change();
+  assert.equal(a.els.offerLocationPanel.hidden,true);
+  a.run('selectOffer("office:rico")');
+  assert.equal(a.els.branchChoice.children.length,6);
+  assert.match(a.els.branchAddress.textContent,/^Батуми,/);
+  assert.equal(new URL(a.els.branchGoogle.href).searchParams.get('destination'),'41.645256,41.6385689');
+  a.els.branchChoice.value='mjc:rustavi:0';a.run('selectBranch()');
+  assert.match(a.els.branchAddress.textContent,/^Батуми,/);
+  a.run('selectOffer("office:mjc")');assert.equal(a.run('expandedOffer'),'office:rico');
+});
+test('banks offer an explicitly labelled search, not an invented branch route',async()=>{
+  const a=await app();a.els.exchangeCity.value='batumi';a.run('toggleAllOffers();selectOffer("bank:1")');
+  assert.equal(a.els.branchAddress.hidden,true);assert.equal(a.els.branchChoiceGroup.hidden,true);
+  assert.match(a.els.branchNotice.textContent,/не указывает конкретное отделение/);
+  const url=new URL(a.els.branchGoogle.href);
+  assert.equal(url.pathname,'/maps/search/');assert.equal(url.searchParams.has('destination'),false);
+  assert.equal(url.searchParams.get('query'),'A bank branches, Batumi, Georgia');
+  assert.equal(a.els.branchSource.hidden,true);
+  a.els.exchangeCity.value='all';a.run('renderOffers()');
+  assert.equal(new URL(a.els.branchGoogle.href).searchParams.get('query'),'A bank branches, Georgia');
+});
+test('manual rate has no fabricated address, and stale network quotes do not block address viewing',async()=>{
+  const a=await app();await cash(a,3);a.run('selectOffer("manual")');
+  assert.match(a.els.branchNotice.textContent,/не привязан/);
+  assert.equal(a.els.branchMapActions.hidden,true);assert.equal(a.els.branchSource.hidden,true);
+  a.responses['./exchange-rates.json'].fetchedAt=new Date(Date.now()-3*3600000).toISOString();
+  for(const row of a.responses['./exchange-rates.json'].offers)row.checkedAt=a.responses['./exchange-rates.json'].fetchedAt;
+  await a.run('refreshOffices()');a.run('toggleAllOffers();selectOffer("office:mjc")');
+  assert.equal(a.els.applyOfferButton.disabled,true);assert.equal(a.els.branchMapActions.hidden,false);
+  assert.match(a.els.branchChecked.textContent,/06\.09\.2026/);
+});
+test('a missing location bundle does not break calculations and keeps the official directory link',async()=>{
+  const a=await app({},false,{noLocations:true});await purchase(a,'usd',8800,100);await cash(a,3);
+  a.run('selectOffer("office:mjc")');
+  assert.equal(a.els.branchMapActions.hidden,true);assert.match(a.els.branchNotice.textContent,/недоступны/);
+  assert.equal(a.els.branchSource.href,'https://mjc.ge/contact');near(a.run('routeValues().cash'),88/3);
+});
+test('branch catalog and navigation URLs stay source-bound and disclose their date',()=>{
+  const L=require('../locations.js');
+  assert.equal(L.branches('mjc','batumi').length,0);
+  assert.equal(L.branches('mjc','all').length,2);
+  assert.equal(L.branches('rico','batumi').length,6);
+  assert.equal(L.branches('__proto__','all').length,0);
+  const rows=[...L.branches('mjc','all'),...L.branches('rico','all')];
+  assert.equal(new Set(rows.map(row=>row.id)).size,rows.length);
+  for(const row of rows){
+    assert.equal(row.checkedAt,'2026-09-06T00:00:00Z');assert.match(row.destination,/, (Tbilisi|Batumi|Rustavi), Georgia$/);
+    assert.ok(['https://mjc.ge/contact','https://www.rico.ge/en/branches/'].includes(row.source));
+    const links=L.branchLinks(row);
+    if(row.point){assert.equal(row.point.length,2);assert.ok(row.point[0]>41&&row.point[0]<42);assert.ok(row.point[1]>41&&row.point[1]<46);}
+    for(const [provider,parameter] of [['google',row.point?'destination':'query'],['apple',row.point?'daddr':'q'],['yandex',row.point?'rtext':'text']]){
+      const url=new URL(links[provider]);assert.equal(url.protocol,'https:');
+      assert.equal(url.searchParams.get(parameter),row.point?(provider==='yandex'?'~':'')+row.point.join(','):row.destination);
+      assert.equal(url.searchParams.has('origin'),false);assert.equal(url.searchParams.has('saddr'),false);
+    }
+  }
+  assert.equal(L.mapLinks(''),null);
+  const hostile=new URL(L.bankSearch('A & query=<script>alert(1)</script>','batumi').google);
+  assert.equal(hostile.hostname,'www.google.com');assert.match(hostile.searchParams.get('query'),/A & query=<script>/);
+  assert.equal([...hostile.searchParams.keys()].join(','),'api,query');
+});
+test('ambiguous text and multi-place source links never become precise directions',()=>{
+  const L=require('../locations.js');
+  const mjc=L.branches('mjc','tbilisi')[0];
+  assert.deepEqual(mjc.point,[41.7102279,44.7970808]);
+  assert.equal(new URL(L.branchLinks(mjc).yandex).searchParams.get('rtext'),'~41.7102279,44.7970808');
+  const ambiguous=L.branches('rico','tbilisi').find(b=>b.id==='rico:tbilisi:1');
+  assert.equal(ambiguous.point,null);
+  assert.equal(new URL(L.branchLinks(ambiguous).google).pathname,'/maps/search/');
+  assert.equal(new URL(L.branchLinks(ambiguous).apple).searchParams.has('daddr'),false);
+});
+test('a newly opened purchase can save while the previous editor submission is still pending',async()=>{
+  const a=await app();a.run('showView("data")');
+  const first=purchase(a,'usd',8800,100);
+  const second=purchase(a,'usd',2700,25);
+  await Promise.all([first,second]);
+  assert.equal(a.state().usdPurchases.length,2);
+  near(a.run('routeValues().usdCost'),92);
+});
+test('a completed earlier purchase cannot hide a later editor or switch its currency',async()=>{
+  const a=await app();a.run('showView("purchase")');
+  const first=purchase(a,'usd',8800,100);
+  a.run('openPurchase("usdt")');a.els.purchaseRub.value='8655';a.els.purchaseQty.value='100';
+  await first;
+  assert.equal(a.run('selectedPayment'),'bybit');assert.equal(a.run('purchaseKind'),'usdt');
+  assert.equal(a.els.purchasePanel.classList.contains('show'),true);
+  assert.equal(a.els.purchaseRub.value,'8655');assert.equal(a.els.purchaseQty.value,'100');
+  await a.run('savePurchase()');assert.equal(a.state().usdtPurchases.length,1);
 });
 test('exchange rates have four decimals while ruble amounts include kopecks',async()=>{
   const a=await app();await purchase(a,'usd',8800,100);await purchase(a,'usdt',8655,100);await cash(a,2.62);

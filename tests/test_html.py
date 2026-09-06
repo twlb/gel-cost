@@ -32,7 +32,7 @@ class HTMLTests(unittest.TestCase):
         self.assertEqual(p.stack,[])
         self.assertTrue(all(n == 1 for n in Counter(p.ids).values()))
         self.assertTrue(all(i in p.labels for i in p.inputs))
-        self.assertEqual(p.scripts,["core.js?v=5.6-exact-money","app.js?v=5.6-editor-repair-2"])
+        self.assertEqual(p.scripts,["core.js?v=5.6-exact-money","locations.js?v=2026-09-06","app.js?v=5.6-locations-1"])
         source=(ROOT/"app.js").read_text(encoding="utf-8")
         for handler in p.handlers:
             self.assertRegex(source,r"function\s+"+re.escape(handler)+r"\(")
@@ -55,4 +55,4 @@ class HTMLTests(unittest.TestCase):
         official=source.split('<div class="official-fields">', 1)[1].split('</details>', 1)[0]
         for field, label in [('officialRub', 'USD/RUB — ЦБ РФ'), ('officialGel', 'USD/GEL — НБГ')]:
             self.assertIn(f'<div><label for="{field}">{label}</label><input id="{field}" type="text" readonly></div>', official)
-        self.assertIn('href="styles.css?v=5.6-layout-repair-3"', source)
+        self.assertIn('href="styles.css?v=5.6-locations-1"', source)

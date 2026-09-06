@@ -8,6 +8,7 @@ on:
       - "app.js"
       - "styles.css"
       - "core.js"
+      - "locations.js"
       - "scripts/**"
       - "tests/**"
       - ".github/workflows/update-rates.yml"

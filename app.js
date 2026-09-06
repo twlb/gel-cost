@@ -1,5 +1,6 @@
 const $=id=>document.getElementById(id);
 const C=GelCore;
+const L=typeof GelLocations!=="undefined"?GelLocations:null;
 const D=C.decimal;
 const fmt=(n,d=2)=>Number(n).toLocaleString("ru-RU",{minimumFractionDigits:d,maximumFractionDigits:d});
 // Rates use four decimal places only for display; calculations keep full precision.
@@ -34,6 +35,8 @@ $("migrationNotice").hidden=!state.legacyActualAdjusted;
 let banks=null,bankFailed=false,bankBusy=false,officialFailed=false,officialBusy=false;
 let offices=null,officeFailed=false,officeBusy=false;
 let currentView="exchange",selectedPayment="cash",selectedOffer="",offerSelectionExplicit=false,allOffers=false,statusTimer;
+let expandedOffer="",branchOptionsKey="";
+const branchSelection={};
 const QUOTE_TTL=2*3600000;
 function announce(message){
   $("actionStatus").textContent=message;
@@ -92,6 +95,7 @@ let rateMode="quote";
 // Drafts live only in this tab, separately for each currency and rate type.
 const purchaseDrafts={},rateDrafts={};
 let purchaseEditorReady=false,rateEditorReady=false;
+let purchaseEditorSequence=0;
 let rateDraftBaseline="";
 let officialReady=false;
 let pendingReset=null;
@@ -99,7 +103,7 @@ let resetTimer=null;
 let resetButton=null;
 let resetOriginal="";
 let resetPurchases="";
-let purchaseSaving=false,rateSaving=false,resetSaving=false;
+let rateSaving=false,resetSaving=false;
 let personalQueue=Promise.resolve(),volatilePersonal=false;
 
 function readPersonal(){
@@ -401,6 +405,7 @@ function openPurchase(kind){
   rememberEditor("purchasePanel");
   closeAllInline("purchasePanel");
   purchaseKind=kind;
+  purchaseEditorSequence++;
   purchaseEditorReady=true;
   $("purchaseTitle").textContent=kind==="usd"?"Купил наличные USD":"Купил USDT";
   $("purchaseUnit").textContent=kind.toUpperCase();
@@ -439,7 +444,9 @@ function updatePurchasePreview(){
 }
 
 async function savePurchase(){
-  if(purchaseSaving)return;
+  // Consume one editor submission, not all future editors while a write is pending.
+  // The personal queue already serializes distinct purchases safely.
+  if(!purchaseEditorReady)return;
   const rub=numberValue($("purchaseRub").value);
   const quantity=numberValue($("purchaseQty").value);
   if(!(rub>0&&quantity>0&&rub<=1e12&&quantity<=1e12&&Number.isFinite(rub/quantity))){
@@ -449,15 +456,14 @@ async function savePurchase(){
   }
   const field=purchaseKind==="usd"?"usdPurchases":"usdtPurchases";
   const item={rub,qty:quantity,ts:Date.now()};
-  purchaseSaving=true;
+  const submittedEditor=purchaseEditorSequence,returnView=currentView;
   closeInline("purchasePanel");
   delete purchaseDrafts[purchaseKind];purchaseEditorReady=false;
-  try{
-    await changePersonal(next=>{next[field].push(item);});
-    if(currentView==="purchase"){setPayment(field==="usdPurchases"?"cash":"bybit");showView("purchase");}
-    announce(volatilePersonal?"Покупка добавлена только в этой вкладке":"Покупка сохранена. Цена в рублях пересчитана.");
+  await changePersonal(next=>{next[field].push(item);});
+  if(returnView==="purchase"&&currentView===returnView&&purchaseEditorSequence===submittedEditor&&!purchaseEditorReady){
+    setPayment(field==="usdPurchases"?"cash":"bybit");showView("purchase");
   }
-  finally{purchaseSaving=false;}
+  announce(volatilePersonal?"Покупка добавлена только в этой вкладке":"Покупка сохранена. Цена в рублях пересчитана.");
 }
 
 function setRateMode(mode){
@@ -729,7 +735,52 @@ function offersForCity(){
 }
 function selectOffer(key){
   if(!offersForCity().some(row=>row.key===key))return;
+  expandedOffer=expandedOffer===key?"":key;
   selectedOffer=key;offerSelectionExplicit=true;renderOffers();
+}
+function closeOfferLocation(){
+  const key=expandedOffer;expandedOffer="";renderOffers();
+  [...$("offerList").children].find(node=>node.dataset.offerKey===key)?.focus({preventScroll:true});
+}
+function renderOfferLocation(item){
+  const panel=$("offerLocationPanel");panel.hidden=!item;
+  if(!item)return;
+  const city=$("exchangeCity").value||"tbilisi";
+  const branches=item.kind==="office"&&L?L.branches(item.id,city):[];
+  $("branchHeading").textContent=item.name+" · адреса";
+  $("branchChoiceGroup").hidden=branches.length<2;
+  $("branchSource").hidden=!item.branches;
+  $("branchSource").href=item.branches||"";
+  const optionsKey=item.key+":"+city;
+  if(branchOptionsKey!==optionsKey){
+    $("branchChoice").replaceChildren(...branches.map(row=>new Option(row.address,row.id)));
+    branchOptionsKey=optionsKey;
+  }
+  const branch=branches.find(row=>row.id===branchSelection[optionsKey])||branches[0];
+  $("branchChoice").value=branch?.id||"";
+  $("branchAddress").hidden=!branch;
+  $("branchAddress").textContent=branch?.address||"";
+  $("branchNotice").textContent=item.kind==="office"
+    ?"Адрес сети — не подтверждение курса в этой кассе. Уточните курс, наличие валюты и часы работы."
+    :item.kind==="bank"?"Источник курса не указывает конкретное отделение. На карте — поиск банка, не подтверждённая касса с этим курсом."
+    :"Ваш ручной курс не привязан к обменному пункту. Выберите обменник из списка, чтобы увидеть адреса.";
+  if(item.kind==="office"&&!branch)$("branchNotice").textContent+=" Адреса для выбранного города недоступны в приложении. Откройте официальный список отделений.";
+  const links=branch?L.branchLinks(branch):item.kind==="bank"&&L?L.bankSearch(item.name,city):null;
+  $("branchMapActions").hidden=!links;
+  for(const [id,key] of [["branchGoogle","google"],["branchApple","apple"],["branchYandex","yandex"]]){
+    $(id).href=links?.[key]||"";
+    $(id).setAttribute("aria-label",$(id).textContent+" — "+(branch?.address||"поиск отделений "+item.name));
+  }
+  $("branchMapHint").textContent=branch?(branch.point?"Маршрут к точке на карте. Проверьте вход в отделение.":"Точная точка не подтверждена. Кнопки открывают поиск адреса, не готовый маршрут: проверьте найденное здание."):links?"Выберите отделение в картах и уточните условия обмена.":"";
+  $("branchChecked").textContent=branch?"Адрес сверён "+new Date(branch.checkedAt).toLocaleDateString("ru-RU")+" · список неполный."+(C.fresh(branch.checkedAt,90*C.DAY)?"":" Адрес давно не проверялся — уточните его у сети."):"";
+}
+function selectBranch(){
+  const item=offersForCity().find(row=>row.key===expandedOffer);
+  if(!item||!L)return;
+  const city=$("exchangeCity").value||"tbilisi";
+  if(!L.branches(item.id,city).some(row=>row.id===$("branchChoice").value))return;
+  branchSelection[item.key+":"+city]=$("branchChoice").value;
+  renderOfferLocation(item);
 }
 function toggleAllOffers(){allOffers=!allOffers;renderOffers();}
 function renderOffers(){
@@ -744,11 +795,17 @@ function renderOffers(){
   $("exchangeError").classList.toggle("show",!valid);
   $("exchangeAmount").setAttribute("aria-invalid",String(!valid));
   const shown=allOffers?rows:rows.slice(0,3);
+  if(!shown.some(row=>row.key===expandedOffer))expandedOffer="";
   // Keep a user's focused row during a background re-render.
   const focused=document.activeElement?.dataset?.offerKey;
+  const focusedBranch=document.activeElement?.id;
+  const locationPanel=$("offerLocationPanel");
+  $("locationPanelHome").appendChild(locationPanel);
   const nodes=shown.map(item=>{
     const button=document.createElement("button");button.type="button";button.className="offer-row";
     button.dataset.offerKey=item.key;button.setAttribute("aria-pressed",String(item.key===selectedOffer));
+    button.setAttribute("aria-expanded",String(item.key===expandedOffer));
+    button.setAttribute("aria-controls","offerLocationPanel");
     const top=document.createElement("span");top.className="offer-top";
     const name=document.createElement("strong");name.textContent=item.name;
     const total=document.createElement("b");total.textContent=valid?money(D.mul(amount,item.buy))+" ₾":"— ₾";
@@ -757,8 +814,11 @@ function renderOffers(){
     detail.textContent=(item.kind==="manual"?"Введён вами":item.kind==="office"?"Обменник · курс сети":"Банк · город уточните")+" · "+fmtRate(item.buy)+" ₾/$"+(item.fresh?"":" · нужна проверка");
     button.appendChild(detail);button.addEventListener("click",()=>selectOffer(item.key));return button;
   });
-  $("offerList").replaceChildren(...nodes);$("offerList").hidden=!rows.length;
+  const withLocation=nodes.flatMap(node=>node.dataset.offerKey===expandedOffer?[node,locationPanel]:[node]);
+  $("offerList").replaceChildren(...withLocation);$("offerList").hidden=!rows.length;
+  renderOfferLocation(rows.find(row=>row.key===expandedOffer));
   if(focused)nodes.find(node=>node.dataset.offerKey===focused)?.focus({preventScroll:true});
+  else if(expandedOffer&&focusedBranch&&["branchChoice","branchGoogle","branchApple","branchYandex","branchSource","closeLocationButton"].includes(focusedBranch))$(focusedBranch).focus({preventScroll:true});
   $("moreOffers").hidden=rows.length<=3;
   $("moreOffers").textContent=allOffers?"Свернуть список":"Все предложения ("+rows.length+")";
   $("moreOffers").setAttribute("aria-expanded",String(allOffers));
@@ -809,7 +869,8 @@ async function refreshOffices(){
 function refreshAllRates(){return Promise.all([refreshOfficial(),refreshBanks(),refreshOffices()]);}
 
 $("exchangeAmount").addEventListener("input",()=>{renderOffers();if(rateKind==="cash"&&$("ratePanel").classList.contains("show"))updateRatePreview();});
-$("exchangeCity").addEventListener("change",()=>{selectedOffer="";offerSelectionExplicit=false;allOffers=false;renderOffers();});
+$("exchangeCity").addEventListener("change",()=>{selectedOffer="";expandedOffer="";offerSelectionExplicit=false;allOffers=false;renderOffers();});
+$("branchChoice").addEventListener("change",selectBranch);
 $("quickGel").addEventListener("input",calc);
 $("purchaseRub").addEventListener("input",updatePurchasePreview);
 $("purchaseQty").addEventListener("input",updatePurchasePreview);

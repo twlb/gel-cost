@@ -7,7 +7,7 @@
 <meta name="description" content="Стоимость покупок в Грузии в ваших рублях: наличные через USD и карта Bybit через USDT. Курсы обменников и банков.">
 <title>GEL Cost</title>
 <link rel="icon" href="data:,">
-<link rel="stylesheet" href="styles.css?v=5.6-layout-repair-3">
+<link rel="stylesheet" href="styles.css?v=5.6-locations-1">
 </head>
 <body>
 <a class="skip" href="#main">К расчёту</a>
@@ -90,7 +90,24 @@
 <div class="exchange-result" aria-live="polite"><p id="exchangeResultLabel">По выбранному предложению</p><strong id="exchangeReceive">— ₾</strong><p id="exchangeBasis" class="note"></p></div>
 <div class="section-head"><h2>Где обменять</h2><span class="note">За вашу сумму</span></div>
 <p class="note" id="offerStatus"></p>
+<p class="note offer-hint">Нажмите на курс — покажем адреса и карты.</p>
 <div class="offer-list" id="offerList" aria-label="Предложения обмена"></div>
+<div id="locationPanelHome">
+<section class="offer-location" id="offerLocationPanel" aria-labelledby="branchHeading" hidden>
+<div class="branch-header"><h3 id="branchHeading">Адреса и маршрут</h3><button type="button" class="text-button" id="closeLocationButton" onclick="closeOfferLocation()">Свернуть адреса</button></div>
+<div id="branchChoiceGroup"><label for="branchChoice">Отделение</label><select id="branchChoice" aria-describedby="branchNotice"></select></div>
+<p class="branch-address" id="branchAddress"></p>
+<div class="map-actions" id="branchMapActions">
+<a id="branchGoogle" target="_blank" rel="noopener noreferrer">Google Maps</a>
+<a id="branchApple" target="_blank" rel="noopener noreferrer">Apple Maps</a>
+<a id="branchYandex" target="_blank" rel="noopener noreferrer">Яндекс Карты</a>
+</div>
+<p class="note" id="branchMapHint"></p>
+<p class="note" id="branchNotice"></p>
+<p class="note" id="branchChecked"></p>
+<a id="branchSource" target="_blank" rel="noopener noreferrer" hidden>Все адреса на сайте сети ↗</a>
+</section>
+</div>
 <button class="primary full" id="applyOfferButton" onclick="applyOffer()" disabled>Выбрать курс для пересчёта в ₽</button>
 <p class="footnote">Без гарантии наличия валюты и возможных комиссий. Перед поездкой уточните условия.</p>
 <button class="text-button full" id="moreOffers" onclick="toggleAllOffers()">Показать все предложения</button>
@@ -107,6 +124,7 @@
 <p class="note">Обменники: публичный курс сети, не конкретной кассы. Банки: отделения, запрос на 1 000 GEL в витрине НБГ; город и наличный обмен для вашей суммы нужно уточнить. Список не охватывает весь рынок.</p>
 <p class="note">Проверяем опубликованные данные в фоне. Если проверка не удалась или курсам больше двух часов, выбор отключается. Время проверки — не время изменения курса на стороне обменника.</p>
 <p class="note">USDT → наличные здесь пока не подключено. Карту Bybit считаем отдельно, по вашему списанию или прогнозному курсу.</p>
+<p class="note">Карты открываются отдельно и получают только адрес. Покупки и суммы им не передаются; местоположение калькулятор не запрашивает. Точку, маршрут и часы работы проверяйте в картах. Список адресов неполный и обновляется отдельно от курсов.</p>
 <button class="secondary full" onclick="openRate('cash')">Ввести свой USD → GEL</button>
 <button class="text-button full" onclick="refreshAllRates()">Повторить проверку курсов</button>
 </details>
@@ -156,6 +174,7 @@
 <div class="actions"><button type="submit" class="primary">Сохранить курс</button><button type="button" class="secondary" onclick="closeInline('ratePanel')">Закрыть</button></div>
 </form>
 <script src="core.js?v=5.6-exact-money"></script>
-<script src="app.js?v=5.6-editor-repair-2"></script>
+<script src="locations.js?v=2026-09-06"></script>
+<script src="app.js?v=5.6-locations-1"></script>
 </body>
 </html>
