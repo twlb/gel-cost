@@ -70,13 +70,13 @@ test('fresh profile has no invented purchases and both sources load',async()=>{
   const a=await app();assert.equal(a.state().usdPurchases.length,0);assert.equal(a.state().usdtPurchases.length,0);
   assert.equal(a.els.quickRub.textContent,'— ₽');assert.match(a.els.marketPrice.textContent,/33,5878/);assert.match(a.els.bankStatus.textContent,/3 банков/);
 });
-test('all displayed exchange rates have four decimals while money totals stay unchanged',async()=>{
+test('exchange rates have four decimals while ruble amounts include kopecks',async()=>{
   const a=await app();await purchase(a,'usd',8800,100);await purchase(a,'usdt',8655,100);await cash(a,2.62);
   assert.equal(a.els.cashAvg.textContent,'88,0000 ₽/$');
   assert.equal(a.els.usdtAvg.textContent,'86,5500 ₽/USDT');
   assert.equal(a.els.cashGelRate.textContent,'2,6200 ₾');
   assert.equal(a.els.cashPrice.textContent,'33,5878 ₽/₾');
-  assert.match(a.els.cashTotal.textContent,/^≈ 3\s359 ₽$/);
+  assert.match(a.els.cashTotal.textContent,/^≈ 3\s358,78 ₽$/);
   a.run('selectOffer("office:mjc")');
   assert.equal(a.els.exchangeReceive.textContent,'≈ 261,30 ₾');
   assert.match(a.els.exchangeBasis.textContent,/33,6778 ₽$/);
@@ -94,6 +94,29 @@ test('editable rate pads four decimals without rounding a more precise saved quo
   near(a.run('routeValues().cash'),88/2.62123456);
   assert.equal(JSON.stringify(a.state().usdPurchases),before);
 });
+test('ruble kopecks are visible in the result, history and official comparison without changing stored amounts',async()=>{
+  const a=await app();await purchase(a,'usd','8800,37',100);await cash(a,2.62);
+  const saved=a.writes[C.STORAGE_KEY];a.els.quickGel.value='12,50';a.run('calc()');
+  assert.equal(a.els.rublesResult.textContent,'≈ 419,86 ₽');
+  assert.equal(a.els.cashTotal.textContent,'≈ 419,86 ₽');assert.equal(a.els.quickRub.textContent,'419,86 ₽');
+  assert.match(a.els.usdHistory.innerHTML,/8\s800,37 ₽/);
+  assert.match(a.els.marketNote.textContent,/12,50 ₾ ≈ 419,85 ₽/);
+  assert.equal(a.state().usdPurchases[0].rub,8800.37);assert.equal(a.writes[C.STORAGE_KEY],saved);
+  near(a.run('routeValues().cash'),88.0037/2.62);
+});
+test('large ruble totals keep kopecks instead of abbreviating millions',async()=>{
+  const a=await app();await purchase(a,'usd',8800,100);await cash(a,2.62);
+  a.els.quickGel.value='1000000';a.run('calc()');
+  assert.match(a.els.rublesResult.textContent,/^≈ 33\s587\s786,26 ₽$/);
+  assert.equal(a.els.cashTotal.textContent,a.els.rublesResult.textContent);
+  a.els.exchangeAmount.value='1000000';a.run('selectOffer("office:mjc")');
+  assert.match(a.els.exchangeBasis.textContent,/88\s000\s000,00 ₽/);
+});
+test('comparison shows savings smaller than one ruble with kopecks',async()=>{
+  const a=await app();await purchase(a,'usd',8800,100);await cash(a,2.62);await purchase(a,'usdt',8655,100);
+  a.run('openRate("bybit")');a.els.actualGel.value='100';a.els.actualUsdt.value='38.75';await a.run('saveRate()');
+  a.els.quickGel.value='12,50';a.run('calc()');assert.match(a.els.heroRoute.textContent,/Bybit дешевле примерно на 0,62 ₽/);
+});
 test('actual Bybit preview displays four decimal rates without rounding its calculation',async()=>{
   const a=await app();await purchase(a,'usdt',8655,100);a.run('openRate("bybit")');
   a.els.actualGel.value='100';a.els.actualUsdt.value='38.75';a.run('updateRatePreview()');
@@ -105,7 +128,7 @@ test('actual Bybit preview displays four decimal rates without rounding its calc
 });
 test('purchase, comma input, cash result and reload preserve canonical state',async()=>{
   const a=await app();await purchase(a,'usd','8 800,00','100');await cash(a,'2,62');
-  assert.match(a.els.quickRub.textContent,/3\s359/);
+  assert.match(a.els.quickRub.textContent,/3\s358,78/);
   const b=await app(a.writes);near(b.run('routeValues().cash'),88/2.62);assert.equal(b.state().usdPurchases.length,1);
 });
 test('trailing text, blank and overflow inputs cannot silently save',async()=>{
@@ -311,7 +334,7 @@ test('optional comparison shows both RUB totals and no winner for one route',asy
   const a=await app();await purchase(a,'usd',8800,100);await cash(a,2.62);
   assert.equal(a.els.cashCard.classes.has('best'),false);assert.equal(a.els.bybitTotal.textContent,'— ₽');
   await purchase(a,'usdt',8655,100);a.run('openRate("bybit")');a.els.actualGel.value='100';a.els.actualUsdt.value='38';await a.run('saveRate()');
-  assert.match(a.els.cashTotal.textContent,/3\s359/);assert.match(a.els.bybitTotal.textContent,/3\s289/);assert.match(a.els.heroRoute.textContent,/Bybit дешевле/);
+  assert.match(a.els.cashTotal.textContent,/3\s358,78/);assert.match(a.els.bybitTotal.textContent,/3\s288,90/);assert.match(a.els.heroRoute.textContent,/Bybit дешевле/);
 });
 test('exchange is the initial view and changing payment never writes personal data',async()=>{
   const a=await app();assert.equal(a.run('currentView'),'exchange');
@@ -331,16 +354,16 @@ test('first-use guidance leads from a real USD purchase to choosing an exchange 
   a.run('continueRublesSetup()');assert.equal(a.run('currentView'),'exchange');
   a.run('selectOffer("office:mjc")');await a.run('applyOffer()');
   assert.equal(a.run('currentView'),'purchase');assert.equal(a.run('selectedPayment'),'cash');
-  assert.equal(a.els.rublesNextAction.hidden,true);assert.match(a.els.rublesResult.textContent,/^≈ 3\s368 ₽$/);
+  assert.equal(a.els.rublesNextAction.hidden,true);assert.match(a.els.rublesResult.textContent,/^≈ 3\s367,78 ₽$/);
   assert.match(a.els.rublesRate.textContent,/33,6778/);near(a.run('routeValues().cash'),88/2.613);
 });
 test('single answer uses the selected method, not the cheaper or stale alternative',async()=>{
   const a=await app();await purchase(a,'usd',8800,100);await cash(a,2.62);
   await purchase(a,'usdt',8655,100);a.run('openRate("bybit")');a.els.actualGel.value='100';a.els.actualUsdt.value='38';await a.run('saveRate()');
   a.run('state.bybitGelUpdated=0;setPayment("cash")');
-  assert.match(a.els.rublesResult.textContent,/3\s359/);assert.equal(a.els.rublesStatus.classes.has('stale'),false);
+  assert.match(a.els.rublesResult.textContent,/3\s358,78/);assert.equal(a.els.rublesStatus.classes.has('stale'),false);
   assert.equal(a.els.rublesNextAction.hidden,true);
-  a.run('setPayment("bybit")');assert.match(a.els.rublesResult.textContent,/3\s289/);
+  a.run('setPayment("bybit")');assert.match(a.els.rublesResult.textContent,/3\s288,90/);
   assert.equal(a.els.rublesStatus.classes.has('stale'),true);assert.equal(a.els.rublesNextAction.textContent,'Указать списание Bybit');
 });
 test('Bybit setup opens a visible editor without requiring the optional comparison',async()=>{
@@ -349,8 +372,8 @@ test('Bybit setup opens a visible editor without requiring the optional comparis
   a.run('continueRublesSetup()');assert.equal(a.run('rateKind'),'bybit');
   assert.equal(a.els.ratePanel.parentElement,a.els.rublesEditorHost);assert.equal(a.els.ratePanel.classes.has('show'),true);
   a.els.actualGel.value='100';a.els.actualUsdt.value='38.75';await a.run('saveRate()');
-  assert.equal(a.els.rublesNextAction.hidden,true);assert.match(a.els.rublesResult.textContent,/3\s354/);
-  a.els.quickGel.value='12,50';a.run('calc()');assert.equal(a.els.rublesResult.textContent,'≈ 419 ₽');
+  assert.equal(a.els.rublesNextAction.hidden,true);assert.match(a.els.rublesResult.textContent,/3\s353,81/);
+  a.els.quickGel.value='12,50';a.run('calc()');assert.equal(a.els.rublesResult.textContent,'≈ 419,23 ₽');
 });
 test('estimated dollar cost is labelled and never presented as an actual purchase',async()=>{
   const old={...C.defaults(),usdEstimate:88,cashGelRate:2.62,cashGelUpdated:Date.now()};

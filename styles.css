@@ -23,6 +23,7 @@ header{min-height:66px}.amount{min-height:64px}.amount input{height:62px;line-he
 .setup-steps li{list-style:none;counter-increment:setup;border-left:2px solid var(--border);padding:0 0 12px 14px;margin:14px 0;font-size:14px}
 .setup-steps b::before{content:counter(setup) ". ";color:var(--muted)}
 .setup-steps .note{margin:6px 0}.setup-steps .text-button{font-size:13px}
+.method-head{flex-wrap:wrap}.total{max-width:100%;white-space:normal;overflow-wrap:anywhere}
 #purchaseView #comparisonDetails{margin-top:8px}
 #rublesEditorHost .inline{margin-top:0}
 @media(max-width:370px){.rubles-result>strong{font-size:40px}#purchaseHeading{font-size:25px}.personal-rate{font-size:13px}.payment-switch button{font-size:13px}}

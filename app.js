@@ -3,6 +3,8 @@ const C=GelCore;
 const fmt=(n,d=2)=>Number(n).toLocaleString("ru-RU",{minimumFractionDigits:d,maximumFractionDigits:d});
 // Rates use four decimal places only for display; calculations keep full precision.
 const fmtRate=value=>fmt(value,4);
+// Ruble amounts always include kopecks, even for large totals.
+const fmtRub=value=>fmt(value,2);
 const money=(value,d=2)=>Math.abs(value)>9999999?Number(value).toLocaleString("ru-RU",{notation:"compact",maximumFractionDigits:2}):fmt(value,d);
 const numberValue=C.number;
 const inputValue=value=>{
@@ -209,8 +211,8 @@ function calc(){
     $("cashFreshness").classList.toggle("stale",cashStale);
   }
   const both=Number.isFinite(cash)&&Number.isFinite(bybit);
-  $("cashTotal").textContent=Number.isFinite(cash)&&!invalidQuantity?"≈ "+money(quantity*cash,0)+" ₽":"— ₽";
-  $("bybitTotal").textContent=Number.isFinite(bybit)&&!invalidQuantity?"≈ "+money(quantity*bybit,0)+" ₽":"— ₽";
+  $("cashTotal").textContent=Number.isFinite(cash)&&!invalidQuantity?"≈ "+fmtRub(quantity*cash)+" ₽":"— ₽";
+  $("bybitTotal").textContent=Number.isFinite(bybit)&&!invalidQuantity?"≈ "+fmtRub(quantity*bybit)+" ₽":"— ₽";
   const cashSource=state.cashOfficeId?(C.OFFICES[state.cashOfficeId]?.name||"Обменник"):(state.cashBankId?state.cashBankName:"Ваш курс");
   $("cashSummary").textContent=!(usdCost>0)?"Добавьте покупку USD — кнопка ниже":!(Number(state.cashGelRate)>0)?"Выберите курс USD → лари":cashSource+" · "+(cashStale?"нужна проверка":checkedText(state.cashGelUpdated))+(Number.isFinite(usdAvg)?"":" · цена USD — оценка");
   $("bybitSummary").textContent=!Number.isFinite(usdtAvg)?"Добавьте покупку USDT — кнопка ниже":!(bybitRate>0)?"Укажите списание по покупке в Bybit":(state.bybitRateMode==="actual"?"По операции":"Прогноз")+" · "+(bybitStale?"обновите Bybit":checkedText(state.bybitGelUpdated));
@@ -220,13 +222,13 @@ function calc(){
   $("dataUsdtAvg").textContent=$("usdtAvg").textContent;
   $("cashCard").classList.toggle("best",both&&!comparisonStale&&!invalidQuantity&&cash<bybit);
   $("bybitCard").classList.toggle("best",both&&!comparisonStale&&!invalidQuantity&&bybit<cash);
-  $("quickRub").textContent=Number.isFinite(best)&&!invalidQuantity?`${fmt(quantity*best,0)} ₽`:"— ₽";
+  $("quickRub").textContent=Number.isFinite(best)&&!invalidQuantity?`${fmtRub(quantity*best)} ₽`:"— ₽";
 
   if(Number.isFinite(cash)&&Number.isFinite(bybit)){
     const saving=(Math.max(cash,bybit)-best)*quantity;
-    $("heroRoute").textContent=saving<1
-      ?"Оба способа сейчас почти одинаковы"
-      :`${bestName} дешевле примерно на ${fmt(saving,0)} ₽`;
+    $("heroRoute").textContent=saving<0.005
+      ?"Оба способа одинаковы с точностью до копейки"
+      :`${bestName} дешевле примерно на ${fmtRub(saving)} ₽`;
     $("heroDetail").textContent="Оценка по вашим данным.";
   }else if(Number.isFinite(best)){
     $("heroRoute").textContent=`Расчёт по способу «${bestName}»`;
@@ -258,7 +260,7 @@ function calc(){
       :"ориентир";
     if(Number.isFinite(best)){
       const difference=(best-benchmark)*quantity;
-      $("marketNote").textContent=`По официальному курсу ${fmt(quantity,0)} ₾ ≈ ${fmt(quantity*benchmark,0)} ₽. Минимальная оценка по вашим данным ${difference>=0?"дороже":"ниже"} на ${fmt(Math.abs(difference),0)} ₽.${comparisonStale?" Личные курсы тоже требуют обновления.":""}`;
+      $("marketNote").textContent=`По официальному курсу ${fmt(quantity)} ₾ ≈ ${fmtRub(quantity*benchmark)} ₽. Минимальная оценка по вашим данным ${difference>=0?"дороже":"ниже"} на ${fmtRub(Math.abs(difference))} ₽.${comparisonStale?" Личные курсы тоже требуют обновления.":""}`;
     }else{
       $("marketNote").textContent="Это справочная цена. Добавьте личные данные, чтобы сравнить её с вашими затратами.";
     }
@@ -290,7 +292,7 @@ function renderRubles(values){
   $("cashPaymentButton").setAttribute("aria-pressed",String(isCash));
   $("bybitPaymentButton").setAttribute("aria-pressed",String(!isCash));
   $("rublesResultLabel").textContent=invalidQuantity?"Введите цену в лари":ready?"Для вас это примерно":"Для пересчёта нужны ваши данные";
-  $("rublesResult").textContent=ready&&!invalidQuantity?"≈ "+money(quantity*rate,0)+" ₽":"— ₽";
+  $("rublesResult").textContent=ready&&!invalidQuantity?"≈ "+fmtRub(quantity*rate)+" ₽":"— ₽";
   $("rublesRate").textContent=ready?"1 ₾ = "+fmtRate(rate)+" ₽ · "+(isCash?"наличными":"картой Bybit"):isCash?"Рубли → доллары → лари":"Рубли → USDT → оплата картой";
   let status;
   if(!hasBasis)status=isCash?"Укажите, сколько рублей потратили на доллары. Тогда посчитаем вашу цену, а не официальный курс.":"Укажите, сколько рублей потратили на USDT для карты.";
@@ -319,7 +321,7 @@ function renderHistory(kind){
   const list=(kind==="usd"?state.usdPurchases:state.usdtPurchases).filter(item=>item&&C.positive(item.rub)&&C.positive(item.qty)).slice().reverse();
   box.innerHTML=list.length?list.map(item=>{
     const rate=item.qty?item.rub/item.qty:0;
-    return `<div class="row"><div>${fmt(item.rub,0)} ₽ → ${fmt(item.qty,kind==="usd"?2:4)} ${kind.toUpperCase()}</div><div class="r">${fmtRate(rate)} ₽<br>${new Date(item.ts).toLocaleDateString("ru-RU")}</div></div>`;
+    return `<div class="row"><div>${fmtRub(item.rub)} ₽ → ${fmt(item.qty,kind==="usd"?2:4)} ${kind.toUpperCase()}</div><div class="r">${fmtRate(rate)} ₽<br>${new Date(item.ts).toLocaleDateString("ru-RU")}</div></div>`;
   }).join(""):'<div class="note">Покупок пока нет.</div>';
 }
 
@@ -682,7 +684,7 @@ function renderOffers(){
   $("exchangeReceive").textContent=item&&valid?"≈ "+money(amount*item.buy)+" ₾":"— ₾";
   $("exchangeResultLabel").textContent=item?(item.fresh?"По предложению ":"Сохранённый курс · ")+item.name:"Выберите предложение";
   const usdCost=routeValues().usdCost;
-  $("exchangeBasis").textContent=valid&&item?(usdCost>0?"Эти USD стоили вам ≈ "+money(amount*usdCost)+" ₽ · 1 ₾ ≈ "+fmtRate(usdCost/item.buy)+" ₽":"Добавьте покупку USD, чтобы увидеть стоимость в рублях."):"";
+  $("exchangeBasis").textContent=valid&&item?(usdCost>0?"Эти USD стоили вам ≈ "+fmtRub(amount*usdCost)+" ₽ · 1 ₾ ≈ "+fmtRate(usdCost/item.buy)+" ₽":"Добавьте покупку USD, чтобы увидеть стоимость в рублях."):"";
   $("selectedOfferDetail").textContent=item?"Проверено "+checkedText(item.checkedAt)+". "+(item.kind==="office"?"Курс сети. Наличие и условия уточните в отделении.":"Витрина НБГ: отделение, запрос на 1 000 GEL. Для вашей суммы условия могут отличаться.")+(item.fresh?"":" Применение отключено: данные устарели или не подтверждены."):"Можно ввести свой проверенный курс ниже.";
   $("selectedSource").hidden=!item;$("selectedBranches").hidden=!item?.branches;
   $("selectedSource").href=item?.url||"";$("selectedBranches").href=item?.branches||"";
