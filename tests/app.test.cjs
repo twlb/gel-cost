@@ -68,7 +68,40 @@ const near=(a,b)=>assert.ok(Math.abs(a-b)<1e-9,`${a} != ${b}`);
 
 test('fresh profile has no invented purchases and both sources load',async()=>{
   const a=await app();assert.equal(a.state().usdPurchases.length,0);assert.equal(a.state().usdtPurchases.length,0);
-  assert.equal(a.els.quickRub.textContent,'— ₽');assert.match(a.els.marketPrice.textContent,/33,59/);assert.match(a.els.bankStatus.textContent,/3 банков/);
+  assert.equal(a.els.quickRub.textContent,'— ₽');assert.match(a.els.marketPrice.textContent,/33,5878/);assert.match(a.els.bankStatus.textContent,/3 банков/);
+});
+test('all displayed exchange rates have four decimals while money totals stay unchanged',async()=>{
+  const a=await app();await purchase(a,'usd',8800,100);await purchase(a,'usdt',8655,100);await cash(a,2.62);
+  assert.equal(a.els.cashAvg.textContent,'88,0000 ₽/$');
+  assert.equal(a.els.usdtAvg.textContent,'86,5500 ₽/USDT');
+  assert.equal(a.els.cashGelRate.textContent,'2,6200 ₾');
+  assert.equal(a.els.cashPrice.textContent,'33,5878 ₽/₾');
+  assert.match(a.els.cashTotal.textContent,/^≈ 3\s359 ₽$/);
+  a.run('selectOffer("office:mjc")');
+  assert.equal(a.els.exchangeReceive.textContent,'≈ 261,30 ₾');
+  assert.match(a.els.exchangeBasis.textContent,/33,6778 ₽$/);
+  a.run('openSettings()');
+  assert.equal(a.els.officialRub.value,'88,0000');assert.equal(a.els.officialGel.value,'2,6200');
+  near(a.run('routeValues().cash'),88/2.62);
+});
+test('editable rate pads four decimals without rounding a more precise saved quote',async()=>{
+  const a=await app();await purchase(a,'usd',8800,100);await cash(a,2.62);
+  a.run('openRate("cash")');assert.equal(a.els.rateValue.value,'2,6200');await a.run('saveRate()');
+  assert.equal(a.state().cashGelRate,2.62);
+  await cash(a,2.62123456);const before=JSON.stringify(a.state().usdPurchases);
+  a.run('openRate("cash")');assert.equal(a.els.rateValue.value,'2,62123456');await a.run('saveRate()');
+  assert.equal(a.state().cashGelRate,2.62123456);assert.equal(a.els.cashGelRate.textContent,'2,6212 ₾');
+  near(a.run('routeValues().cash'),88/2.62123456);
+  assert.equal(JSON.stringify(a.state().usdPurchases),before);
+});
+test('actual Bybit preview displays four decimal rates without rounding its calculation',async()=>{
+  const a=await app();await purchase(a,'usdt',8655,100);a.run('openRate("bybit")');
+  a.els.actualGel.value='100';a.els.actualUsdt.value='38.75';a.run('updateRatePreview()');
+  assert.match(a.els.ratePreview.textContent,/1 USDT = 2,5806 ₾/);
+  assert.match(a.els.ratePreview.textContent,/1 ₾ ≈ 33,5381 ₽/);
+  await a.run('saveRate()');
+  assert.equal(a.els.bybitGelRate.textContent,'2,5806 ₾');assert.equal(a.els.bybitPrice.textContent,'33,5381 ₽/₾');
+  near(a.run('routeValues().bybit'),86.55*38.75/100);
 });
 test('purchase, comma input, cash result and reload preserve canonical state',async()=>{
   const a=await app();await purchase(a,'usd','8 800,00','100');await cash(a,'2,62');
@@ -99,7 +132,7 @@ test('storage denial warns without stopping calculation',async()=>{
 });
 test('invalid official response retains dated cached data and warns',async()=>{
   const a=await app();a.responses['./rates.json']={usdRub:0,usdGel:0};await a.run('refreshOfficial()');
-  assert.match(a.els.marketPrice.textContent,/33,59/);assert.equal(a.els.marketStatus.textContent,'сохранённый');assert.match(a.els.marketNote.textContent,/Свежесть не подтверждена/);
+  assert.match(a.els.marketPrice.textContent,/33,5878/);assert.equal(a.els.marketStatus.textContent,'сохранённый');assert.match(a.els.marketNote.textContent,/Свежесть не подтверждена/);
 });
 test('bank selection and refresh update quote without changing purchases',async()=>{
   const a=await app();await purchase(a,'usd',8800,100);a.els.bankChoice.value='2';await a.run('applyBank()');near(a.run('routeValues().cash'),88/2.61);

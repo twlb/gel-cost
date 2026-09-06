@@ -1,9 +1,18 @@
 const $=id=>document.getElementById(id);
 const C=GelCore;
 const fmt=(n,d=2)=>Number(n).toLocaleString("ru-RU",{minimumFractionDigits:d,maximumFractionDigits:d});
+// Rates use four decimal places only for display; calculations keep full precision.
+const fmtRate=value=>fmt(value,4);
 const money=(value,d=2)=>Math.abs(value)>9999999?Number(value).toLocaleString("ru-RU",{notation:"compact",maximumFractionDigits:2}):fmt(value,d);
 const numberValue=C.number;
-const inputValue=value=>Number(value)>0?String(value):"";
+const inputValue=value=>{
+  if(!C.positive(value))return "";
+  const text=String(C.number(value));
+  // Pad short editable quotes, but do not truncate a more precise saved quote.
+  if(!/^\d+(?:\.\d+)?$/.test(text))return text;
+  const [whole,fraction=""]=text.split(".");
+  return whole+","+fraction.padEnd(4,"0");
+};
 let storage;
 try{storage=localStorage}catch{storage={getItem(){throw Error()},setItem(){throw Error()}}}
 const loaded=C.load(storage);
@@ -165,15 +174,15 @@ function calc(){
   const comparisonStale=(Number.isFinite(cash)&&cashStale)||(Number.isFinite(bybit)&&bybitStale);
 
   $("cashAvgLabel").textContent=Number.isFinite(usdAvg)?"Средняя покупок USD":"Оценка доллара";
-  $("cashAvg").textContent=usdCost>0?`${fmt(usdCost)} ₽/$`:"Добавьте покупку";
-  $("usdtAvg").textContent=Number.isFinite(usdtAvg)?`${fmt(usdtAvg)} ₽/USDT`:"Добавьте покупку";
-  $("cashGelRate").textContent=Number(state.cashGelRate)>0?`${fmt(state.cashGelRate,4)} ₾`:"Обновите курс";
-  $("bybitGelRate").textContent=bybitRate>0?`${fmt(bybitRate,4)} ₾`:"Обновите курс";
+  $("cashAvg").textContent=usdCost>0?`${fmtRate(usdCost)} ₽/$`:"Добавьте покупку";
+  $("usdtAvg").textContent=Number.isFinite(usdtAvg)?`${fmtRate(usdtAvg)} ₽/USDT`:"Добавьте покупку";
+  $("cashGelRate").textContent=Number(state.cashGelRate)>0?`${fmtRate(state.cashGelRate)} ₾`:"Обновите курс";
+  $("bybitGelRate").textContent=bybitRate>0?`${fmtRate(bybitRate)} ₾`:"Обновите курс";
   $("bybitRateLabel").textContent=state.bybitRateMode==="actual"?"Эффективно за 1 USDT":"Bybit за 1 USDT";
-  $("cashPrice").textContent=Number.isFinite(cash)?`${fmt(cash)} ₽/₾`:"—";
-  $("bybitPrice").textContent=Number.isFinite(bybit)?`${fmt(bybit)} ₽/₾`:"—";
-  $("cashExplain").textContent=Number.isFinite(cash)?`${fmt(cash)} ₽`:"Недостаточно данных";
-  $("bybitExplain").textContent=Number.isFinite(bybit)?`${fmt(bybit)} ₽`:"Недостаточно данных";
+  $("cashPrice").textContent=Number.isFinite(cash)?`${fmtRate(cash)} ₽/₾`:"—";
+  $("bybitPrice").textContent=Number.isFinite(bybit)?`${fmtRate(bybit)} ₽/₾`:"—";
+  $("cashExplain").textContent=Number.isFinite(cash)?`${fmtRate(cash)} ₽`:"Недостаточно данных";
+  $("bybitExplain").textContent=Number.isFinite(bybit)?`${fmtRate(bybit)} ₽`:"Недостаточно данных";
   showFreshness("cashFreshness",state.cashGelUpdated,"USD→₾");
   showFreshness("bybitFreshness",state.bybitGelUpdated,"Bybit");
   if(state.cashBankId){
@@ -225,7 +234,7 @@ function calc(){
   if(state.cashBankId&&Number.isFinite(cash)&&!comparisonStale)$("heroDetail").textContent+=" · банк: до возможных комиссий";
   if(invalidQuantity)$("heroRoute").textContent="Укажите стоимость покупки в лари";
 
-  $("marketPrice").textContent=Number.isFinite(benchmark)?`${fmt(benchmark)} ₽/₾`:"—";
+  $("marketPrice").textContent=Number.isFinite(benchmark)?`${fmtRate(benchmark)} ₽/₾`:"—";
   if(state.officialUpdated&&Number.isFinite(benchmark)){
     const sourceDate=key=>state.officialSnapshot?.sources?.[key]?.date?.slice(0,10)||"неизвестна";
     const old=officialFailed||!C.fresh(state.officialSnapshot?.fetchedAt,2*C.DAY)||[sourceDate("usdRub"),sourceDate("usdGel")].some(d=>Date.now()-Date.parse(d)>7*C.DAY);
@@ -257,7 +266,7 @@ function renderHistory(kind){
   const list=(kind==="usd"?state.usdPurchases:state.usdtPurchases).filter(item=>item&&C.positive(item.rub)&&C.positive(item.qty)).slice().reverse();
   box.innerHTML=list.length?list.map(item=>{
     const rate=item.qty?item.rub/item.qty:0;
-    return `<div class="row"><div>${fmt(item.rub,0)} ₽ → ${fmt(item.qty,kind==="usd"?2:4)} ${kind.toUpperCase()}</div><div class="r">${fmt(rate)} ₽<br>${new Date(item.ts).toLocaleDateString("ru-RU")}</div></div>`;
+    return `<div class="row"><div>${fmt(item.rub,0)} ₽ → ${fmt(item.qty,kind==="usd"?2:4)} ${kind.toUpperCase()}</div><div class="r">${fmtRate(rate)} ₽<br>${new Date(item.ts).toLocaleDateString("ru-RU")}</div></div>`;
   }).join(""):'<div class="note">Покупок пока нет.</div>';
 }
 
@@ -300,7 +309,7 @@ function updatePurchasePreview(){
   if(rub>0&&quantity>0){
     const list=purchaseKind==="usd"?state.usdPurchases:state.usdtPurchases;
     const newAverage=weighted([...list,{rub,qty:quantity}]);
-    $("purchasePreview").textContent=`Эта покупка: ${fmt(rub/quantity)} ₽/${purchaseKind.toUpperCase()} · новая средняя: ${fmt(newAverage)} ₽`;
+    $("purchasePreview").textContent=`Эта покупка: ${fmtRate(rub/quantity)} ₽/${purchaseKind.toUpperCase()} · новая средняя: ${fmtRate(newAverage)} ₽`;
   }else{
     $("purchasePreview").textContent="Цена покупки рассчитается автоматически.";
   }
@@ -362,18 +371,18 @@ function updateRatePreview(){
   let text="";
   if(rateKind==="cash"){
     const rate=numberValue($("rateValue").value);
-    if(rate>0&&usdCost>0)text=`При этом курсе 1 ₾ будет стоить вам ${fmt(usdCost/rate)} ₽.`;
+    if(rate>0&&usdCost>0)text=`При этом курсе 1 ₾ будет стоить вам ${fmtRate(usdCost/rate)} ₽.`;
   }else if(rateMode==="quote"){
     const rate=numberValue($("rateValue").value);
-    if(rate>0&&Number.isFinite(usdtAvg))text=`С учётом комиссии и cashback 1 ₾ ≈ ${fmt(usdtAvg*mult/rate)} ₽.`;
+    if(rate>0&&Number.isFinite(usdtAvg))text=`С учётом комиссии и cashback 1 ₾ ≈ ${fmtRate(usdtAvg*mult/rate)} ₽.`;
   }else{
     const gel=numberValue($("actualGel").value);
     const charged=numberValue($("actualUsdt").value);
     if(gel>0&&charged>0){
       const effective=C.actualRate(gel,charged,$("actualReward").value.trim()||"0");
       if(!Number.isFinite(effective))return $("ratePreview").textContent="Возврат должен быть не меньше 0 и меньше списания.";
-      text=`Эффективный курс: 1 USDT = ${fmt(effective,4)} ₾`;
-      if(Number.isFinite(usdtAvg))text+=` · 1 ₾ ≈ ${fmt(usdtAvg/effective)} ₽`;
+      text=`Эффективный курс: 1 USDT = ${fmtRate(effective)} ₾`;
+      if(Number.isFinite(usdtAvg))text+=` · 1 ₾ ≈ ${fmtRate(usdtAvg/effective)} ₽`;
     }
   }
   $("ratePreview").textContent=text;
@@ -416,8 +425,8 @@ function openSettings(){
   const panel=$("settingsPanel");
   const willOpen=!panel.classList.contains("show");
   closeAllInline("settingsPanel");
-  $("officialRub").value=officialReady?(state.officialUsdRub??""):"";
-  $("officialGel").value=officialReady?(state.officialUsdGel??""):"";
+  $("officialRub").value=officialReady?fmtRate(state.officialUsdRub):"";
+  $("officialGel").value=officialReady?fmtRate(state.officialUsdGel):"";
   $("feePct").value=String(state.feePct);
   $("cashbackPct").value=String(state.cashbackPct);
   panel.classList.toggle("show",willOpen);
@@ -467,8 +476,8 @@ async function refreshOfficial(){
   finally{officialBusy=false;}
   restoreOfficial();calc();
   if($("settingsPanel").classList.contains("show")){
-    $("officialRub").value=officialReady?state.officialUsdRub:"";
-    $("officialGel").value=officialReady?state.officialUsdGel:"";
+    $("officialRub").value=officialReady?fmtRate(state.officialUsdRub):"";
+    $("officialGel").value=officialReady?fmtRate(state.officialUsdGel):"";
   }
 }
 function restoreOfficial(){
@@ -496,7 +505,7 @@ function renderBanks(){
   if(banks){
     for(const item of banks.offers){
       const cost=routeValues().usdCost;
-      $("bankChoice").add(new Option(item.bank+" · "+fmt(item.buy,4)+" ₾"+(cost>0?" · "+fmt(cost/item.buy)+" ₽/₾":""),item.id));
+      $("bankChoice").add(new Option(item.bank+" · "+fmtRate(item.buy)+" ₾"+(cost>0?" · "+fmtRate(cost/item.buy)+" ₽/₾":""),item.id));
     }
     $("bankChoice").value=selected;
   }
@@ -594,7 +603,7 @@ function renderOffers(){
     const total=document.createElement("b");total.textContent=valid?money(amount*item.buy)+" ₾":"— ₾";
     top.appendChild(name);top.appendChild(total);button.appendChild(top);
     const detail=document.createElement("small");
-    detail.textContent=(item.kind==="office"?"Обменник · курс сети":"Банк · город уточните")+" · "+fmt(item.buy,4)+" ₾/$"+(item.fresh?"":" · нужна проверка");
+    detail.textContent=(item.kind==="office"?"Обменник · курс сети":"Банк · город уточните")+" · "+fmtRate(item.buy)+" ₾/$"+(item.fresh?"":" · нужна проверка");
     button.appendChild(detail);button.addEventListener("click",()=>selectOffer(item.key));return button;
   });
   $("offerList").replaceChildren(...nodes);$("offerList").hidden=!rows.length;
@@ -609,7 +618,7 @@ function renderOffers(){
   $("exchangeReceive").textContent=item&&valid?"≈ "+money(amount*item.buy)+" ₾":"— ₾";
   $("exchangeResultLabel").textContent=item?(item.fresh?"По предложению ":"Сохранённый курс · ")+item.name:"Выберите предложение";
   const usdCost=routeValues().usdCost;
-  $("exchangeBasis").textContent=valid&&item?(usdCost>0?"Эти USD стоили вам ≈ "+money(amount*usdCost)+" ₽ · 1 ₾ ≈ "+fmt(usdCost/item.buy)+" ₽":"Добавьте покупку USD, чтобы увидеть стоимость в рублях."):"";
+  $("exchangeBasis").textContent=valid&&item?(usdCost>0?"Эти USD стоили вам ≈ "+money(amount*usdCost)+" ₽ · 1 ₾ ≈ "+fmtRate(usdCost/item.buy)+" ₽":"Добавьте покупку USD, чтобы увидеть стоимость в рублях."):"";
   $("selectedOfferDetail").textContent=item?"Проверено "+checkedText(item.checkedAt)+". "+(item.kind==="office"?"Курс сети. Наличие и условия уточните в отделении.":"Витрина НБГ: отделение, запрос на 1 000 GEL. Для вашей суммы условия могут отличаться.")+(item.fresh?"":" Применение отключено: данные устарели или не подтверждены."):"Можно ввести свой проверенный курс ниже.";
   $("selectedSource").hidden=!item;$("selectedBranches").hidden=!item?.branches;
   $("selectedSource").href=item?.url||"";$("selectedBranches").href=item?.branches||"";
