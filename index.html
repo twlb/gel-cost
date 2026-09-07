@@ -4,32 +4,32 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#111316">
-<meta name="description" content="Курсы обменников и банков, адреса на карте. Расчёт обмена рублей, USD, USDT и лари в обе стороны.">
+<meta name="description" content="Обмен рублей, долларов и евро на лари: курсы банков и обменников, адреса на карте и расчёт с комиссиями.">
 <title>GEL Cost</title>
 <link rel="icon" href="data:,">
-<link rel="stylesheet" href="styles.css?v=5.7-audit-1">
+<link rel="stylesheet" href="styles.css?v=5.7-release-1">
 </head>
 <body>
 <a class="skip" href="#main">К расчёту</a>
 <div class="app">
-<header><a class="brand" href="#exchange" onclick="showView('exchange')">GEL Cost <span class="badge">V5.6</span></a><button class="text-button" id="dataNav" onclick="showView('data')">Мои данные</button></header>
+<header><a class="brand" href="#exchange" onclick="showView('exchange')">GEL Cost <span class="badge">V5.7</span></a><button class="text-button" id="dataNav" onclick="showView('data')">Мои данные</button></header>
 <main id="main">
 <noscript><p class="notice">Для расчётов включите JavaScript в браузере.</p></noscript>
 <div class="notice" id="storageNotice" role="status" hidden></div>
-<div class="notice" id="migrationNotice" hidden>Курс из V5.4 пересчитан без неподтверждённого cashback. История покупок сохранена. При необходимости обновите USDT по операции.</div>
+<div class="notice" id="migrationNotice" hidden>Курс из V5.4 пересчитан без неподтверждённого кешбэка. История покупок сохранена. При необходимости уточните курс USDT по операции.</div>
 <div id="actionStatus" class="action-status" role="status" aria-live="polite"></div>
 <section id="calculatorView" hidden aria-labelledby="calculatorHeading">
 <h1 id="calculatorHeading" tabindex="-1">Рассчитать обмен</h1>
 <div class="mode-switch" role="group" aria-label="Задача расчёта"><button id="planGive" aria-pressed="true" onclick="setPlanMode('give')">Сколько получу</button><button id="planWant" aria-pressed="false" onclick="setPlanMode('want')">Сколько нужно</button></div>
 <div class="grid plan-currencies">
-<div><label for="planFrom">Отдаю</label><select id="planFrom" onchange="changePlanRoute()"><option value="RUB">Рубли</option><option value="USD">USD</option><option value="USDT">USDT</option><option value="GEL">Лари</option></select></div>
+<div><label for="planFrom">Отдаю</label><select id="planFrom" onchange="changePlanRoute('from')"><option value="RUB">Рубли</option><option value="USD">USD</option><option value="EUR">Евро</option><option value="USDT">USDT</option><option value="GEL">Лари</option></select></div>
 <button type="button" class="swap-button" id="planReverse" aria-label="Поменять валюты местами" title="Поменять валюты местами" onclick="reversePlan()">
 <!-- Lucide ArrowRightLeft, ISC license: THIRD_PARTY_NOTICES.md -->
 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m16 3 4 4-4 4" /><path d="M20 7H4" /><path d="m8 21-4-4 4-4" /><path d="M4 17h16" /></svg>
 </button>
-<div><label for="planTo">Получаю</label><select id="planTo" onchange="changePlanRoute()"><option value="GEL">Лари</option><option value="USD">USD</option><option value="USDT">USDT</option><option value="RUB">Рубли</option></select></div>
+<div><label for="planTo">Получаю</label><select id="planTo" onchange="changePlanRoute('to')"><option value="GEL">Лари</option><option value="USD">USD</option><option value="EUR">Евро</option><option value="USDT">USDT</option><option value="RUB">Рубли</option></select></div>
 </div>
-<div id="planViaGroup"><label for="planVia">Через</label><select id="planVia" onchange="changePlanRoute()"><option value="USD">Наличные USD</option><option value="USDT">USDT</option></select></div>
+<div id="planViaGroup"><label for="planVia">Как меняю</label><select id="planVia" onchange="changePlanRoute()"><option value="USD">Через наличные USD</option><option value="USDT">Через USDT</option><option value="direct">Напрямую</option></select></div>
 <label id="planAmountLabel" for="planAmount">Сколько рублей отдаю</label><div class="input amount"><input id="planAmount" type="text" inputmode="decimal" maxlength="18" autocomplete="off" placeholder="Сумма" aria-describedby="planError" oninput="renderPlanner()"><span class="unit" id="planAmountUnit">₽</span></div>
 <h2 id="planPath">Рубли → доллары → лари</h2>
 <article class="plan-step" id="planStep0"><h3 id="planStepTitle0">1. Рубли → доллары</h3><label id="planQuoteLabel0" for="planQuote0">Покупаю 1 USD за рубли</label><div class="input"><input id="planQuote0" type="text" inputmode="decimal" maxlength="18" placeholder="Введите курс" aria-describedby="planSource0 planQuoteError0" oninput="editPlanQuote(0)" onblur="finishPlanQuote(0)"><span class="unit" id="planQuoteUnit0">₽</span></div><p class="note" id="planSource0"></p><p class="error" id="planQuoteError0"></p><p class="plan-step-result" id="planStepResult0"></p><details class="disclosure" id="planFee0"><summary id="planFeeSummary0">Комиссия</summary><p class="note" id="planFeeHelp0"></p><div class="grid"><div><label for="planPct0">Процент, %</label><input id="planPct0" type="text" inputmode="decimal" maxlength="12" value="0" oninput="editPlanFee(0)"></div><div><label id="planFixedLabel0" for="planFixed0">Фиксированная, ₽</label><input id="planFixed0" type="text" inputmode="decimal" maxlength="18" value="0" oninput="editPlanFee(0)"></div></div><p class="note">Укажите только комиссию, не включённую в курс.</p></details></article>
@@ -39,11 +39,11 @@
 <div class="error" id="planError" role="alert"></div>
 <p class="note stale" id="planCaution" hidden></p>
 </div>
-<div class="actions"><button class="secondary" id="planChooseOffice" onclick="showView('exchange')">Выбрать обменник</button><button class="secondary" id="planAddress" onclick="showPlanLocation()" hidden>Адреса обменника</button></div>
+<div class="actions"><button class="secondary" id="planChooseOffice" onclick="choosePlanOffice()">Выбрать курс</button><button class="secondary" id="planAddress" onclick="showPlanLocation()" hidden>Адреса обменника</button></div>
 <p class="footnote">Черновик исчезнет после перезагрузки. Ваши покупки не изменятся.</p>
 <details class="disclosure" id="planHelp"><summary>О расчёте</summary>
 <p class="note">≈ — примерная сумма, не заявка на обмен. Результат зависит от указанных курсов и комиссий.</p>
-<p class="note">Курс наличного USD можно взять из вкладки «Обмен». Курсы рубля и USDT введите сами. Официальный курс и цена прошлых покупок сюда не подставляются.</p>
+<p class="note">Курс обмена USD, EUR или RUB на лари можно взять из вкладки «Обмен». Рубли и лари можно менять напрямую или через USD/USDT. Для евро доступна пара с лари. Остальные курсы введите сами: официальный курс и прошлые покупки сюда не подставляются.</p>
 <p class="note">USD и USDT — разные валюты. При смене направления нужны отдельные курсы: обменник покупает и продаёт валюту по разной цене.</p>
 </details>
 </section>
@@ -77,7 +77,7 @@
 <article class="method" id="bybitCard">
 <div class="method-head"><div><h2>Оплата через USDT</h2><p>Через купленный USDT</p></div><strong class="total" id="bybitTotal">— ₽</strong></div>
 <div class="method-footer"><p class="method-note" id="bybitSummary">Добавьте покупку USDT и курс</p>
-<button class="text-button" id="bybitCompareAction" onclick="editComparison('bybit')">Обновить USDT</button></div>
+<button class="text-button" id="bybitCompareAction" onclick="editComparison('bybit')">Уточнить курс USDT</button></div>
 </article>
 <article class="method" id="cashCard">
 <div class="method-head"><div><h2>Наличные</h2><p>Через купленный USD</p></div><strong class="total" id="cashTotal">— ₽</strong></div>
@@ -90,13 +90,13 @@
 <details class="disclosure" id="calculationDetails"><summary>Как посчитали</summary>
 <p class="note">Считаем по средней цене ваших покупок за период. Это не учёт остатка кошелька. Примерная цена, не гарантия списания или обмена.</p>
 <h3>Наличные: ₽ → USD → ₾</h3>
-<div class="pathrow"><span id="cashAvgLabel">Средняя покупок USD</span><b id="cashAvg">—</b></div>
+<div class="pathrow"><span id="cashAvgLabel">Средняя цена USD</span><b id="cashAvg">—</b></div>
 <div class="pathrow"><span>За 1 USD дают</span><b id="cashGelRate">—</b></div>
 <div class="pathrow"><span>Ваш 1 ₾</span><b id="cashPrice">—</b></div>
 <p class="note">Цена USD ÷ курс USD→GEL = <span id="cashExplain">—</span> за лари.</p>
 <p class="note" id="cashFreshness"></p><p class="note" id="cashSource"></p>
 <h3>Карта: ₽ → USDT → покупка в ₾</h3>
-<div class="pathrow"><span>Средняя покупок USDT</span><b id="usdtAvg">—</b></div>
+<div class="pathrow"><span>Средняя цена USDT</span><b id="usdtAvg">—</b></div>
 <div class="pathrow"><span id="bybitRateLabel">За 1 USDT</span><b id="bybitGelRate">—</b></div>
 <div class="pathrow"><span>Ваш 1 ₾</span><b id="bybitPrice">—</b></div>
 <p class="note">Цена USDT ÷ эффективный курс = <span id="bybitExplain">—</span> за лари. В прогнозе дополнительно учитываем указанные проценты.</p>
@@ -111,17 +111,25 @@
 <p class="footnote">Это пересчёт цены, не платёж. История покупок — в «Моих данных».</p>
 </section>
 <section id="exchangeView" aria-labelledby="exchangeHeading">
-<div class="city"><label for="exchangeCity">Город</label><select id="exchangeCity"><option value="batumi" selected>Батуми</option><option value="tbilisi">Тбилиси</option><option value="all">Все города</option></select></div>
-<h1 id="exchangeHeading" tabindex="-1">Сколько дадут за доллары?</h1>
-<p class="subtitle">Наличные USD → лари</p>
-<label for="exchangeAmount">Отдаю доллары</label>
-<div class="input amount"><input id="exchangeAmount" type="text" inputmode="decimal" value="100" maxlength="18" autocomplete="off" aria-describedby="exchangeError"><span class="unit">USD</span></div>
+<h1 id="exchangeHeading" tabindex="-1">Сколько получу в лари?</h1>
+<div class="exchange-filters">
+<div><label for="exchangeCurrency">Отдаю</label><select id="exchangeCurrency"><option value="USD" selected>USD</option><option value="RUB">RUB</option><option value="EUR">EUR</option></select></div>
+<div><label for="exchangeCity">Город</label><select id="exchangeCity"><option value="batumi" selected>Батуми</option><option value="kobuleti">Кобулети</option><option value="poti">Поти</option><option value="kutaisi">Кутаиси</option><option value="tbilisi">Тбилиси</option></select></div>
+</div>
+<label id="exchangeAmountLabel" for="exchangeAmount">Сумма в долларах</label>
+<div class="input amount"><input id="exchangeAmount" type="text" inputmode="decimal" value="100" maxlength="18" autocomplete="off" aria-describedby="exchangeError"><span class="unit" id="exchangeAmountUnit">USD</span></div>
 <div class="error" id="exchangeError" role="alert"></div>
-<div class="exchange-result" aria-live="polite"><p id="exchangeResultLabel">По выбранному предложению</p><strong id="exchangeReceive">— ₾</strong></div>
-<div class="section-head"><h2>Где обменять</h2><span class="note">За вашу сумму</span></div>
+<div class="exchange-result" aria-live="polite"><p id="exchangeResultLabel">По выбранному курсу</p><strong id="exchangeReceive">— ₾</strong></div>
+<div class="section-head"><h2>Курсы и адреса</h2><span class="note">За вашу сумму</span></div>
 <p class="note" id="offerStatus"></p>
-<div class="offer-tools"><button class="text-button" id="refreshOffersButton" onclick="refreshAllRates()">Обновить курсы</button><button class="text-button" id="manualRateButton" onclick="openRate('cash')">Свой курс</button></div>
-<div id="cashRateHost"></div>
+<p class="note" id="currencyCoverage" hidden></p>
+<div class="offer-tools"><button class="text-button" id="refreshOffersButton" onclick="refreshAllRates()">Обновить курсы</button><button class="text-button" id="manualRateButton" onclick="openExchangeManual()" aria-expanded="false">Свой курс</button></div>
+<div id="cashRateHost"><form class="inline" id="exchangeManualPanel" onsubmit="event.preventDefault();saveExchangeManual()">
+<h3 id="exchangeManualTitle">Свой курс</h3>
+<label id="exchangeManualLabel" for="exchangeManualValue">За 1 EUR дают</label><div class="input"><input id="exchangeManualValue" type="text" inputmode="decimal" maxlength="18" autocomplete="off" aria-describedby="exchangeManualError exchangeManualPreview"><span class="unit">₾</span></div>
+<p class="note" id="exchangeManualPreview" aria-live="polite"></p><p class="error" id="exchangeManualError" role="alert"></p>
+<div class="actions"><button class="primary" type="submit">Сохранить курс</button><button class="secondary" type="button" onclick="closeInline('exchangeManualPanel')">Закрыть</button></div>
+</form></div>
 <div class="offer-list" id="offerList" aria-label="Предложения обмена"></div>
 <button class="text-button full" id="moreOffers" onclick="toggleAllOffers()">Показать все предложения</button>
 <div id="offerActionsHome"><div class="offer-actions-panel" id="offerActions" hidden>
@@ -143,7 +151,7 @@
 </section>
 </div>
 </div></div>
-<details class="disclosure" id="legacyOfferDetails"><summary>Для покупок в рублях</summary><p id="exchangeBasis" class="note"></p><button class="secondary full" id="applyOfferButton" onclick="applyOffer()" disabled>Выбрать курс для пересчёта в ₽</button><p class="note">Этот курс можно использовать в «Моих данных» → «Пересчитать цену в рубли».</p></details>
+<details class="disclosure" id="legacyOfferDetails"><summary>Цена в рублях</summary><p id="exchangeBasis" class="note"></p><button class="secondary full" id="applyOfferButton" onclick="applyOffer()" disabled>Применить курс</button><p class="note">Пересчёт цен в лари по стоимости ваших USD и выбранному курсу.</p></details>
 <p class="footnote">Перед поездкой уточните курс, комиссию и наличие валюты.</p>
 <div class="offer-detail"><p class="note" id="selectedOfferDetail"></p><div class="actions"><a id="selectedSource" target="_blank" rel="noopener noreferrer" hidden>Источник курса</a><a id="selectedBranches" target="_blank" rel="noopener noreferrer" hidden>Отделения</a></div></div>
 <div id="bankPanel" hidden>
@@ -157,16 +165,16 @@
 <details class="disclosure"><summary>О курсах и картах</summary>
 <p class="note" id="bestOfferHelp" hidden>Лучший курс — среди актуальных предложений в списке, до комиссий.</p>
 <p class="note">Обменники: публичный курс сети, не конкретной кассы. Банки: отделения, запрос на 1 000 GEL в витрине НБГ; город и наличный обмен для вашей суммы нужно уточнить. Список не охватывает весь рынок.</p>
-<p class="note">Проверяем опубликованные данные в фоне. Если проверка не удалась или курсам больше двух часов, выбор отключается. Время проверки — не время изменения курса на стороне обменника.</p>
+<p class="note">Обновляем курсы в фоне. Если проверка не удалась или данным больше двух часов, опубликованный курс нельзя применить. Просмотр остаётся доступен. Время проверки — не время изменения курса у источника.</p>
 <p class="note">USDT → наличные здесь пока не подключено. Оплату через USDT считаем отдельно, по вашему списанию или прогнозному курсу.</p>
-<p class="note">«Смотреть на карте» сразу открывает место: на Android — через карты телефона, на устройствах Apple — Apple Maps, на остальных — Google Maps. Открытие приложения или веб-версии зависит от браузера и настроек устройства. Калькулятор не запрашивает вашу геопозицию и не строит маршрут; в картах выберите «Маршрут» и «Моё местоположение». Передаётся только точка обменника или адрес поиска, без покупок и сумм. Список адресов неполный и обновляется отдельно от курсов.</p>
+<p class="note">Кнопка открывает место или поиск адреса: на Android — карты телефона, на Apple — Apple Maps, иначе — Google Maps. Откроется приложение или сайт — зависит от браузера и настроек. Маршрут стройте в картах: «Маршрут» → «Моё местоположение». Калькулятор не запрашивает геопозицию и передаёт только точку или адрес, без покупок и сумм. Список адресов неполный; он обновляется отдельно от курсов.</p>
 <button class="text-button full" onclick="refreshAllRates()">Повторить проверку курсов</button>
 </details>
 </section>
 <section id="dataView" hidden aria-labelledby="dataHeading">
 <h1 id="dataHeading" tabindex="-1">Ваши данные</h1><p class="subtitle">По какой цене вы купили валюту</p>
 <button class="secondary full" onclick="showView('purchase')">Пересчитать цену в рубли</button><p class="note">Цена с ценника или из меню — по вашим покупкам валюты. Будущий обмен — во вкладке «Калькулятор».</p>
-<p class="note">Средняя взвешена по суммам покупок за период. Расходы не уменьшают её; остаток здесь не учитывается.</p>
+<p class="note">Средняя цена считается отдельно для USD и USDT: потраченные рубли ÷ купленная валюта за период. Расходы и остаток не учитываются.</p>
 <div class="data-group"><div class="pathrow"><h2>Наличные USD</h2><b id="dataUsdAvg">—</b></div><button class="text-button" onclick="openPurchase('usd')">Добавить покупку USD</button><details><summary>История покупок USD</summary><div id="usdHistory"></div></details></div>
 <div class="data-group"><div class="pathrow"><h2>USDT</h2><b id="dataUsdtAvg">—</b></div><button class="text-button" onclick="openPurchase('usdt')">Добавить покупку USDT</button><details><summary>История покупок USDT</summary><div id="usdtHistory"></div></details></div>
 <div id="purchaseDataHost"></div>
@@ -177,7 +185,7 @@
 <button class="secondary full" onclick="openSettings()">Условия прогноза USDT</button>
 <div class="inline" id="settingsPanel">
 <h3>Проценты для прогноза</h3><p class="note">Только для режима «Ввести курс». Оба процента от базовой стоимости. В расчёте по операции повторно их не учитываем.</p>
-<div class="grid settings-grid"><div><label for="feePct">Комиссия, %</label><input id="feePct" type="text" inputmode="decimal" value="0"></div><div><label for="cashbackPct">Ожидаемый cashback, %</label><input id="cashbackPct" type="text" inputmode="decimal" value="0"></div></div>
+<div class="grid settings-grid"><div><label for="feePct">Комиссия, %</label><input id="feePct" type="text" inputmode="decimal" value="0"></div><div><label for="cashbackPct">Ожидаемый кешбэк, %</label><input id="cashbackPct" type="text" inputmode="decimal" value="0"></div></div>
 <div class="error" id="settingsError" role="alert"></div>
 <div class="actions"><button class="primary" onclick="saveSettings()">Сохранить условия</button><button class="secondary" onclick="closeInline('settingsPanel')">Закрыть</button></div>
 <details><summary>Исходные официальные курсы</summary>
@@ -202,13 +210,13 @@
 <form class="inline" id="ratePanel" onsubmit="event.preventDefault();saveRate()">
 <h3 id="rateTitle">Обновить курс</h3>
 <div class="mode-switch" id="bybitModeSwitch"><button type="button" id="actualModeButton" onclick="setRateMode('actual')">По операции</button><button type="button" id="quoteModeButton" onclick="setRateMode('quote')">Ввести курс</button></div>
-<div class="mode" id="quoteMode"><label id="rateLabel" for="rateValue">За 1 USD дают</label><div class="input"><input id="rateValue" type="text" inputmode="decimal" maxlength="18"><span class="unit">₾</span></div><p class="note" id="quoteHelp">Базовый курс до комиссии и cashback. Проценты — в «Данных».</p></div>
-<div class="mode" id="actualMode"><p class="note">Откройте последнюю оплату через USDT и перенесите две суммы. Так комиссия уже попадёт в расчёт.</p><div class="grid"><div><label for="actualGel">Сумма покупки</label><div class="input"><input id="actualGel" type="text" inputmode="decimal" maxlength="18"><span class="unit">₾</span></div></div><div><label for="actualUsdt">Списано USDT</label><div class="input"><input id="actualUsdt" type="text" inputmode="decimal" maxlength="18"><span class="unit">USDT</span></div></div></div><details id="rewardDetails"><summary>Уже получил cashback за эту покупку</summary><label for="actualReward">Подтверждённый возврат, USDT</label><input id="actualReward" type="text" inputmode="decimal" placeholder="0" maxlength="18"><p class="note">Только полученные USDT. Баллы и ожидаемый cashback не вычитаем. Если возврата нет, оставьте 0.</p></details></div>
+<div class="mode" id="quoteMode"><label id="rateLabel" for="rateValue">За 1 USD дают</label><div class="input"><input id="rateValue" type="text" inputmode="decimal" maxlength="18"><span class="unit">₾</span></div><p class="note" id="quoteHelp">Курс до комиссии и кешбэка. Проценты — в «Моих данных».</p></div>
+<div class="mode" id="actualMode"><p class="note">Откройте последнюю оплату через USDT и перенесите две суммы. Так комиссия уже попадёт в расчёт.</p><div class="grid"><div><label for="actualGel">Сумма покупки</label><div class="input"><input id="actualGel" type="text" inputmode="decimal" maxlength="18"><span class="unit">₾</span></div></div><div><label for="actualUsdt">Списано USDT</label><div class="input"><input id="actualUsdt" type="text" inputmode="decimal" maxlength="18"><span class="unit">USDT</span></div></div></div><details id="rewardDetails"><summary>Полученный кешбэк за покупку</summary><label for="actualReward">Подтверждённый возврат, USDT</label><input id="actualReward" type="text" inputmode="decimal" placeholder="0" maxlength="18"><p class="note">Только полученные USDT. Баллы и ожидаемый кешбэк не вычитаем. Если возврата нет, оставьте 0.</p></details></div>
 <p class="note" id="ratePreview" aria-live="polite"></p><div class="error" id="rateError" role="alert"></div>
 <div class="actions"><button type="submit" class="primary" id="saveRateButton">Сохранить курс</button><button type="button" class="secondary" onclick="closeInline('ratePanel')">Закрыть</button></div>
 </form>
-<script src="core.js?v=5.7-audit-1"></script>
-<script src="locations.js?v=2026-09-07-map-choice-1"></script>
-<script src="app.js?v=5.7-audit-1"></script>
+<script src="core.js?v=5.7-release-1"></script>
+<script src="locations.js?v=5.7-release-1"></script>
+<script src="app.js?v=5.7-release-1"></script>
 </body>
 </html>

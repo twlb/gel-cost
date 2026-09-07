@@ -5,9 +5,14 @@
   // A separate key also protects this history from an already-open older build.
   const STORAGE_KEY="gelcost-v5.6-personal";
   const CACHE_KEYS={official:"gelcost-v5.5-official",banks:"gelcost-v5.5-banks",offices:"gelcost-v5.6-offices"};
+  const currencyMeta={
+    USD:{displayNominal:1,sourceNominals:{banks:1,mjc:1,rico:1}},
+    EUR:{displayNominal:1,sourceNominals:{banks:1,mjc:1,rico:1}},
+    RUB:{displayNominal:100,sourceNominals:{banks:100,mjc:1,rico:100}}
+  };
   const OFFICES={
     mjc:{name:"MJC",cities:["tbilisi","rustavi"],url:"https://mjc.ge/rates",branches:"https://mjc.ge/contact"},
-    rico:{name:"Rico",cities:["tbilisi","batumi"],url:"https://www.rico.ge/en/",branches:"https://www.rico.ge/en/branches/"}
+    rico:{name:"Rico",cities:["tbilisi","batumi","kobuleti","poti","kutaisi"],url:"https://www.rico.ge/en/",branches:"https://www.rico.ge/en/branches/"}
   };
   function number(value){
     if(typeof value==="number")return Number.isFinite(value)?value:NaN;
@@ -170,29 +175,36 @@
     if(!Number.isFinite(timestamp(checked))||timestamp(checked)>now+300000)throw Error("Некорректное время проверки");
     return {...data,usdRub:number(data.usdRub),usdGel:number(data.usdGel),fetchedAt:checked};
   }
-  function bankSnapshot(data,now=Date.now()){
-    if(data?.schemaVersion!==1||data.currency!=="USD"||data.channel!=="Branch"||data.userType!=="PhysicalPerson"||data.unit!=="GEL per USD"||data.queryAmountGel!==1000)throw Error("Неизвестный формат банковских курсов");
+  function bankSnapshot(data,now=Date.now(),expectedCurrency="USD"){
+    const meta=currencyMeta[expectedCurrency];
+    if(!meta||data?.schemaVersion!==1||data.currency!==expectedCurrency||data.channel!=="Branch"||data.userType!=="PhysicalPerson"||data.unit!=="GEL per "+expectedCurrency||data.queryAmountGel!==1000)throw Error("Неизвестный формат банковских курсов");
+    if((expectedCurrency!=="USD"||data.nominal!==undefined)&&data.nominal!==1)throw Error("Неизвестный нормализованный номинал");
+    if((expectedCurrency!=="USD"||data.sourceNominal!==undefined)&&data.sourceNominal!==meta.sourceNominals.banks)throw Error("Неизвестный исходный номинал");
+    if(data.refreshFailed)throw Error("Обновление банковских курсов не подтверждено");
     if(!Number.isFinite(timestamp(data.fetchedAt))||timestamp(data.fetchedAt)>now+300000)throw Error("Некорректная дата банковских курсов");
     if(!Array.isArray(data.offers)||data.offers.length<3||data.offers.length>100)throw Error("Недостаточно банков для проверки");
     const ids=new Set();
     for(const item of data.offers){
       if(!item||typeof item.id!=="string"||!/^\d+$/.test(item.id)||ids.has(item.id)||typeof item.bank!=="string"||item.bank.length>120||!item.bank.trim())throw Error("Неизвестный банк");
       ids.add(item.id);
-      if(!(number(item.buy)>=0.5&&number(item.sell)<=10&&number(item.buy)<=number(item.sell)&&number(item.sell)/number(item.buy)<=1.3))throw Error("Некорректная пара банковских курсов");
+      if(!(number(item.buy)>=0.5/meta.displayNominal&&number(item.sell)<=10/meta.displayNominal&&number(item.buy)<=number(item.sell)&&number(item.sell)/number(item.buy)<=1.3))throw Error("Некорректная пара банковских курсов");
     }
     const sorted=data.offers.map(o=>number(o.buy)).sort((a,b)=>a-b);
     const median=sorted[Math.floor(sorted.length/2)];
     if(sorted.some(value=>Math.abs(value/median-1)>0.15))throw Error("Выброс в банковских курсах");
     return {...data,offers:data.offers.map(item=>({...item,buy:number(item.buy),sell:number(item.sell)})).sort((a,b)=>b.buy-a.buy||a.bank.localeCompare(b.bank))};
   }
-  function officeSnapshot(data,now=Date.now()){
-    if(data?.schemaVersion!==1||data.currency!=="USD"||data.unit!=="GEL per USD"||data.channel!=="Cash"||data.side!=="buy")throw Error("Неизвестный формат обменников");
+  function officeSnapshot(data,now=Date.now(),expectedCurrency="USD"){
+    const meta=currencyMeta[expectedCurrency];
+    if(!meta||data?.schemaVersion!==1||data.currency!==expectedCurrency||data.unit!=="GEL per "+expectedCurrency||data.channel!=="Cash"||data.side!=="buy")throw Error("Неизвестный формат обменников");
+    if((expectedCurrency!=="USD"||data.nominal!==undefined)&&data.nominal!==1)throw Error("Неизвестный нормализованный номинал");
     if(!fresh(data.fetchedAt,Infinity,now)||!Array.isArray(data.offers)||data.offers.length>2||!Array.isArray(data.failures)||data.failures.some(id=>!Object.hasOwn(OFFICES,id))||new Set(data.failures).size!==data.failures.length)throw Error("Некорректный набор обменников");
     const ids=new Set();
     for(const row of data.offers){
       if(!row||!Object.hasOwn(OFFICES,row.id)||ids.has(row.id)||row.nominal!==1||row.sourceUpdatedAt!==null)throw Error("Неизвестная котировка");
+      if((expectedCurrency!=="USD"||row.sourceNominal!==undefined)&&row.sourceNominal!==meta.sourceNominals[row.id])throw Error("Неизвестный исходный номинал");
       ids.add(row.id);
-      if(!(number(row.buy)>=0.5&&number(row.buy)<=number(row.sell)&&number(row.sell)<=10&&number(row.sell)/number(row.buy)<=1.3))throw Error("Некорректный курс обменника");
+      if(!(number(row.buy)>=0.5/meta.displayNominal&&number(row.buy)<=number(row.sell)&&number(row.sell)<=10/meta.displayNominal&&number(row.sell)/number(row.buy)<=1.3))throw Error("Некорректный курс обменника");
       if(!fresh(row.checkedAt,Infinity,now)||timestamp(row.checkedAt)>timestamp(data.fetchedAt))throw Error("Некорректная дата обменника");
     }
     if(Object.keys(OFFICES).some(id=>!ids.has(id)&&!data.failures.includes(id)))throw Error("Пропущен статус источника");
@@ -200,18 +212,22 @@
   }
   // Independent planning: no purchase history, official-rate fallback or USD/USDT parity.
   function exchangePlan({from,to,via="USD",mode="give",amount,quotes={},fees={}}={}){
-    const currencies=["RUB","USD","USDT","GEL"];
-    if(!currencies.includes(from)||!currencies.includes(to)||from===to||!["USD","USDT"].includes(via)||!["give","want"].includes(mode))return {ok:false,error:"direction"};
+    const currencies=["RUB","USD","USDT","GEL","EUR"];
+    const rubGel=[from,to].every(c=>c==="RUB"||c==="GEL");
+    const eurGel=[from,to].includes("EUR")&&[from,to].includes("GEL");
+    if(!currencies.includes(from)||!currencies.includes(to)||from===to||!["USD","USDT","direct"].includes(via)||!["give","want"].includes(mode)||([from,to].includes("EUR")&&!eurGel)||(via==="direct"&&!rubGel&&!eurGel))return {ok:false,error:"direction"};
     if(!(number(amount)>0&&number(amount)<=1e9))return {ok:false,error:"amount"};
-    const path=[from,to].every(c=>c==="RUB"||c==="GEL")?[from,via,to]:[from,to];
-    const definitions={RUBUSD:["rubBuy",true],USDRUB:["rubSell",false],USDGEL:["gelBuy",false],GELUSD:["gelSell",true],RUBUSDT:["rubUsdtBuy",true],USDTRUB:["rubUsdtSell",false],USDTGEL:["gelUsdtBuy",false],GELUSDT:["gelUsdtSell",true],USDUSDT:["usdUsdtBuy",true],USDTUSD:["usdUsdtSell",false]};
+    const path=rubGel&&via!=="direct"?[from,via,to]:[from,to];
+    const definitions={RUBUSD:["rubBuy",true],USDRUB:["rubSell",false],USDGEL:["gelBuy",false],GELUSD:["gelSell",true],RUBUSDT:["rubUsdtBuy",true],USDTRUB:["rubUsdtSell",false],USDTGEL:["gelUsdtBuy",false],GELUSDT:["gelUsdtSell",true],USDUSDT:["usdUsdtBuy",true],USDTUSD:["usdUsdtSell",false],RUBGEL:["gelRubBuy",false,100],GELRUB:["gelRubSell",true,100],EURGEL:["gelEurBuy",false,1],GELEUR:["gelEurSell",true,1]};
     const steps=[];
     for(let i=0;i<path.length-1;i++){
-      const key=path[i]+path[i+1],[quote,invert]=definitions[key],value=quotes[quote];
+      const key=path[i]+path[i+1],definition=definitions[key];
+      if(!definition)return {ok:false,error:"direction"};
+      const [quote,invert,nominal=1]=definition,value=quotes[quote];
       if(!(number(value)>=1e-8&&number(value)<=1e9))return {ok:false,error:"quote",step:i,quote};
       const pct=fees[key]?.pct??0,fixed=fees[key]?.fixed??0;
       if(!(number(pct)>=0&&number(pct)<100&&number(fixed)>=0&&number(fixed)<=1e9))return {ok:false,error:"fee",step:i};
-      steps.push({key,from:path[i],to:path[i+1],quote,rate:decimal.from(value),factor:invert?decimal.div(1,value):decimal.from(value),mult:decimal.sub(1,decimal.div(pct,100)),fixed:decimal.from(fixed)});
+      steps.push({key,from:path[i],to:path[i+1],quote,nominal,rate:decimal.from(value),factor:invert?decimal.div(nominal,value):decimal.div(value,nominal),mult:decimal.sub(1,decimal.div(pct,100)),fixed:decimal.from(fixed)});
     }
     let current=decimal.from(amount);
     const ordered=mode==="want"?[...steps].reverse():steps;
@@ -229,7 +245,7 @@
     }
     return {ok:true,path,steps,give:steps[0].input,receive:steps[steps.length-1].output};
   }
-  const api={DAY,STORAGE_KEY,CACHE_KEYS,OFFICES,number,positive,decimal,fresh,weighted,defaults,migrate,load,personal,actualRate,routes,exchangePlan,official,bankSnapshot,officeSnapshot};
+  const api={DAY,STORAGE_KEY,CACHE_KEYS,OFFICES,currencyMeta,number,positive,decimal,fresh,weighted,defaults,migrate,load,personal,actualRate,routes,exchangePlan,official,bankSnapshot,officeSnapshot};
   if(typeof module!=="undefined"&&module.exports)module.exports=api;
   else root.GelCore=api;
 })(typeof window!=="undefined"?window:this);

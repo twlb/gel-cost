@@ -89,6 +89,12 @@ html{scroll-padding-top:16px;scroll-padding-bottom:110px}
 .exchange-actions>button{flex:1 1 145px;min-width:0;overflow-wrap:anywhere}
 .offer-tools{display:flex;flex-wrap:wrap;justify-content:space-between;gap:4px 16px;margin:0 0 10px}
 .offer-tools .text-button{font-size:13px}
+.exchange-filters{display:grid;grid-template-columns:96px minmax(0,1fr);gap:12px;margin:0 0 20px;align-items:end}
+.exchange-filters>div{min-width:0}
+.exchange-filters select{height:48px;font-size:16px;padding:10px 8px}
+#exchangeHeading{margin-bottom:18px}
+#currencyCoverage{font-size:12px;margin-top:-2px}
+@media(max-width:370px){.exchange-filters{grid-template-columns:88px minmax(0,1fr)}}
 .offer-actions-panel{padding:0 12px 12px;border-left:3px solid var(--accent);background:#10232e}
 .offer-actions-panel .exchange-actions{margin:0;gap:8px}
 .offer-actions-panel .exchange-actions>button{flex:1 1 110px;font-size:13px;padding:10px 8px}

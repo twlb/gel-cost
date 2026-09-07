@@ -1,17 +1,23 @@
 /* Public branch addresses, separate from quotes and personal purchase data.
-   Checked against the networks' official directories on 2026-09-06.
+   Original catalog checked on 2026-09-06; new cities checked on 2026-09-07.
    Coordinates are only taken from unambiguous POI links or checked map results.
    No inferred opening hours or branch-specific exchange rates. */
 (function(root){
   "use strict";
   const checkedAt="2026-09-06T00:00:00Z";
-  const cities={tbilisi:{name:"Тбилиси",map:"Tbilisi"},batumi:{name:"Батуми",map:"Batumi"},rustavi:{name:"Рустави",map:"Rustavi"}};
+  const cities={
+    tbilisi:{name:"Тбилиси",map:"Tbilisi"},batumi:{name:"Батуми",map:"Batumi"},
+    rustavi:{name:"Рустави",map:"Rustavi"},kobuleti:{name:"Кобулети",map:"Kobuleti"},
+    poti:{name:"Поти",map:"Poti"},kutaisi:{name:"Кутаиси",map:"Kutaisi"}
+  };
   const directories={
     mjc:{source:"https://mjc.ge/contact",addresses:{
       tbilisi:["89/91 Davit Aghmashenebeli Avenue"],
       rustavi:["3 Leonidze Street"]
     }},
-    rico:{source:"https://www.rico.ge/en/branches/",addresses:{
+    rico:{source:"https://www.rico.ge/en/branches/",checkedByCity:{
+      kobuleti:"2026-09-07T00:00:00Z",poti:"2026-09-07T00:00:00Z",kutaisi:"2026-09-07T00:00:00Z"
+    },addresses:{
       tbilisi:[
         "70 Ilia Chavchavadze Avenue","12 Ilia Chavchavadze Avenue","24 Kostava Street",
         "21 Pushkin Street","9 Tamar Mepe Avenue","131a Akaki Tsereteli Avenue",
@@ -25,7 +31,13 @@
       ],
       batumi:["25 Ilia Chavchavadze Street","18 Baratashvili Street","64 Airport Highway",
         "8a Kobaladze Street","15 Severiane Achareli Street","1 Sherif Khimshiashvili Street"],
-      rustavi:["3 Megobroba Avenue","19 Kostava Street","12 Leonidze Street"]
+      rustavi:["3 Megobroba Avenue","19 Kostava Street","12 Leonidze Street"],
+      kobuleti:["3 Rustaveli Street"],
+      poti:["2 Lolua Street"],
+      // Only unambiguous street/building addresses from the official directory.
+      // The Bukia intersection and ambiguously numbered microdistrict are omitted.
+      kutaisi:["62 Ilia Chavchavadze Avenue","2 Davit Agmashenebeli Square",
+        "2 Nikea Street","50 Ilia Chavchavadze Avenue","101 A. Tsereteli Street"]
     }}
   };
   // Rico: single !3d/!4d POI in the official branch's map link, not the @ map centre.
@@ -56,7 +68,16 @@
     // https://maps.app.goo.gl/aLMEC9cvijJhmrkc8 — building 8a, not a street centre.
     "rico:batumi:8a Kobaladze Street":[41.6338869,41.6068395],
     // https://maps.app.goo.gl/dtiDK5PHHqwisTYt7 — explicit coordinate pin.
-    "rico:batumi:15 Severiane Achareli Street":[41.643279,41.654425]
+    "rico:batumi:15 Severiane Achareli Street":[41.643279,41.654425],
+    // Official directory's See Location links verified on 2026-09-07.
+    // Extracted single !3d/!4d POI, never the distinct @ viewport centre.
+    // Kobuleti's official POI (41.810982,41.78012) resolves to Javakhishvili
+    // Street in Apple Maps, not the listed Rustaveli 3. Keep address search
+    // until this mismatch is resolved; a source link alone is not verification.
+    // Poti: place 0x405db80ba5c490ef:0x70f08a67563e12ea.
+    "rico:poti:2 Lolua Street":[42.145482,41.677306],
+    // Kutaisi, Chavchavadze 62: place 0x405c8cc969988cd5:0x1e1b2afb5bc4fba8.
+    "rico:kutaisi:62 Ilia Chavchavadze Avenue":[42.2579718,42.6691528]
   };
   function branches(office,city="batumi"){
     const directory=Object.hasOwn(directories,office)?directories[office]:null;
@@ -64,7 +85,8 @@
     return Object.entries(directory.addresses).flatMap(([key,addresses])=>
       city!=="all"&&city!==key?[]:addresses.map((address,index)=>({
         id:office+":"+key+":"+index,city:key,address:cities[key].name+", "+address,
-        destination:address+", "+cities[key].map+", Georgia",source:directory.source,checkedAt,
+        destination:address+", "+cities[key].map+", Georgia",source:directory.source,
+        checkedAt:directory.checkedByCity?.[key]||checkedAt,
         point:points[office+":"+key+":"+address]||null
       })));
   }

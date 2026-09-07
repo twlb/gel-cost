@@ -10,6 +10,15 @@ const day=new Date().toISOString().slice(0,10)+'T00:00:00Z';
 const official=()=>({usdRub:88,usdGel:2.62,updatedAt:day,fetchedAt:new Date().toISOString(),sources:{usdRub:{date:day},usdGel:{date:day}}});
 const bankData=()=>({schemaVersion:1,currency:'USD',unit:'GEL per USD',channel:'Branch',userType:'PhysicalPerson',queryAmountGel:1000,fetchedAt:new Date().toISOString(),offers:[{id:'1',bank:'A',buy:2.6,sell:2.7},{id:'2',bank:'B',buy:2.61,sell:2.7},{id:'3',bank:'C',buy:2.62,sell:2.7}]});
 const officeData=()=>{const stamp=new Date().toISOString();return {schemaVersion:1,currency:'USD',unit:'GEL per USD',channel:'Cash',side:'buy',fetchedAt:stamp,offers:[{id:'mjc',buy:2.613,sell:2.616,nominal:1,checkedAt:stamp,sourceUpdatedAt:null},{id:'rico',buy:2.61,sell:2.615,nominal:1,checkedAt:stamp,sourceUpdatedAt:null}],failures:[]};};
+const euroBankData=()=>({...bankData(),currency:'EUR',unit:'GEL per EUR',nominal:1,sourceNominal:1,offers:[{id:'1',bank:'EUR A',buy:2.99,sell:3.1},{id:'2',bank:'EUR B',buy:3,sell:3.1},{id:'3',bank:'EUR C',buy:3.01,sell:3.1}]});
+const currencyOfficeData=currency=>{
+  const stamp=new Date().toISOString(),rub=currency==='RUB';
+  return {schemaVersion:1,currency,unit:'GEL per '+currency,nominal:1,channel:'Cash',side:'buy',fetchedAt:stamp,offers:[
+    {id:'mjc',buy:rub?0.033:3.02,sell:rub?0.034:3.07,nominal:1,sourceNominal:1,checkedAt:stamp,sourceUpdatedAt:null},
+    {id:'rico',buy:rub?0.0325:3.01,sell:rub?0.0335:3.06,nominal:1,sourceNominal:rub?100:1,checkedAt:stamp,sourceUpdatedAt:null}
+  ],failures:[]};
+};
+const allSourceData=()=>({'./rates.json':official(),'./market-rates.json':bankData(),'./exchange-rates.json':officeData(),'./market-rates-eur.json':euroBankData(),'./exchange-rates-eur.json':currencyOfficeData('EUR'),'./exchange-rates-rub.json':currencyOfficeData('RUB')});
 class Element{
   constructor(){this.dataset={};this.value='';this.textContent='';this.hidden=false;this.innerHTML='';this.children=[];this.events={};this.attrs={};this.classes=new Set();this.classList={contains:k=>this.classes.has(k),add:k=>this.classes.add(k),remove:k=>this.classes.delete(k),toggle:(k,on)=>{if(on===undefined)on=!this.classes.has(k);on?this.classes.add(k):this.classes.delete(k);}};}
   setAttribute(k,v){this.attrs[k]=v;}
@@ -41,8 +50,9 @@ async function app(saved={},blocked=false,options={}){
   const html=fs.readFileSync(path.join(root,'index.html'),'utf8');
   const els={};for(const id of html.matchAll(/\bid="([^"]+)"/g)){els[id[1]]=new Element();els[id[1]].id=id[1];}
   // Existing calculation fixtures explicitly use Tbilisi; default-city tests use the HTML selection.
-  els.quickGel.value='100';els.exchangeAmount.value='100';els.exchangeCity.value=options.city===null?html.match(/<option value="([^"]+)" selected>/)[1]:options.city||'tbilisi';
-  const responses={'./rates.json':official(),'./market-rates.json':bankData(),'./exchange-rates.json':officeData()};
+  const citySelect=html.match(/<select\b[^>]*\bid="exchangeCity"[^>]*>([\s\S]*?)<\/select>/)[1];
+  els.quickGel.value='100';els.exchangeAmount.value='100';els.exchangeCurrency.value='USD';els.exchangeCity.value=options.city===null?citySelect.match(/<option value="([^"]+)" selected>/)[1]:options.city||'tbilisi';
+  const responses={...allSourceData(),...options.responses};
   const shared=options.shared||sharedBrowser(saved);
   const timers=new Map();let tid=0,now=Date.now();const writes=shared.writes,downloads=[],requests=[];
   const events={},documentEvents={};
@@ -58,9 +68,9 @@ async function app(saved={},blocked=false,options={}){
     console,Intl,Date:Clock,Number,Math,JSON,Promise,AbortController,Blob,URL,Option:class{constructor(text,value){this.text=text;this.value=value;}},
     localStorage:store,navigator:{locks:options.noLocks?undefined:shared.locks,geolocation:options.geolocation,userAgent:options.userAgent||''},
     addEventListener:(name,fn)=>events[name]=fn,
-    document:{getElementById:id=>els[id],hidden:false,addEventListener:(name,fn)=>documentEvents[name]=fn,createElement:tag=>{const e=new Element();if(tag==='a')downloads.push(e);return e;},querySelectorAll:()=>['purchasePanel','ratePanel','settingsPanel','usdHistory','usdtHistory'].map(id=>els[id]).filter(e=>e.classes.has('show'))},
+    document:{getElementById:id=>els[id],hidden:false,addEventListener:(name,fn)=>documentEvents[name]=fn,createElement:tag=>{const e=new Element();if(tag==='a')downloads.push(e);return e;},querySelectorAll:()=>['purchasePanel','ratePanel','exchangeManualPanel','settingsPanel','usdHistory','usdtHistory'].map(id=>els[id]).filter(e=>e.classes.has('show'))},
     setTimeout:(fn,ms)=>{const id=++tid;timers.set(id,{fn,ms});return id;},clearTimeout:id=>timers.delete(id),setInterval:(fn,ms)=>timers.set(++tid,{fn,ms,interval:true}),
-    fetch:async(url,options)=>{requests.push(url);if(responses[url] instanceof Error)throw responses[url];if(responses[url]==='hang')return new Promise((resolve,reject)=>options.signal.addEventListener('abort',()=>reject(Error('aborted'))));const data=await responses[url];return {ok:Boolean(data),json:async()=>structuredClone(data)};},
+    fetch:async(url,options)=>{requests.push(url);if(responses[url] instanceof Error)throw responses[url];if(responses[url]==='hang')return new Promise((resolve,reject)=>options.signal.addEventListener('abort',()=>reject(Error('aborted'))));const data=await responses[url];return {ok:Boolean(data),json:async()=>{if(data==='malformed-json')throw new SyntaxError('Intentional malformed JSON response');return structuredClone(data);}};},
   });
   ctx.window=ctx;
   vm.runInContext(fs.readFileSync(path.join(root,'core.js'),'utf8'),ctx);
@@ -185,7 +195,7 @@ test('stale warnings remain visible outside help and a manual override removes s
   a.els.planHelp.open=false;a.advance(3*3600000);a.run('calc()');
   assert.match(a.els.planSource0.textContent,/свежесть не подтверждена/);assert.equal(a.els.planSource0.classes.has('stale'),true);
   assert.equal(a.els.planNext.textContent,'Введите курс на шаге 1.');
-  a.els.planQuote0.value='2,6';a.run('editPlanQuote(0)');assert.equal(a.els.planSource0.textContent,'Ваш курс');
+  a.els.planQuote0.value='2,6';a.run('editPlanQuote(0)');assert.equal(a.els.planSource0.textContent,'Свой курс');
   assert.equal(a.els.planSource0.classes.has('stale'),false);assert.equal(a.els.planResult.textContent,'≈ 260,00 ₾');
 });
 test('long amount typography also fits price and exchange fields without altering input',async()=>{
@@ -223,7 +233,7 @@ test('saving a rate before the purchase asks for the correct currency and respec
   assert.match(a.els.actionStatus.textContent,/Введите корректную цену в лари/);
   assert.equal(a.els.rublesResult.textContent,'— ₽');
   a.run('showView("exchange")');a.els.exchangeAmount.value='';await cash(a,2.7);
-  assert.equal(a.els.actionStatus.textContent,'Мой курс сохранён. Введите сумму долларов для расчёта.');
+  assert.equal(a.els.actionStatus.textContent,'Свой курс сохранён. Введите сумму обмена.');
   a.run('showView("data")');await purchase(a,'usd',9000,100);
   assert.equal(a.els.actionStatus.textContent,'Покупка сохранена.');
 });
@@ -407,10 +417,10 @@ test('branch catalog and map pins stay source-bound and disclose their date',()=
   const rows=[...L.branches('mjc','all'),...L.branches('rico','all')];
   assert.equal(new Set(rows.map(row=>row.id)).size,rows.length);
   for(const row of rows){
-    assert.equal(row.checkedAt,'2026-09-06T00:00:00Z');assert.match(row.destination,/, (Tbilisi|Batumi|Rustavi), Georgia$/);
+    assert.equal(row.checkedAt,['kobuleti','poti','kutaisi'].includes(row.city)?'2026-09-07T00:00:00Z':'2026-09-06T00:00:00Z');assert.match(row.destination,/, (Tbilisi|Batumi|Rustavi|Kobuleti|Poti|Kutaisi), Georgia$/);
     assert.ok(['https://mjc.ge/contact','https://www.rico.ge/en/branches/'].includes(row.source));
     const links=L.branchLinks(row);
-    if(row.point){assert.equal(row.point.length,2);assert.ok(row.point[0]>41&&row.point[0]<42);assert.ok(row.point[1]>41&&row.point[1]<46);}
+    if(row.point){assert.equal(row.point.length,2);assert.ok(row.point[0]>41&&row.point[0]<43);assert.ok(row.point[1]>41&&row.point[1]<46);}
     for(const [provider,parameter] of [['google','query'],['apple',row.point?'coordinate':'q'],['yandex',row.point?'whatshere[point]':'text']]){
       const url=new URL(links[provider]);assert.equal(url.protocol,'https:');
       assert.equal(url.searchParams.get(parameter),row.point?(provider==='yandex'?[row.point[1],row.point[0]]:row.point).join(','):row.destination);
@@ -768,32 +778,32 @@ test('lock acquisition is bounded and duplicate clicks do not duplicate a purcha
   assert.equal(a.state().usdPurchases.length,1);assert.equal(shared.writes[C.STORAGE_KEY],undefined);
   assert.match(a.els.storageNotice.textContent,/Не удалось сохранить/);
 });
-test('regression: active tab fetches both sources every five minutes without writing purchases',async()=>{
+test('regression: active tab fetches all six sources every five minutes without writing purchases',async()=>{
   const a=await app();await purchase(a,'usd',8800,100);a.els.bankChoice.value='2';await a.run('applyBank()');
   const saved=a.writes[C.STORAGE_KEY],timer=[...a.timers.values()].find(t=>t.interval);
   for(let minute=1;minute<5;minute++){a.advance(60000);await timer.fn();}
-  assert.equal(a.requests.length,3);
+  assert.equal(a.requests.length,6);assert.deepEqual([...a.requests].sort(),Object.keys(allSourceData()).sort());
   a.advance(60000);
   for(const data of Object.values(a.responses))data.fetchedAt=new Date(a.run('Date.now()')).toISOString();
   a.responses['./market-rates.json'].offers[1].buy=2.63;
-  await timer.fn();assert.equal(a.requests.length,6);assert.equal(a.state().cashGelRate,2.63);
+  await timer.fn();assert.equal(a.requests.length,12);assert.equal(a.state().cashGelRate,2.63);
   assert.equal(a.writes[C.STORAGE_KEY],saved);
-  await timer.fn();assert.equal(a.requests.length,6);
-  a.advance(5*60000);await timer.fn();assert.equal(a.requests.length,9);
+  await timer.fn();assert.equal(a.requests.length,12);
+  a.advance(5*60000);await timer.fn();assert.equal(a.requests.length,18);
 });
 test('hidden tab skips polling, then refreshes on return without repeated requests',async()=>{
   const a=await app(),timer=[...a.timers.values()].find(t=>t.interval);
-  a.run('document.hidden=true');a.advance(10*60000);await timer.fn();assert.equal(a.requests.length,3);
-  a.run('document.hidden=false');a.documentEvents.visibilitychange();await a.settle();assert.equal(a.requests.length,6);
-  a.documentEvents.visibilitychange();await a.settle();assert.equal(a.requests.length,6);
+  a.run('document.hidden=true');a.advance(10*60000);await timer.fn();assert.equal(a.requests.length,6);
+  a.run('document.hidden=false');a.documentEvents.visibilitychange();await a.settle();assert.equal(a.requests.length,12);
+  a.documentEvents.visibilitychange();await a.settle();assert.equal(a.requests.length,12);
 });
 test('network recovery retries immediately and busy requests are not duplicated',async()=>{
-  const a=await app();a.responses['./rates.json']='hang';a.responses['./market-rates.json']='hang';a.responses['./exchange-rates.json']='hang';
-  const pending=a.events.online();await a.settle();assert.equal(a.requests.length,6);
-  a.advance(5*60000);await [...a.timers.values()].find(t=>t.interval).fn();assert.equal(a.requests.length,6);
+  const a=await app();for(const url of Object.keys(a.responses))a.responses[url]='hang';
+  const pending=a.events.online();await a.settle();assert.equal(a.requests.length,12);
+  a.advance(5*60000);await [...a.timers.values()].find(t=>t.interval).fn();assert.equal(a.requests.length,12);
   for(const timer of [...a.timers.values()].filter(t=>t.ms===10000))timer.fn();await pending;
-  a.responses['./rates.json']=official();a.responses['./market-rates.json']=bankData();a.responses['./exchange-rates.json']=officeData();
-  await a.events.online();assert.equal(a.requests.length,9);assert.equal(a.els.marketStatus.textContent,'ориентир');
+  Object.assign(a.responses,allSourceData());
+  await a.events.online();assert.equal(a.requests.length,18);assert.equal(a.els.marketStatus.textContent,'ориентир');
 });
 test('export waits for pending personal saves and includes the latest purchase',async()=>{
   const a=await app();
@@ -935,7 +945,7 @@ test('manual exchange previews and saves without a RUB purchase or a view change
   assert.equal(a.state().cashGelRate,null,'the preview does not save a draft');
   await a.run('saveRate()');assert.equal(a.run('currentView'),'exchange');
   assert.equal(a.els.exchangeReceive.textContent,'≈ 300,00 ₾');
-  assert.equal(a.els.exchangeResultLabel.textContent,'Мой курс · 3,0000 ₾/$');
+  assert.equal(a.els.exchangeResultLabel.textContent,'Свой курс · 1 USD = 3,0000 ₾');
   assert.equal(a.els.selectedSource.hidden,true);assert.equal(a.els.selectedBranches.hidden,true);
   assert.equal(a.els.applyOfferButton.disabled,false);
   assert.equal(a.run('offersForCity().filter(row=>row.kind==="manual").length'),1);
@@ -1091,7 +1101,7 @@ test('imported stale personal quote retains its date and caution across refresh 
   const saved=a.writes[C.STORAGE_KEY],stamp=a.state().cashGelUpdated;
   a.run('showView("exchange");selectOffer("manual");useOfferForPlan()');
   assert.equal(a.run('plan.quoteMeta.gelBuy.checkedAt'),stamp);
-  assert.match(a.els.planSource0.textContent,/Мой сохранённый курс.*нужна проверка/);
+  assert.match(a.els.planSource0.textContent,/Свой сохранённый курс.*нужна проверка/);
   assert.ok(a.els.planSource0.textContent.includes(a.run(`checkedText(${stamp})`)));
   assert.equal(a.els.planSource0.classes.has('stale'),true);
   assert.equal(a.els.planCaution.hidden,false);
@@ -1117,7 +1127,7 @@ test('editing another leg keeps stale personal provenance; editing that exact qu
   assert.equal(a.els.planCaution.hidden,false);
   assert.match(a.els.planSource1.textContent,/нужна проверка/);
   a.els.planQuote1.value='2,65';a.run('editPlanQuote(1)');
-  assert.equal(a.els.planSource1.textContent,'Ваш курс');
+  assert.equal(a.els.planSource1.textContent,'Свой курс');
   assert.equal(a.els.planSource1.classes.has('stale'),false);
   assert.equal(a.els.planCaution.hidden,true);
   assert.equal(a.run('Object.hasOwn(plan.quoteMeta,"gelBuy")'),false);
@@ -1127,7 +1137,7 @@ test('editing another leg keeps stale personal provenance; editing that exact qu
 
 test('fresh imported personal quote becomes visibly stale when its own timestamp expires',async()=>{
   const a=await app();await cash(a,2.6);a.run('selectOffer("manual");useOfferForPlan()');
-  assert.match(a.els.planSource0.textContent,/Мой сохранённый курс/);
+  assert.match(a.els.planSource0.textContent,/Свой сохранённый курс/);
   assert.equal(a.els.planCaution.hidden,true);
   a.advance(2*C.DAY);a.run('calc()');
   assert.equal(a.els.planCaution.hidden,false);assert.match(a.els.planSource0.textContent,/нужна проверка/);
@@ -1277,7 +1287,7 @@ test('visible offer refresh action remains busy until both offer sources finish'
   assert.equal(a.els.refreshOffersButton.disabled,false);assert.equal(a.els.refreshOffersButton.textContent,'Обновить курсы');
   a.responses['./market-rates.json']=new Error('offline');a.responses['./exchange-rates.json']=new Error('offline');
   await a.run('refreshAllRates()');assert.equal(a.els.refreshOffersButton.disabled,false);
-  assert.equal(a.els.offerStatus.classes.has('stale'),true);assert.match(a.els.offerStatus.textContent,/Нет актуальных предложений/);
+  assert.equal(a.els.offerStatus.classes.has('stale'),true);assert.match(a.els.offerStatus.textContent,/Нет свежих курсов банков и обменников/);
 });
 
 test('an open untouched settings form reflects external updates before it can overwrite them',async()=>{
@@ -1346,4 +1356,391 @@ test('saving a clean settings form is a no-op even before an external storage ev
   assert.match(a.els.actionStatus.textContent,/не изменились/);
   a.els.feePct.value='4';await a.run('saveSettings()');
   assert.equal(JSON.parse(shared.writes[C.STORAGE_KEY]).feePct,4,'An intentional dirty edit still saves');
+});
+
+// V5.7 independent cash currencies: fixtures are normalized GEL per one unit.
+const manualCurrencyKey=currency=>'gelcost-v5.7-manual-'+currency;
+function saveCurrencyManual(a,currency,value){
+  a.run(`changeExchangeCurrency('${currency}');openExchangeManual()`);
+  a.els.exchangeManualValue.value=value;a.els.exchangeManualValue.events.input();
+  a.run('saveExchangeManual()');
+}
+
+test('V5.7 all six sources load separately and currency UI preserves legacy USD by default',async()=>{
+  const a=await app({},false,{city:null});
+  assert.equal(a.els.exchangeCurrency.value,'USD');assert.equal(a.els.exchangeCity.value,'batumi');
+  assert.equal(a.run('offersForCity().every(row=>row.currency==="USD")'),true);
+  assert.deepEqual([...a.requests].sort(),Object.keys(allSourceData()).sort());
+  for(const currency of ['EUR','RUB']){
+    a.run(`changeExchangeCurrency('${currency}')`);
+    assert.equal(a.run(`offersForCity().every(row=>row.currency==='${currency}')`),true);
+    assert.equal(a.run('offersForCity().filter(row=>row.kind==="office").length'),1,'Only Rico in Batumi');
+    assert.equal(a.els.legacyOfferDetails.hidden,true);
+  }
+  assert.equal(a.run('offersForCity().some(row=>row.kind==="bank")'),false,'RUB must not borrow another currency bank feed');
+  assert.match(a.els.currencyCoverage.textContent,/Банковские курсы пока не подключены/);
+  a.run('changeExchangeCurrency("USD")');assert.equal(a.els.legacyOfferDetails.hidden,false);
+  assert.equal(a.writes[C.STORAGE_KEY],undefined);
+});
+
+test('V5.7 switching currencies retains independent amounts, selection and unsaved raw drafts',async()=>{
+  const a=await app();a.els.exchangeAmount.value='123,45';
+  a.run('selectOffer("office:rico");openExchangeManual()');a.els.rateValue.value='2,7';
+  a.run('changeExchangeCurrency("EUR")');a.els.exchangeAmount.value='234,56';
+  a.run('selectOffer("office:EUR:rico");openExchangeManual()');a.els.exchangeManualValue.value='3,';
+  a.run('changeExchangeCurrency("RUB")');a.els.exchangeAmount.value='76543,21';
+  a.run('openExchangeManual()');a.els.exchangeManualValue.value='4,125';
+  a.run('changeExchangeCurrency("EUR");openExchangeManual()');
+  assert.equal(a.els.exchangeAmount.value,'234,56');assert.equal(a.els.exchangeManualValue.value,'3,');
+  assert.equal(a.run('selectedOffer'),'office:EUR:rico');
+  a.run('changeExchangeCurrency("USD");openExchangeManual()');
+  assert.equal(a.els.exchangeAmount.value,'123,45');assert.equal(a.els.rateValue.value,'2,7');assert.equal(a.run('selectedOffer'),'office:rico');
+  a.run('changeExchangeCurrency("RUB");openExchangeManual()');
+  assert.equal(a.els.exchangeAmount.value,'76543,21');assert.equal(a.els.exchangeManualValue.value,'4,125');
+  assert.match(a.els.exchangeManualLabel.textContent,/100 ₽/);
+  assert.equal(a.writes[manualCurrencyKey('EUR')],undefined);assert.equal(a.writes[manualCurrencyKey('RUB')],undefined);
+  assert.equal(a.writes[C.STORAGE_KEY],undefined);
+});
+
+test('V5.7 new manual rates save independently and cannot change USD or USDT personal history',async()=>{
+  const a=await app();await purchase(a,'usd',8800,100);await purchase(a,'usdt',8655,100);await cash(a,2.62);
+  a.run('showView("exchange")');const personal=a.writes[C.STORAGE_KEY];
+  saveCurrencyManual(a,'EUR','3,25');
+  assert.equal(a.els.exchangeReceive.textContent,'≈ 325,00 ₾');
+  assert.equal(a.run('selectedOffer'),'manual:EUR');
+  const euro=a.writes[manualCurrencyKey('EUR')];assert.equal(JSON.parse(euro).rate,'3.25');
+  a.run('changeExchangeCurrency("RUB")');a.els.exchangeAmount.value='100000';saveCurrencyManual(a,'RUB','3,5');
+  assert.equal(a.els.exchangeReceive.textContent,'≈ 3\u00a0500,00 ₾');
+  assert.equal(JSON.parse(a.writes[manualCurrencyKey('RUB')]).rate,'0.035');
+  assert.equal(a.writes[manualCurrencyKey('EUR')],euro);
+  assert.equal(a.writes[C.STORAGE_KEY],personal);
+  a.run('applyOffer()');assert.equal(a.writes[C.STORAGE_KEY],personal,'Non-USD apply cannot alter old personal cash basis');
+  a.run('changeExchangeCurrency("USD")');assert.equal(a.state().cashGelRate,2.62);
+  assert.equal(a.els.exchangeReceive.textContent,'≈ 262,00 ₾');
+});
+
+test('V5.7 saved manual currency selection restores on reload instead of silently choosing a public quote',async()=>{
+  const a=await app();saveCurrencyManual(a,'EUR','3,25');saveCurrencyManual(a,'RUB','3,5');
+  const b=await app(a.writes);
+  for(const [currency,result] of [['EUR','≈ 325,00 ₾'],['RUB','≈ 350,00 ₾']]){
+    b.run(`changeExchangeCurrency('${currency}')`);
+    assert.equal(b.run('selectedOffer'),'manual:'+currency,`${currency}: explicitly saved personal quote should remain selected`);
+    assert.equal(b.els.exchangeReceive.textContent,result);
+  }
+  assert.equal(b.writes[manualCurrencyKey('EUR')],a.writes[manualCurrencyKey('EUR')]);
+  assert.equal(b.writes[manualCurrencyKey('RUB')],a.writes[manualCurrencyKey('RUB')]);
+});
+
+test('V5.7 manual forms preserve errors and input on invalid, blocked or corrupt storage',async()=>{
+  const a=await app();saveCurrencyManual(a,'EUR','3,25');const saved=a.writes[manualCurrencyKey('EUR')];
+  a.run('openExchangeManual()');
+  for(const input of ['', 'bad', '-1', '0', '1000000001']){
+    a.els.exchangeManualValue.value=input;a.run('saveExchangeManual()');
+    assert.equal(a.writes[manualCurrencyKey('EUR')],saved);assert.equal(a.els.exchangeManualPanel.classes.has('show'),true);
+    assert.equal(a.els.exchangeManualError.classes.has('show'),true);assert.equal(a.els.exchangeManualValue.value,input);
+  }
+  a.shared.failWrites=true;a.els.exchangeManualValue.value='3,3';a.run('saveExchangeManual()');
+  assert.equal(a.writes[manualCurrencyKey('EUR')],saved);assert.equal(a.els.exchangeManualValue.value,'3,3');
+  assert.match(a.els.exchangeManualError.textContent,/не сохранён/);
+  const b=await app({[manualCurrencyKey('RUB')]:'broken'});
+  saveCurrencyManual(b,'RUB','3,25');assert.equal(b.writes[manualCurrencyKey('RUB')],'broken');
+  assert.match(b.els.exchangeManualError.textContent,/не перезаписан/);
+  assert.equal(b.els.exchangeManualPanel.classes.has('show'),true);
+});
+
+test('V5.7 manual forms close around maps and navigation but retain their currency draft',async()=>{
+  const a=await app({},false,{city:'batumi'});
+  a.run('changeExchangeCurrency("EUR");selectOffer("office:EUR:rico");openExchangeManual()');
+  a.els.exchangeManualValue.value='3,14159';a.run('toggleOfferLocation()');
+  assert.equal(a.els.exchangeManualPanel.classes.has('show'),false);assert.equal(a.els.offerLocationPanel.hidden,false);
+  a.run('openExchangeManual()');assert.equal(a.els.offerLocationPanel.hidden,true);assert.equal(a.els.exchangeManualValue.value,'3,14159');
+  a.run('showView("calculator");showView("exchange");openExchangeManual()');
+  assert.equal(a.els.exchangeManualValue.value,'3,14159');
+  a.els.exchangeCity.value='kobuleti';a.els.exchangeCity.events.change();
+  assert.equal(a.els.exchangeManualValue.value,'3,14159');assert.equal(a.writes[manualCurrencyKey('EUR')],undefined);
+});
+
+test('V5.7 EUR source failure is isolated from RUB and USD, retains dated quotes, and blocks application',async()=>{
+  const a=await app();a.run('changeExchangeCurrency("EUR");selectOffer("office:EUR:rico")');
+  const before=a.run('JSON.stringify(plan)');
+  a.responses['./market-rates-eur.json']=new Error('offline');a.responses['./exchange-rates-eur.json']=new Error('offline');
+  await a.run('refreshAllRates()');
+  assert.equal(a.els.planOfferButton.disabled,true);assert.match(a.els.offerStatus.textContent,/Нет свежих курсов банков и обменников/);
+  assert.equal(a.run('offersForCity().filter(row=>row.fresh).length'),0);
+  a.run('useOfferForPlan()');assert.equal(a.run('JSON.stringify(plan)'),before);
+  a.run('toggleOfferLocation()');assert.equal(a.els.offerLocationPanel.hidden,false,'An old quote can still expose an explicitly dated address');
+  for(const currency of ['RUB','USD']){
+    a.run(`changeExchangeCurrency('${currency}')`);assert.ok(a.run('offersForCity().filter(row=>row.fresh).length')>0);
+    assert.equal(a.els.planOfferButton.disabled,false);
+  }
+  a.run('changeExchangeCurrency("EUR")');Object.assign(a.responses,allSourceData());
+  await a.run('refreshAllRates()');assert.equal(a.els.planOfferButton.disabled,false);assert.equal(a.els.exchangeCurrency.value,'EUR');
+});
+
+test('V5.7 stale cached EUR remains dated on offline reload and never borrows fresh USD rates',async()=>{
+  const stale=currencyOfficeData('EUR'),stamp=new Date(Date.now()-3*3600000).toISOString();
+  stale.fetchedAt=stamp;for(const row of stale.offers)row.checkedAt=stamp;
+  const a=await app({'gelcost-v5.7-offices-EUR':JSON.stringify(stale)},false,{responses:{'./exchange-rates-eur.json':new Error('offline'),'./market-rates-eur.json':new Error('offline')}});
+  a.run('changeExchangeCurrency("EUR");selectOffer("office:EUR:rico")');
+  assert.equal(a.els.planOfferButton.disabled,true);assert.match(a.els.exchangeResultLabel.textContent,/Нужна проверка/);
+  assert.equal(a.run('offersForCity().every(row=>row.currency==="EUR"&&!row.fresh)'),true);
+  assert.equal(a.run('offersForCity().find(row=>row.id==="rico").checkedAt'),stamp);
+  a.run('changeExchangeCurrency("USD")');assert.equal(a.els.planOfferButton.disabled,false);
+});
+
+test('V5.7 mismatched currencies, missing nominal and malformed responses cannot enter another feed',async()=>{
+  for(const bad of [officeData(),{...currencyOfficeData('EUR'),nominal:100},'malformed-json']){
+    const a=await app({},false,{responses:{'./exchange-rates-eur.json':bad,'./market-rates-eur.json':new Error('offline')}});
+    a.run('changeExchangeCurrency("EUR")');assert.equal(a.run('offersForCity().length'),0);
+    assert.equal(a.els.exchangeReceive.textContent,'— ₾');assert.equal(a.els.planOfferButton.disabled,true);
+  }
+  const rub=currencyOfficeData('RUB');delete rub.offers[1].sourceNominal;
+  const b=await app({},false,{responses:{'./exchange-rates-rub.json':rub}});
+  b.run('changeExchangeCurrency("RUB")');assert.equal(b.run('offersForCity().length'),0);
+  b.run('changeExchangeCurrency("EUR")');assert.ok(b.run('offersForCity().length')>0);
+});
+
+test('V5.7 new-city addresses stay city-bound for every currency while bank searches remain unscoped',async()=>{
+  const a=await app(),L=require('../locations.js');
+  for(const currency of ['USD','EUR','RUB'])for(const city of ['batumi','kobuleti','poti','kutaisi','tbilisi']){
+    a.run(`changeExchangeCurrency('${currency}')`);a.els.exchangeCity.value=city;a.els.exchangeCity.events.change();
+    const key=currency==='USD'?'office:rico':'office:'+currency+':rico';
+    a.run(`selectOffer('${key}');toggleOfferLocation()`);
+    assert.equal(a.els.branchAddress.textContent,L.branches('rico',city)[0].address);
+    assert.equal(a.els.openDeviceMap.href,L.branchLinks(L.branches('rico',city)[0]).google);
+    if(city!=='tbilisi')assert.equal(a.run('offersForCity().some(row=>row.id==="mjc")'),false);
+    assert.equal(a.els.offerLocationPanel.hidden,false);
+  }
+  a.run('changeExchangeCurrency("EUR");selectOffer("bank:EUR:1");toggleOfferLocation()');
+  assert.match(a.els.branchNotice.textContent,/не подтверждённая касса/);
+  assert.equal(new URL(a.els.openDeviceMap.href).searchParams.get('query'),'EUR A bank branches, Tbilisi, Georgia');
+  assert.equal(a.writes[C.STORAGE_KEY],undefined);
+});
+
+test('V5.7 EUR public quote passes to a direct planner and reverse uses a separate sell quote with fees',async()=>{
+  const a=await app();a.run('changeExchangeCurrency("EUR");selectOffer("office:EUR:rico");useOfferForPlan()');
+  assert.equal(a.els.planFrom.value,'EUR');assert.equal(a.els.planTo.value,'GEL');assert.equal(a.els.planStep1.hidden,true);
+  assert.equal(a.els.planQuote0.value,'3,0100');assert.equal(a.els.planResult.textContent,'≈ 301,00 ₾');
+  assert.match(a.els.planSource0.textContent,/покупает EUR/);
+  a.run('reversePlan()');a.els.planAmount.value='306';a.run('renderPlanner()');
+  assert.equal(a.els.planQuote0.value,'3,0600');assert.equal(a.els.planResult.textContent,'≈ 100,00 EUR');
+  a.els.planFixed0.value='6';a.els.planPct0.value='10';a.run('editPlanFee(0)');
+  assert.equal(a.els.planResult.textContent,'≈ 88,24 EUR');assert.match(a.els.planFixedLabel0.textContent,/₾/);
+  a.run('setPlanMode("want")');a.els.planAmount.value='100';a.run('renderPlanner()');
+  assert.equal(a.els.planResult.textContent,'≈ 346,00 ₾');
+  assert.equal(a.writes[C.STORAGE_KEY],undefined);
+});
+
+test('V5.7 RUB public quote is normalized once, shown per100, transferred directly and reversed with its sell side',async()=>{
+  const a=await app();a.run('changeExchangeCurrency("RUB");selectOffer("office:RUB:rico")');a.els.exchangeAmount.value='100000';a.run('renderOffers()');
+  assert.equal(a.els.exchangeReceive.textContent,'≈ 3\u00a0250,00 ₾');
+  const row=a.els.offerList.children.find(node=>node.dataset.offerKey==='office:RUB:rico');
+  assert.match(row.children[1].textContent,/100 ₽ = 3,2500 ₾/);
+  a.run('useOfferForPlan()');assert.equal(a.els.planFrom.value,'RUB');assert.equal(a.els.planVia.value,'direct');
+  assert.equal(a.els.planStep1.hidden,true);assert.match(a.els.planQuoteLabel0.textContent,/100 ₽/);
+  assert.equal(a.els.planQuote0.value,'3,2500');assert.equal(a.els.planResult.textContent,'≈ 3\u00a0250,00 ₾');
+  a.els.planFixed0.value='1000';a.els.planPct0.value='1';a.run('editPlanFee(0)');
+  assert.equal(a.els.planResult.textContent,'≈ 3\u00a0185,33 ₾');
+  a.run('reversePlan()');a.els.planAmount.value='3350';a.run('renderPlanner()');
+  assert.equal(a.els.planQuote0.value,'3,3500');assert.equal(a.els.planResult.textContent,'≈ 100\u00a0000,00 ₽');
+  assert.equal(a.els.planFixed0.value,'0');assert.equal(a.els.planPct0.value,'0','Forward fees must not become reverse fees');
+  a.run('reversePlan()');assert.equal(a.els.planFixed0.value,'1000');assert.equal(a.els.planPct0.value,'1');
+});
+
+test('V5.7 RUB per100 presentation does not invent binary digits on reopening or source transfer',async()=>{
+  const a=await app();saveCurrencyManual(a,'RUB','3,3');a.run('openExchangeManual()');
+  assert.equal(a.els.exchangeManualValue.value,'3,3000');
+  a.run('closeInline("exchangeManualPanel");selectOffer("office:RUB:mjc");useOfferForPlan()');
+  assert.equal(a.els.planQuote0.value,'3,3000');assert.equal(a.els.planResult.textContent,'≈ 330,00 ₾');
+});
+
+test('V5.7 imported new manual quotes retain provenance, do not become a reverse quote, and leave old purchases alone',async()=>{
+  const a=await app();saveCurrencyManual(a,'RUB','3,25');
+  const key=manualCurrencyKey('RUB'),saved=a.writes[key];a.advance(2*86400000);
+  a.run('renderOffers();useOfferForPlan()');assert.match(a.els.planSource0.textContent,/нужна проверка/);
+  assert.equal(a.els.planResult.textContent,'≈ 325,00 ₾');assert.equal(a.els.planCaution.hidden,false);
+  a.run('reversePlan()');assert.equal(a.els.planQuote0.value,'');assert.equal(a.els.planResult.textContent,'— ₽');
+  a.els.planQuote0.value='3,35';a.run('editPlanQuote(0)');a.run('reversePlan()');
+  assert.equal(a.els.planQuote0.value,'3,2500');assert.match(a.els.planSource0.textContent,/нужна проверка/);
+  assert.equal(a.writes[key],saved);assert.equal(a.writes[C.STORAGE_KEY],undefined);
+});
+
+test('V5.7 planner keeps its source currency and city when exchange filters change, then returns to the correct map',async()=>{
+  const a=await app({},false,{city:'kobuleti'});
+  a.run('changeExchangeCurrency("EUR");selectOffer("office:EUR:rico");useOfferForPlan()');
+  const result=a.els.planResult.textContent;
+  a.run('changeExchangeCurrency("USD")');a.els.exchangeCity.value='poti';a.els.exchangeCity.events.change();
+  a.run('showView("calculator")');assert.equal(a.els.planResult.textContent,result);assert.equal(a.els.planQuote0.value,'3,0100');
+  a.run('showPlanLocation()');assert.equal(a.els.exchangeCurrency.value,'EUR');assert.equal(a.els.exchangeCity.value,'kobuleti');
+  assert.equal(a.els.branchAddress.textContent,'Кобулети, 3 Rustaveli Street');assert.equal(a.run('selectedOffer'),'office:EUR:rico');
+  assert.equal(a.writes[C.STORAGE_KEY],undefined);
+});
+
+test('V5.7 storage events refresh separate manual records without replacing another currency or an open draft',async()=>{
+  const shared=sharedBrowser(),a=await app({},false,{shared}),b=await app({},false,{shared});
+  a.run('changeExchangeCurrency("EUR");openExchangeManual()');a.els.exchangeManualValue.value='3,14159';
+  saveCurrencyManual(b,'EUR','3,25');shared.flush();
+  assert.equal(a.els.exchangeManualValue.value,'3,14159');assert.equal(a.run('manualRecords.EUR.rate'),'3.25');
+  saveCurrencyManual(b,'RUB','3,5');shared.flush();
+  assert.equal(a.els.exchangeCurrency.value,'EUR');assert.equal(a.els.exchangeManualValue.value,'3,14159');
+  assert.equal(a.run('manualRecords.EUR.rate'),'3.25');assert.equal(a.run('manualRecords.RUB.rate'),'0.035');
+  assert.equal(shared.writes[C.STORAGE_KEY],undefined);
+});
+
+test('V5.7 manual RUB per100 keeps an exact half-tetri through save, reload, planner and reopening',async()=>{
+  const a=await app();saveCurrencyManual(a,'RUB','3,01235');
+  assert.equal(a.els.exchangeReceive.textContent,'≈ 301,24 ₾');
+  assert.equal(JSON.parse(a.writes[manualCurrencyKey('RUB')]).rate,'0.0301235');
+  a.run('openExchangeManual()');assert.equal(a.els.exchangeManualValue.value,'3,01235');
+  assert.match(a.els.exchangeManualPreview.textContent,/301,24 ₾/);
+  a.run('closeInline("exchangeManualPanel");useOfferForPlan()');
+  assert.equal(a.els.planQuote0.value,'3,01235');assert.equal(a.els.planResult.textContent,'≈ 301,24 ₾');
+  const b=await app(a.writes);b.run('changeExchangeCurrency("RUB")');
+  assert.equal(b.els.exchangeReceive.textContent,'≈ 301,24 ₾');b.run('openExchangeManual()');
+  assert.equal(b.els.exchangeManualValue.value,'3,01235');
+});
+
+test('V5.7 hidden direct route is cleared when changing from RUB to USD or USDT',async()=>{
+  for(const currency of ['USD','USDT']){
+    const a=await app();a.run('changeExchangeCurrency("RUB");selectOffer("office:RUB:rico");useOfferForPlan()');
+    assert.equal(a.els.planVia.value,'direct');
+    a.els.planFrom.value=currency;a.run('changePlanRoute("from")');
+    assert.equal(a.els.planFrom.value,currency);assert.equal(a.els.planTo.value,'GEL');
+    assert.equal(a.els.planViaGroup.hidden,true);assert.equal(a.els.planVia.value,'USD');
+    assert.equal(a.els.planQuote0.value,'','A RUB quote must not become a USD or USDT quote');
+    a.els.planAmount.value='100';a.els.planQuote0.value='2,5';a.run('editPlanQuote(0)');
+    assert.equal(a.els.planResult.textContent,'≈ 250,00 ₾');assert.equal(a.els.planError.classes.has('show'),false);
+  }
+});
+
+test('V5.7 untouched new manual forms cannot overwrite later values before or after their storage event',async()=>{
+  for(const currency of ['EUR','RUB'])for(const deliverEvent of [false,true]){
+    const key=manualCurrencyKey(currency),nominal=currency==='RUB'?100:1;
+    const seed={version:1,currency,rate:currency==='RUB'?'0.03':'3',updatedAt:Date.now()};
+    const shared=sharedBrowser({[key]:JSON.stringify(seed)}),a=await app({},false,{shared}),b=await app({},false,{shared});
+    a.run(`changeExchangeCurrency('${currency}');openExchangeManual()`);
+    assert.equal(a.els.exchangeManualValue.value,'3,0000');
+    saveCurrencyManual(b,currency,'3,2');const latest=shared.writes[key];
+    if(deliverEvent){shared.flush();assert.equal(a.els.exchangeManualValue.value,'3,2000');}
+    a.run('saveExchangeManual()');
+    assert.equal(shared.writes[key],latest,`${currency}: a clean form cannot revert a later saved rate`);
+    assert.equal(Number(a.run(`manualRecords.${currency}.rate`))*nominal,3.2);
+    assert.equal(a.els.exchangeManualPanel.classes.has('show'),false);
+    assert.match(a.els.actionStatus.textContent,/не изменён/);
+    a.run('openExchangeManual()');assert.equal(a.els.exchangeManualValue.value,'3,2000');
+  }
+});
+
+test('V5.7 dirty new manual forms survive external changes and save only the intended currency',async()=>{
+  for(const currency of ['EUR','RUB']){
+    const key=manualCurrencyKey(currency),other=currency==='EUR'?'RUB':'EUR';
+    const seed={version:1,currency,rate:currency==='RUB'?'0.03':'3',updatedAt:Date.now()};
+    const shared=sharedBrowser({[key]:JSON.stringify(seed)}),a=await app({},false,{shared}),b=await app({},false,{shared});
+    a.run(`changeExchangeCurrency('${currency}');openExchangeManual()`);a.els.exchangeManualValue.value='3,1';
+    saveCurrencyManual(b,currency,'3,2');saveCurrencyManual(b,other,'3,4');shared.flush();
+    const otherSaved=shared.writes[manualCurrencyKey(other)];
+    assert.equal(a.els.exchangeManualValue.value,'3,1');
+    a.run('saveExchangeManual()');
+    assert.equal(JSON.parse(shared.writes[key]).rate,currency==='RUB'?'0.031':'3.1');
+    assert.equal(shared.writes[manualCurrencyKey(other)],otherSaved);
+    assert.equal(shared.writes[C.STORAGE_KEY],undefined);
+    a.run('openExchangeManual()');assert.equal(a.els.exchangeManualValue.value,'3,1000');
+  }
+});
+
+test('V5.7 completion of an earlier USD save cannot switch currency, discard EUR draft, or select a USD offer',async()=>{
+  const a=await app();a.run('openExchangeManual()');a.els.rateValue.value='2,9';
+  const pending=a.run('saveRate()');
+  a.run('changeExchangeCurrency("EUR");selectOffer("office:EUR:rico");openExchangeManual()');
+  a.els.exchangeManualValue.value='3,14159';a.els.exchangeAmount.value='123,45';
+  await pending;
+  assert.equal(a.state().cashGelRate,2.9);assert.equal(a.els.exchangeCurrency.value,'EUR');
+  assert.equal(a.run('currentView'),'exchange');assert.equal(a.run('selectedOffer'),'office:EUR:rico');
+  assert.equal(a.els.exchangeManualPanel.classes.has('show'),true);assert.equal(a.els.exchangeManualValue.value,'3,14159');
+  assert.equal(a.els.exchangeAmount.value,'123,45');assert.equal(a.writes[manualCurrencyKey('EUR')],undefined);
+});
+
+test('V5.7 export includes independent exact EUR and RUB rates without changing the legacy personal state',async()=>{
+  const a=await app();await purchase(a,'usd',8800,100);await purchase(a,'usdt',8655,100);
+  const personal=a.writes[C.STORAGE_KEY];a.run('showView("exchange")');
+  saveCurrencyManual(a,'EUR','3,25');saveCurrencyManual(a,'RUB','3,01235');
+  await a.run('exportData()');assert.equal(a.downloads.length,1);
+  const url=a.downloads[0].href;
+  try{
+    const backup=await (await fetch(url)).json();
+    assert.equal(backup.cashExchangeRates.EUR.rate,'3.25');assert.equal(backup.cashExchangeRates.RUB.rate,'0.0301235');
+    assert.equal(backup.cashExchangeRates.EUR.currency,'EUR');assert.equal(backup.cashExchangeRates.RUB.currency,'RUB');
+    assert.deepEqual(backup.state.usdPurchases,JSON.parse(personal).usdPurchases);
+    assert.deepEqual(backup.state.usdtPurchases,JSON.parse(personal).usdtPurchases);
+    assert.equal(backup.state.cashExchangeRates,undefined);assert.equal(a.writes[C.STORAGE_KEY],personal);
+  }finally{URL.revokeObjectURL(url);}
+});
+
+test('V5.7 copy: generic exchange feedback follows the amount, not USD, for every cash currency',async()=>{
+  for(const currency of ['USD','EUR','RUB']){
+    const a=await app();a.run(`changeExchangeCurrency('${currency}')`);
+    for(const amount of ['','bad','0','1000000001']){
+      a.els.exchangeAmount.value=amount;
+      const message=a.run('calculationFeedback("Курс сохранён.","cash")');
+      assert.equal(message,'Курс сохранён. Введите сумму обмена.');
+      assert.doesNotMatch(message,/USD|доллар|пересчитана/);
+    }
+    a.els.exchangeAmount.value='12,50';
+    assert.equal(a.run('calculationFeedback("Курс сохранён.","cash")'),'Курс сохранён. Сумма обмена пересчитана.');
+    if(currency!=='USD')for(const [amount,quote,normalized] of [['','3,01235','0.0301235'],['bad','3,01245','0.0301245']]){
+      a.els.exchangeAmount.value=amount;saveCurrencyManual(a,currency,quote);
+      assert.equal(a.els.actionStatus.textContent,`Свой курс ${currency} сохранён. Введите сумму обмена.`);
+      assert.equal(a.els.exchangeReceive.textContent,'— ₾');
+      assert.equal(a.els.planOfferButton.disabled,true);
+      assert.equal(JSON.parse(a.writes[manualCurrencyKey(currency)]).rate,currency==='RUB'?normalized:quote.replace(',','.'));
+    }
+    assert.equal(a.writes[C.STORAGE_KEY],undefined);
+  }
+});
+
+test('V5.7 copy: price-in-rubles instruction names the actual disclosure and explicit apply action',async()=>{
+  const html=fs.readFileSync(path.join(root,'index.html'),'utf8');
+  const disclosure=html.match(/<details\b[^>]*id="legacyOfferDetails"[^>]*>([\s\S]*?)<\/details>/)[1];
+  assert.match(disclosure,/<summary>Цена в рублях<\/summary>/);
+  assert.match(disclosure,/<button\b[^>]*id="applyOfferButton"[^>]*onclick="applyOffer\(\)"[^>]*>Применить курс<\/button>/);
+  assert.match(disclosure,/стоимости ваших USD/);
+  const a=await app({},false,{city:'batumi'});await purchase(a,'usd',8800,100);a.run('showView("purchase")');
+  assert.equal(a.els.rublesStatus.textContent,'В «Обмене» выберите USD и предложение. Раскройте «Цена в рублях» и нажмите «Применить курс».');
+  const purchases=JSON.stringify(a.state().usdPurchases);
+  a.run('openBanks();selectOffer("office:rico")');
+  assert.equal(a.els.exchangeCurrency.value,'USD');assert.equal(a.els.legacyOfferDetails.hidden,false);assert.equal(a.els.legacyOfferDetails.open,true);
+  assert.equal(a.state().cashOfficeId,null,'Selecting a row is only a preview');
+  assert.equal(a.els.applyOfferButton.textContent,'Применить курс');assert.equal(a.els.applyOfferButton.disabled,false);
+  await a.run('applyOffer()');
+  assert.equal(a.run('currentView'),'purchase');assert.equal(a.state().cashOfficeId,'rico');assert.equal(a.state().cashGelRate,2.61);
+  assert.equal(JSON.stringify(a.state().usdPurchases),purchases);assert.equal(a.els.cashTotal.textContent,'≈ 3\u00a0371,65 ₽');
+});
+
+test('V5.7 copy: stale public rates remain inspectable with maps, while transfer has a truthful next step',async()=>{
+  for(const [currency,result] of [['USD','≈ 261,00 ₾'],['EUR','≈ 301,00 ₾'],['RUB','≈ 325,00 ₾']]){
+    const a=await app({},false,{city:'batumi'});a.run(`changeExchangeCurrency('${currency}');selectOffer('${currency==='USD'?'office:rico':'office:'+currency+':rico'}')`);
+    a.advance(3*3600000);a.run('renderOffers()');
+    const plan=a.run('JSON.stringify(plan)'),personal=a.writes[C.STORAGE_KEY];
+    assert.equal(a.els.exchangeReceive.textContent,result,'A dated estimate stays visible');
+    assert.equal(a.els.exchangeResultLabel.textContent,'Нужна проверка · Rico');assert.equal(a.els.exchangeResultLabel.classes.has('stale'),true);
+    assert.match(a.els.selectedOfferDetail.textContent,/Проверено .*Курс нельзя применить: данные устарели или не подтверждены\./);
+    assert.equal(a.els.offerActionNote.hidden,false);
+    assert.equal(a.els.offerActionNote.textContent,'Чтобы применить курс, обновите данные или введите свой.');
+    assert.equal(a.els.planOfferButton.disabled,true);assert.equal(a.els.offerAddressButton.hidden,false);
+    a.run('toggleOfferLocation()');assert.equal(a.els.offerLocationPanel.hidden,false);assert.ok(a.els.openDeviceMap.href);
+    assert.equal(a.els.branchNotice.textContent,'Адрес сети — не подтверждение курса в этой кассе. Уточните курс, наличие валюты и часы работы.');
+    a.run('useOfferForPlan()');await a.run('applyOffer()');
+    assert.equal(a.run('currentView'),'exchange');assert.equal(a.run('JSON.stringify(plan)'),plan);assert.equal(a.writes[C.STORAGE_KEY],personal);
+  }
+});
+
+test('V5.7 copy: RUB describes an unconnected bank integration, not the absence of a market',async()=>{
+  const a=await app({},false,{city:'batumi'});a.run('changeExchangeCurrency("RUB")');
+  assert.equal(a.els.currencyCoverage.hidden,false);
+  assert.equal(a.els.currencyCoverage.textContent,'RUB: курсы обменников. Банковские курсы пока не подключены.');
+  assert.doesNotMatch(a.els.currencyCoverage.textContent,/предложений.*нет|не существует|не обменивают/);
+  assert.equal(a.requests.some(url=>url.includes('market-rates-rub')),false);
+  assert.equal(a.run('offersForCity().some(row=>row.kind==="bank")'),false);
+  assert.equal(a.els.exchangeReceive.textContent,'≈ 325,00 ₾');
+  for(const currency of ['USD','EUR']){a.run(`changeExchangeCurrency('${currency}')`);assert.equal(a.els.currencyCoverage.hidden,true);assert.ok(a.run('offersForCity().some(row=>row.kind==="bank")'));}
 });

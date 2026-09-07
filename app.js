@@ -14,7 +14,7 @@ const money=value=>{
 const numberValue=C.number;
 const inputValue=value=>{
   if(!C.positive(value))return "";
-  let text=String(C.number(value));
+  let text=typeof value==="string"?value.trim().replace(/\s/g,"").replace(",","."):String(C.number(value));
   if(text.includes("e")){
     const [coefficient,exponent]=text.split("e"),[whole,fraction=""]=coefficient.split(".");
     const digits=whole+fraction,point=whole.length+Number(exponent);
@@ -34,21 +34,42 @@ notice(loaded.warning);
 $("migrationNotice").hidden=!state.legacyActualAdjusted;
 let banks=null,bankFailed=false,bankBusy=false,officialFailed=false,officialBusy=false;
 let offices=null,officeFailed=false,officeBusy=false;
+const exchangeMeta={USD:{name:"долларах",unit:"USD",nominal:1},EUR:{name:"евро",unit:"EUR",nominal:1},RUB:{name:"рублях",unit:"₽",nominal:100}};
+let exchangeCurrency="USD",manualEditorCurrency="EUR",manualEditorBaseline="";
+const exchangeDrafts={},manualDrafts={},manualRecords={},manualBlocked={};
+const extraMarkets={EUR:{banks:null,offices:null,bankFailed:false,officeFailed:false,bankBusy:false,officeBusy:false},RUB:{banks:null,offices:null,bankFailed:false,officeFailed:false,bankBusy:false,officeBusy:false}};
+const chosenCity=()=>$("exchangeCity").value||"batumi";
+const marketFor=currency=>currency==="USD"?{banks,offices,bankFailed,officeFailed,bankBusy,officeBusy}:extraMarkets[currency];
+const offerKey=(kind,currency,id="")=>kind+(currency==="USD"?"":":"+currency)+(id?":"+id:"");
+const quoteText=(currency,rate)=>exchangeMeta[currency].nominal+" "+exchangeMeta[currency].unit+" = "+fmtRate(rate*exchangeMeta[currency].nominal)+" ₾";
+// Currency nominal scaling is exact; serializing a binary division would lose half-tetri boundaries.
+function decimalText(value){
+  const exact=D.from(value);if(!exact)return "";
+  let remainder=exact.n%exact.d,text=String(exact.n/exact.d);
+  if(remainder)text+=".";
+  while(remainder){remainder*=10n;text+=String(remainder/exact.d);remainder%=exact.d;}
+  return text;
+}
+const nominalQuote=(rate,nominal)=>decimalText(D.mul(rate,nominal));
 let currentView="exchange",selectedPayment="cash",selectedOffer="",offerSelectionExplicit=false,allOffers=false,statusTimer;
 let expandedOffer="",branchOptionsKey="";
 const branchSelection={};
 const androidMaps=/Android/i.test(navigator.userAgent||"");
 const appleMaps=/(iPhone|iPad|iPod|Macintosh)/i.test(navigator.userAgent||"");
 const QUOTE_TTL=2*3600000;
-const plan={from:"RUB",to:"GEL",via:"USD",mode:"give",quotes:{},quoteMeta:{},fees:{},sourceKey:"",initialized:false};
+const plan={from:"RUB",to:"GEL",via:"USD",mode:"give",quotes:{},quoteMeta:{},fees:{},sourceKey:"",sourceCurrency:"USD",sourceCity:"batumi",initialized:false};
 let settingsDraft=null,settingsBaseline="",settingsPending=0;
-const planNames={RUB:"Рубли",USD:"Доллары",USDT:"USDT",GEL:"Лари"};
-const planUnits={RUB:"₽",USD:"USD",USDT:"USDT",GEL:"₾"};
+const planNames={RUB:"Рубли",USD:"Доллары",EUR:"Евро",USDT:"USDT",GEL:"Лари"};
+const planUnits={RUB:"₽",USD:"USD",EUR:"EUR",USDT:"USDT",GEL:"₾"};
 const planLegs={
   RUBUSD:{quote:"rubBuy",label:"Покупаю 1 USD за рубли",unit:"₽"},
   USDRUB:{quote:"rubSell",label:"Продаю 1 USD за рубли",unit:"₽"},
-  USDGEL:{quote:"gelBuy",label:"Продаю 1 USD за лари",unit:"₾",side:"buy"},
-  GELUSD:{quote:"gelSell",label:"Покупаю 1 USD за лари",unit:"₾",side:"sell"},
+  USDGEL:{quote:"gelBuy",label:"Продаю 1 USD за лари",unit:"₾",side:"buy",currency:"USD",nominal:1},
+  GELUSD:{quote:"gelSell",label:"Покупаю 1 USD за лари",unit:"₾",side:"sell",currency:"USD",nominal:1},
+  EURGEL:{quote:"gelEurBuy",label:"Продаю 1 EUR за лари",unit:"₾",side:"buy",currency:"EUR",nominal:1},
+  GELEUR:{quote:"gelEurSell",label:"Покупаю 1 EUR за лари",unit:"₾",side:"sell",currency:"EUR",nominal:1},
+  RUBGEL:{quote:"gelRubBuy",label:"Продаю 100 ₽ за лари",unit:"₾",side:"buy",currency:"RUB",nominal:100},
+  GELRUB:{quote:"gelRubSell",label:"Покупаю 100 ₽ за лари",unit:"₾",side:"sell",currency:"RUB",nominal:100},
   RUBUSDT:{quote:"rubUsdtBuy",label:"Покупаю 1 USDT за рубли",unit:"₽"},
   USDTRUB:{quote:"rubUsdtSell",label:"Продаю 1 USDT за рубли",unit:"₽"},
   USDTGEL:{quote:"gelUsdtBuy",label:"Продаю 1 USDT за лари",unit:"₾"},
@@ -56,10 +77,18 @@ const planLegs={
   USDUSDT:{quote:"usdUsdtBuy",label:"Покупаю 1 USDT за доллары",unit:"USD"},
   USDTUSD:{quote:"usdUsdtSell",label:"Продаю 1 USDT за доллары",unit:"USD"}
 };
-function plannerPath(){return [plan.from,plan.to].every(c=>c==="RUB"||c==="GEL")&&plan.from!==plan.to?[plan.from,plan.via,plan.to]:[plan.from,plan.to];}
+function plannerPath(){return plan.via!=="direct"&&[plan.from,plan.to].every(c=>c==="RUB"||c==="GEL")&&plan.from!==plan.to?[plan.from,plan.via,plan.to]:[plan.from,plan.to];}
 function plannerRows(){const path=plannerPath();return path.slice(0,-1).map((from,i)=>({from,to:path[i+1],key:from+path[i+1],...planLegs[from+path[i+1]]}));}
 function setPlanMode(mode){if(!["give","want"].includes(mode))return;plan.mode=mode;renderPlanner();}
-function changePlanRoute(){plan.from=$("planFrom").value;plan.to=$("planTo").value;plan.via=$("planVia").value;renderPlanner();}
+function changePlanRoute(changed){
+  plan.from=$("planFrom").value;plan.to=$("planTo").value;plan.via=$("planVia").value;
+  if(changed&&[plan.from,plan.to].includes("EUR")&&![plan.from,plan.to].includes("GEL")){
+    if(changed==="from")plan.to="GEL";else plan.from="GEL";
+    announce("Для евро доступен обмен с лари.");
+  }
+  if(plan.via==="direct"&&![plan.from,plan.to].every(c=>c==="RUB"||c==="GEL")&&!([plan.from,plan.to].includes("EUR")&&[plan.from,plan.to].includes("GEL")))plan.via="USD";
+  renderPlanner();
+}
 function reversePlan(){[plan.from,plan.to]=[plan.to,plan.from];renderPlanner();}
 function editPlanQuote(index){const row=plannerRows()[index];if(row?.quote){plan.quotes[row.quote]=$("planQuote"+index).value;delete plan.quoteMeta[row.quote];renderPlanner();}}
 function finishPlanQuote(index){
@@ -73,31 +102,40 @@ function useOfferForPlan(){
   if(!item||editingExchangeRate()||item.kind!=="manual"&&!item.fresh)return;
   const amount=C.number($("exchangeAmount").value);
   if(!(amount>0&&amount<=1e9))return;
-  if(!plan.initialized){plan.from="USD";plan.to="GEL";plan.mode="give";$("planAmount").value=$("exchangeAmount").value;}
+  if(!plan.initialized||exchangeCurrency!=="USD"||plan.sourceCurrency!=="USD"){
+    plan.from=exchangeCurrency;plan.to="GEL";plan.mode="give";$("planAmount").value=$("exchangeAmount").value;
+  }
+  plan.sourceCurrency=exchangeCurrency;plan.sourceCity=chosenCity();
+  const buyLeg=planLegs[exchangeCurrency+"GEL"],sellLeg=planLegs["GEL"+exchangeCurrency];
   if(item.kind==="manual"){
-    plan.sourceKey="";plan.quotes.gelBuy=inputValue(item.buy);delete plan.quotes.gelSell;
-    plan.quoteMeta.gelBuy={checkedAt:item.checkedAt};delete plan.quoteMeta.gelSell;
+    plan.sourceKey="";plan.quotes[buyLeg.quote]=inputValue(nominalQuote(item.buy,buyLeg.nominal));delete plan.quotes[sellLeg.quote];
+    plan.quoteMeta[buyLeg.quote]={checkedAt:item.checkedAt};delete plan.quoteMeta[sellLeg.quote];
   }else{
-    plan.sourceKey=item.key;delete plan.quotes.gelBuy;delete plan.quotes.gelSell;
-    delete plan.quoteMeta.gelBuy;delete plan.quoteMeta.gelSell;
+    plan.sourceKey=item.key;delete plan.quotes[buyLeg.quote];delete plan.quotes[sellLeg.quote];
+    delete plan.quoteMeta[buyLeg.quote];delete plan.quoteMeta[sellLeg.quote];
   }
   // An explicitly chosen cash offer starts a cash route, never a USDT route.
   if(plan.from==="USDT"||plan.to==="USDT"||plan.from===plan.to){plan.from="RUB";plan.to="GEL";}
-  plan.via="USD";
+  plan.via=exchangeCurrency==="RUB"?"direct":"USD";
   plan.initialized=true;showView("calculator");
 }
 function showPlanLocation(){
-  const item=offersForCity().find(row=>row.key===plan.sourceKey);
+  const item=offersForCity(plan.sourceCurrency,plan.sourceCity).find(row=>row.key===plan.sourceKey);
   if(!item||item.kind==="manual")return;
+  changeExchangeCurrency(plan.sourceCurrency);$("exchangeCity").value=plan.sourceCity;
   selectedOffer=item.key;offerSelectionExplicit=true;expandedOffer=item.key;
   showView("exchange");$("branchHeading").scrollIntoView?.({block:"start"});$("closeLocationButton").focus({preventScroll:true});
 }
+function choosePlanOffice(){
+  const currency=plannerRows().find(row=>row.side)?.currency||"USD";
+  changeExchangeCurrency(currency);showView("exchange");
+}
 function renderPlanner(){
   $("planFrom").value=plan.from;$("planTo").value=plan.to;$("planVia").value=plan.via;
-  const path=plannerPath(),rows=plannerRows(),source=offersForCity().find(row=>row.key===plan.sourceKey);
+  const path=plannerPath(),rows=plannerRows(),source=offersForCity(plan.sourceCurrency,plan.sourceCity).find(row=>row.key===plan.sourceKey);
   const sourceOk=source&&source.kind!=="manual"&&source.fresh;
   const quotes={...plan.quotes},fees={};
-  $("planViaGroup").hidden=path.length!==3;
+  $("planViaGroup").hidden=!(plan.from!==plan.to&&[plan.from,plan.to].every(c=>c==="RUB"||c==="GEL"));
   $("planGive").setAttribute("aria-pressed",String(plan.mode==="give"));$("planWant").setAttribute("aria-pressed",String(plan.mode==="want"));
   $("planGive").classList.toggle("active",plan.mode==="give");$("planWant").classList.toggle("active",plan.mode==="want");
   const amountCurrency=plan.mode==="give"?plan.from:plan.to,resultCurrency=plan.mode==="give"?plan.to:plan.from;
@@ -110,15 +148,16 @@ function renderPlanner(){
   for(let i=0;i<2;i++){
     const row=rows[i];$("planStep"+i).hidden=!row?.quote;if(!row?.quote)continue;
     const manual=Object.hasOwn(plan.quotes,row.quote),auto=row.side&&!manual;
-    if(auto){quotes[row.quote]=sourceOk?source[row.side]:NaN;usesPublic=true;}
+    const matchingSource=source?.currency===row.currency?source:null;
+    if(auto){quotes[row.quote]=matchingSource&&sourceOk?nominalQuote(source[row.side],row.nominal):NaN;usesPublic=usesPublic||Boolean(matchingSource);}
     $("planStepTitle"+i).textContent=(i+1)+". "+planNames[row.from]+" → "+planNames[row.to];
     $("planQuoteLabel"+i).textContent=row.label;$("planQuoteUnit"+i).textContent=row.unit;
-    $("planQuote"+i).value=manual?plan.quotes[row.quote]:auto&&source?inputValue(source[row.side]):"";
+    $("planQuote"+i).value=manual?plan.quotes[row.quote]:auto&&matchingSource?inputValue(nominalQuote(source[row.side],row.nominal)):"";
     $("planQuote"+i).setAttribute("placeholder","Введите курс");
     const meta=plan.quoteMeta[row.quote],oldPersonal=Boolean(manual&&meta&&!C.fresh(meta.checkedAt));
     stalePersonal=stalePersonal||oldPersonal;
-    $("planSource"+i).textContent=auto?(source?(source.name+" · "+(sourceOk?"проверено "+checkedText(source.checkedAt):"свежесть не подтверждена")+" · "+(row.side==="buy"?"обменник покупает USD":"обменник продаёт USD")):"Выберите обменник или введите курс."):manual&&C.positive(plan.quotes[row.quote])?(meta?"Мой сохранённый курс · "+(meta.checkedAt?checkedText(meta.checkedAt):"дата неизвестна")+(oldPersonal?" · нужна проверка":""):"Ваш курс"):"";
-    $("planSource"+i).classList.toggle("stale",Boolean(auto&&source&&!sourceOk)||oldPersonal);
+    $("planSource"+i).textContent=auto?(matchingSource?(source.name+" · "+(sourceOk?"проверено "+checkedText(source.checkedAt):"свежесть не подтверждена")+" · "+(row.side==="buy"?"покупает ":"продаёт ")+row.currency):"Выберите курс во вкладке «Обмен» или введите свой."):manual&&C.positive(plan.quotes[row.quote])?(meta?"Свой сохранённый курс · "+(meta.checkedAt?checkedText(meta.checkedAt):"дата неизвестна")+(oldPersonal?" · нужна проверка":""):"Свой курс"):"";
+    $("planSource"+i).classList.toggle("stale",Boolean(auto&&matchingSource&&!sourceOk)||oldPersonal);
     const fee=plan.fees[row.key]||{pct:"0",fixed:"0"};fees[row.key]={pct:fee.pct===""?0:fee.pct,fixed:fee.fixed===""?0:fee.fixed};
     $("planPct"+i).value=fee.pct;$("planFixed"+i).value=fee.fixed;
     $("planFixedLabel"+i).textContent="Фиксированная, "+planUnits[row.from];
@@ -169,7 +208,7 @@ function calculationFeedback(message,method,view=currentView){
   if(currentView!==view||currentView==="data")return message;
   if(currentView==="exchange"){
     const amount=numberValue($("exchangeAmount").value);
-    return message+(amount>0&&amount<=1e9?" Сумма обмена пересчитана.":" Введите сумму долларов для расчёта.");
+    return message+(amount>0&&amount<=1e9?" Сумма обмена пересчитана.":" Введите сумму обмена.");
   }
   if(selectedPayment!==method)return message;
   const values=routeValues(),cash=method==="cash";
@@ -189,7 +228,7 @@ function showView(view){
   $("calculatorView").hidden=view!=="calculator";
   $("purchaseNav").setAttribute("aria-current",view==="calculator"?"page":"false");
   if(view==="calculator"){
-    if(!plan.initialized){const item=offersForCity().find(row=>row.key===selectedOffer&&row.kind!=="manual"&&row.fresh);if(item)plan.sourceKey=item.key;plan.initialized=true;}
+    if(!plan.initialized){const item=offersForCity("USD").find(row=>row.key===selectedOffer&&row.kind!=="manual"&&row.fresh);if(item){plan.sourceKey=item.key;plan.sourceCity=chosenCity();}plan.initialized=true;}
     renderPlanner();
   }
   // Section changes leave unfinished fields intact.
@@ -303,7 +342,7 @@ function changePersonal(change){
       });
     }catch{
       volatilePersonal=true;
-      notice("Не удалось сохранить данные безопасно. Изменения работают только в этой вкладке и могут пропасть после закрытия. Скачайте резервную копию в настройках. Откройте приложение по HTTPS в современном браузере; если адрес уже защищён — проверьте доступ к хранилищу и перезагрузите страницу после экспорта.");
+      notice("Не удалось сохранить данные безопасно. Изменения работают только в этой вкладке и могут пропасть после закрытия. До закрытия вкладки скачайте резервную копию в «Моих данных». Откройте приложение по HTTPS в современном браузере; если адрес уже защищён — проверьте доступ к хранилищу и перезагрузите страницу после экспорта.");
       if(!next){next=C.personal(state);accepted=change(next)!==false;}
     }finally{clearTimeout(timer);}
     // A different writer may have completed while our lock was being released.
@@ -371,7 +410,7 @@ function calc(){
   const bybitStale=!C.fresh(state.bybitGelUpdated);
   const comparisonStale=(Number.isFinite(cash)&&cashStale)||(Number.isFinite(bybit)&&bybitStale);
 
-  $("cashAvgLabel").textContent=Number.isFinite(usdAvg)?"Средняя покупок USD":"Оценка доллара";
+  $("cashAvgLabel").textContent=Number.isFinite(usdAvg)?"Средняя цена USD":"Оценка доллара";
   $("cashAvg").textContent=usdCost>0?`${fmtRate(usdCost)} ₽/$`:"Добавьте покупку";
   $("usdtAvg").textContent=Number.isFinite(usdtAvg)?`${fmtRate(usdtAvg)} ₽/USDT`:"Добавьте покупку";
   $("cashGelRate").textContent=Number(state.cashGelRate)>0?`${fmtRate(state.cashGelRate)} ₾`:"Обновите курс";
@@ -402,7 +441,7 @@ function calc(){
   $("cashSummary").textContent=!(usdCost>0)?"Не указана цена покупки USD":!(Number(state.cashGelRate)>0)?"Выберите курс USD → лари":cashSource+" · "+(cashStale?"нужна проверка":checkedText(state.cashGelUpdated))+(Number.isFinite(usdAvg)?"":" · цена USD — оценка");
   $("bybitSummary").textContent=!Number.isFinite(usdtAvg)?"Не указана цена покупки USDT":!(bybitRate>0)?"Укажите списание по оплате через USDT":(state.bybitRateMode==="actual"?"По операции":"Прогноз")+" · "+(bybitStale?"обновите USDT":checkedText(state.bybitGelUpdated));
   $("cashCompareAction").textContent=!(usdCost>0)?"Добавить покупку USD":"Изменить курс";
-  $("bybitCompareAction").textContent=!Number.isFinite(usdtAvg)?"Добавить покупку USDT":"Обновить USDT";
+  $("bybitCompareAction").textContent=!Number.isFinite(usdtAvg)?"Добавить покупку USDT":"Уточнить курс USDT";
   $("cashSummary").classList.toggle("stale",Number.isFinite(cash)&&cashStale);
   $("bybitSummary").classList.toggle("stale",Number.isFinite(bybit)&&bybitStale);
   $("dataUsdAvg").textContent=(!Number.isFinite(usdAvg)&&usdCost>0?"Оценка: ":"")+$("cashAvg").textContent;
@@ -497,7 +536,7 @@ function renderRubles(values){
   $("rublesRate").textContent=ready?"1 ₾ = "+fmtRate(rate)+" ₽ · "+(isCash?"наличными":"через USDT"):isCash?"Рубли → доллары → лари":"Рубли → USDT → оплата картой";
   let status;
   if(!hasBasis)status=isCash?"Укажите, сколько рублей потратили на доллары. Тогда посчитаем вашу цену, а не официальный курс.":"Укажите, сколько рублей потратили на USDT для карты.";
-  else if(!hasRate)status=isCash?"Выберите обменник во вкладке «Обмен». Его курс подставится сюда.":"Укажите сумму прошлой покупки в лари и списание в USDT из вашей операции.";
+  else if(!hasRate)status=isCash?"В «Обмене» выберите USD и предложение. Раскройте «Цена в рублях» и нажмите «Применить курс».":"Укажите сумму прошлой покупки в лари и списание в USDT из вашей операции.";
   else if(stale)status=isCash?(state.cashBankId||state.cashOfficeId?"Расчёт по сохранённому курсу. Проверьте его во вкладке «Обмен».":"Расчёт по сохранённому курсу. Обновите свой USD → GEL перед обменом."):"Расчёт по сохранённым данным USDT. Обновите курс или укажите недавнюю операцию.";
   else status=isCash?"Учтены цена ваших долларов и выбранный курс обмена.":state.bybitRateMode==="actual"?"Учтены цена ваших USDT и списание по прошлой операции.":"Это прогноз по введённому курсу и вашим процентам, не гарантия списания.";
   if(isCash&&hasRate)status+=" Источник: "+(state.cashOfficeId?(C.OFFICES[state.cashOfficeId]?.name||"обменник"):state.cashBankId?state.cashBankName:"мой ручной курс")+".";
@@ -509,7 +548,7 @@ function renderRubles(values){
   $("rublesNextAction").dataset.action=action;
   const editRateLabel=isCash?(hasRate&&!state.cashBankId&&!state.cashOfficeId?"Обновить мой курс":"Выбрать курс обмена"):state.bybitRateMode==="quote"&&hasRate?"Обновить курс USDT":"Указать списание USDT";
   $("rublesNextAction").textContent=action==="basis"?"Указать покупку "+currency:editRateLabel;
-  $("paymentSetupTitle").textContent=ready?"Мой курс: откуда взялась сумма":"Что нужно для расчёта";
+  $("paymentSetupTitle").textContent=ready?"Из чего сложилась цена":"Что нужно для расчёта";
   $("paymentSetupHelp").textContent=isCash?"Сначала вы купили доллары за рубли, затем обменяли их на лари. Учитываем оба обмена.":"Сначала вы купили USDT за рубли, затем оплатили покупку картой. Учитываем цену USDT и фактическое списание или ваш прогноз.";
   $("basisStepTitle").textContent=isCash?"За сколько купили доллары":"За сколько купили USDT";
   $("basisStepValue").textContent=hasBasis?(estimated?"Ваша оценка: ":"Средняя ваших покупок: ")+fmtRate(basis)+" ₽ за 1 "+currency:"Пока нет данных о покупке за рубли.";
@@ -538,6 +577,10 @@ function rateFields(){
   return {mode:rateMode,value:$("rateValue").value,gel:$("actualGel").value,charged:$("actualUsdt").value,reward:$("actualReward").value};
 }
 function rememberEditor(id){
+  if(id==="exchangeManualPanel"&&$(id).classList.contains("show")){
+    if($("exchangeManualValue").value!==manualEditorBaseline)manualDrafts[manualEditorCurrency]=$("exchangeManualValue").value;
+    else delete manualDrafts[manualEditorCurrency];
+  }
   if(id==="settingsPanel"&&settingsBaseline){
     const fields={fee:$("feePct").value,cashback:$("cashbackPct").value};
     settingsDraft=JSON.stringify(fields)!==settingsBaseline?fields:null;
@@ -551,7 +594,7 @@ function rememberEditor(id){
 }
 function closeInline(id){
   rememberEditor(id);$(id).classList.remove("show");
-  if(id==="ratePanel"&&currentView==="exchange")renderOffers();
+  if(["ratePanel","exchangeManualPanel"].includes(id)&&currentView==="exchange")renderOffers();
 }
 
 function toggleHistory(id){
@@ -634,7 +677,7 @@ async function savePurchase(){
 
 function setRateMode(mode){
   rateMode=mode;
-  $("rateTitle").textContent=rateKind==="cash"?"Обновить USD → ₾":mode==="actual"?"Последняя оплата USDT":"Курс для прогноза USDT";
+  $("rateTitle").textContent=rateKind==="cash"?"Свой курс USD → GEL":mode==="actual"?"Последняя оплата USDT":"Курс для прогноза USDT";
   $("saveRateButton").textContent=rateKind==="cash"?"Сохранить курс":mode==="actual"?"Использовать операцию":"Сохранить прогноз";
   $("quoteMode").classList.toggle("show",mode==="quote");
   $("actualMode").classList.toggle("show",mode==="actual");
@@ -658,8 +701,8 @@ function openRate(kind){
   rateKind=kind;
   rateEditorSequence++;
   rateEditorReady=true;
-  $("rateTitle").textContent=kind==="cash"?"Обновить USD → ₾":"Обновить USDT → ₾";
-  $("rateLabel").textContent=kind==="cash"?"Сейчас за 1 USD дают":"Сейчас за 1 USDT дают";
+  $("rateTitle").textContent=kind==="cash"?"Свой курс USD → GEL":"Обновить USDT → ₾";
+  $("rateLabel").textContent=kind==="cash"?"За 1 USD дают":"За 1 USDT дают";
   $("bybitModeSwitch").hidden=kind==="cash";
   $("quoteHelp").hidden=kind==="cash";
   const draft=rateDrafts[kind];
@@ -683,11 +726,11 @@ function updateRatePreview(){
   if(rateKind==="cash"){
     const rate=numberValue($("rateValue").value);
     const amount=numberValue($("exchangeAmount").value);
-    if(rate>0&&currentView==="exchange"&&amount>0&&amount<=1e9)text=`За ${fmt(amount)} USD получите ≈ ${money(D.mul(amount,rate))} ₾ по этому курсу.`;
-    if(rate>0&&usdCost>0)text+=(text?" ":"")+`При этом курсе 1 ₾ будет стоить вам ${fmtRate(usdCost/rate)} ₽.`;
+    if(rate>0&&currentView==="exchange"&&amount>0&&amount<=1e9)text=`За ${fmt(amount)} USD получите ≈ ${money(D.mul(amount,rate))} ₾.`;
+    if(rate>0&&usdCost>0)text+=(text?" ":"")+`Для вас: 1 ₾ ≈ ${fmtRate(usdCost/rate)} ₽.`;
   }else if(rateMode==="quote"){
     const rate=numberValue($("rateValue").value);
-    if(rate>0&&Number.isFinite(usdtAvg))text=`С учётом комиссии и cashback 1 ₾ ≈ ${fmtRate(usdtAvg*mult/rate)} ₽.`;
+    if(rate>0&&Number.isFinite(usdtAvg))text=`С учётом комиссии и кешбэка 1 ₾ ≈ ${fmtRate(usdtAvg*mult/rate)} ₽.`;
   }else{
     const gel=numberValue($("actualGel").value);
     const charged=numberValue($("actualUsdt").value);
@@ -709,7 +752,7 @@ function showRateError(message){
 
 async function saveRate(){
   if(rateSaving)return;
-  const savedKind=rateKind,returnView=currentView,submittedEditor=rateEditorSequence;
+  const savedKind=rateKind,returnView=currentView,returnCurrency=exchangeCurrency,submittedEditor=rateEditorSequence;
   let patch;
   if(rateKind==="cash"){
     const value=numberValue($("rateValue").value);
@@ -725,7 +768,7 @@ async function saveRate(){
     if(!(gel>0&&charged>0))return showRateError("Введите сумму покупки в лари и фактически списанные USDT.");
     const reward=numberValue($("actualReward").value.trim()||"0");
     const effective=C.actualRate(gel,charged,reward);
-    if(!Number.isFinite(effective))return showRateError("Полученный cashback должен быть от 0 до суммы списания, не включая её.");
+    if(!Number.isFinite(effective))return showRateError("Полученный кешбэк должен быть от 0 до суммы списания, не включая её.");
     patch={bybitActual:{gel,charged,reward},bybitActualGelRate:effective,
       legacyActualAdjusted:false,bybitRateMode:"actual",bybitGelUpdated:Date.now()};
   }
@@ -734,12 +777,12 @@ async function saveRate(){
   delete rateDrafts[savedKind];rateEditorReady=false;
   try{
     await changePersonal(next=>Object.assign(next,patch));
-    if(currentView===returnView&&rateEditorSequence===submittedEditor&&!rateEditorReady){
+    if(currentView===returnView&&(returnView!=="exchange"||returnCurrency===exchangeCurrency)&&rateEditorSequence===submittedEditor&&!rateEditorReady){
       if(savedKind==="cash"){selectedOffer="manual";expandedOffer="";offerSelectionExplicit=true;}
       setPayment(savedKind==="cash"?"cash":"bybit");
       showView(savedKind==="cash"&&returnView==="exchange"?"exchange":"purchase");
     }
-    announce(volatilePersonal?"Курс изменён только в этой вкладке":calculationFeedback(savedKind==="cash"?"Мой курс сохранён.":patch.bybitRateMode==="actual"?"Операция сохранена.":"Прогноз сохранён.",savedKind,returnView));
+    announce(volatilePersonal?"Курс изменён только в этой вкладке":calculationFeedback(savedKind==="cash"?"Свой курс сохранён.":patch.bybitRateMode==="actual"?"Операция сохранена.":"Прогноз сохранён.",savedKind,returnView));
   }
   finally{rateSaving=false;}
 }
@@ -824,6 +867,7 @@ async function fetchJson(url){
 }
 function openBanks(){
   if(currentView==="purchase")$("legacyOfferDetails").open=true;
+  changeExchangeCurrency("USD");
   showView("exchange");renderBanks();
 }
 function renderBanks(){
@@ -837,8 +881,8 @@ function renderBanks(){
     $("bankChoice").value=selected;
   }
   const fresh=banks&&C.fresh(banks.fetchedAt,2*3600000)&&!bankFailed;
-  $("bankStatus").textContent=bankBusy?"Проверяем опубликованный набор…":banks
-    ?banks.offers.length+" банков · проверено "+new Date(banks.fetchedAt).toLocaleString("ru-RU")+"."+(fresh?"":" Набор устарел или обновление не удалось; применение отключено.")
+  $("bankStatus").textContent=bankBusy?"Проверяем курсы банков…":banks
+    ?banks.offers.length+" банков · проверено "+new Date(banks.fetchedAt).toLocaleString("ru-RU")+"."+(fresh?"":" Курсы устарели или не прошли проверку. Применить их нельзя.")
     :"Банковские данные пока недоступны. Ваш ручной курс продолжает работать.";
   updateBankPreview();renderOffers();
 }
@@ -847,7 +891,7 @@ function updateBankPreview(){
   const enabled=Boolean(item&&C.fresh(banks.fetchedAt,2*3600000)&&!bankFailed);
   $("applyBankButton").disabled=!enabled;
   $("bankPreview").textContent=item?item.bank+": за 100 USD ≈ "+money(D.mul(item.buy,100))+" GEL до возможных комиссий. После выбора курс этого банка будет обновляться из опубликованных данных.":"Список отсортирован по курсу покупки USD: больше лари за доллар — выше в списке.";
-  if(item&&!enabled)$("bankPreview").textContent="Применение отключено: набор устарел или источник недоступен. Проверьте данные либо укажите свой курс вручную.";
+  if(item&&!enabled)$("bankPreview").textContent="Курс нельзя применить: данные устарели или источник недоступен. Обновите курсы или введите свой.";
 }
 async function applyBank(){
   const item=banks?.offers.find(o=>o.id===$("bankChoice").value);
@@ -895,28 +939,88 @@ async function saveSettings(){
 async function exportData(){
   await personalQueue;
   syncPersonal();
-  const blob=new Blob([JSON.stringify({app:"GEL Cost",exportedAt:new Date().toISOString(),state},null,2)],{type:"application/json"});
+  for(const currency of ["EUR","RUB"])readManual(currency);
+  const blob=new Blob([JSON.stringify({app:"GEL Cost",exportedAt:new Date().toISOString(),state,cashExchangeRates:manualRecords},null,2)],{type:"application/json"});
   const url=URL.createObjectURL(blob),link=document.createElement("a");
   link.href=url;link.download="gel-cost-backup.json";link.click();
   setTimeout(()=>URL.revokeObjectURL(url),1000);
 }
 
+// New cash currencies have independent caches and manual rates. The USD purchase ledger is unchanged.
+const manualKey=currency=>"gelcost-v5.7-manual-"+currency;
+function readManual(currency){
+  try{
+    const raw=storage.getItem(manualKey(currency));
+    if(!raw){manualRecords[currency]=null;manualBlocked[currency]=false;return;}
+    const item=JSON.parse(raw);
+    if(item.version!==1||item.currency!==currency||!C.positive(item.rate)||item.rate>1e9||!Number.isFinite(item.updatedAt)||item.updatedAt<=0)throw Error("Invalid manual record");
+    manualRecords[currency]=item;manualBlocked[currency]=false;
+  }catch{manualBlocked[currency]=true;manualRecords[currency]=null;}
+}
+function changeExchangeCurrency(currency=$("exchangeCurrency").value){
+  if(!exchangeMeta[currency])return;
+  if(currency!==exchangeCurrency){
+    closeInline("ratePanel");closeInline("exchangeManualPanel");
+    exchangeDrafts[exchangeCurrency]={amount:$("exchangeAmount").value,key:selectedOffer,explicit:offerSelectionExplicit};
+    exchangeCurrency=currency;
+    const draft=exchangeDrafts[currency];
+    $("exchangeAmount").value=draft?.amount??(currency==="RUB"?"10000":"100");
+    selectedOffer=draft?.key||"";offerSelectionExplicit=draft?.explicit||false;
+    expandedOffer="";allOffers=false;
+  }
+  renderOffers();
+}
+function openExchangeManual(){
+  if(exchangeCurrency==="USD")return openRate("cash");
+  if($("exchangeManualPanel").classList.contains("show"))return closeInline("exchangeManualPanel");
+  closeAllInline("exchangeManualPanel");manualEditorCurrency=exchangeCurrency;
+  readManual(exchangeCurrency);
+  const meta=exchangeMeta[exchangeCurrency],saved=manualRecords[exchangeCurrency];
+  $("exchangeManualTitle").textContent="Свой курс "+exchangeCurrency+" → GEL";
+  $("exchangeManualLabel").textContent="За "+meta.nominal+" "+meta.unit+" дают";
+  manualEditorBaseline=saved?inputValue(nominalQuote(saved.rate,meta.nominal)):"";
+  $("exchangeManualValue").value=manualDrafts[exchangeCurrency]??manualEditorBaseline;
+  $("exchangeManualError").classList.remove("show");
+  $("exchangeManualPanel").classList.add("show");expandedOffer="";
+  updateExchangeManualPreview();renderOffers();focusEditor("exchangeManualPanel","exchangeManualValue");
+}
+function updateExchangeManualPreview(){
+  const meta=exchangeMeta[manualEditorCurrency],rate=C.number($("exchangeManualValue").value),amount=C.number($("exchangeAmount").value);
+  $("exchangeManualPreview").textContent=rate>0&&rate<=1e9&&amount>0&&amount<=1e9
+    ?"За "+fmtRub($("exchangeAmount").value)+" "+meta.unit+" получите ≈ "+fmtRub(D.div(D.mul($("exchangeAmount").value,$("exchangeManualValue").value),meta.nominal))+" ₾. Перед обменом уточните комиссию.":"";
+  $("exchangeManualError").classList.remove("show");
+}
+function saveExchangeManual(){
+  const currency=manualEditorCurrency,rate=C.number($("exchangeManualValue").value);
+  const fail=text=>{$("exchangeManualError").textContent=text;$("exchangeManualError").classList.add("show");};
+  if(!(rate>0&&rate<=1e9))return fail("Введите курс больше нуля и не больше 1 млрд.");
+  readManual(currency);
+  if(manualBlocked[currency])return fail("Не удалось безопасно прочитать сохранённый курс. Он не перезаписан. Проверьте доступ к хранилищу браузера.");
+  if($("exchangeManualValue").value===manualEditorBaseline){closeInline("exchangeManualPanel");announce("Курс не изменён.");return;}
+  const record={version:1,currency,rate:decimalText(D.div($("exchangeManualValue").value,exchangeMeta[currency].nominal)),updatedAt:Date.now()};
+  try{storage.setItem(manualKey(currency),JSON.stringify(record));}catch{return fail("Курс не сохранён: браузер не разрешил запись. Ваш ввод оставлен в форме.");}
+  manualRecords[currency]=record;closeInline("exchangeManualPanel");delete manualDrafts[currency];
+  selectedOffer=offerKey("manual",currency);offerSelectionExplicit=true;renderOffers();
+  announce(calculationFeedback("Свой курс "+currency+" сохранён.","cash"));
+}
+
 // Public sources are a separate cache; no background fetch writes personal history.
-function offersForCity(){
-  const city=$("exchangeCity").value||"batumi";
-  const officeRows=(offices?.offers||[]).filter(row=>city==="all"||C.OFFICES[row.id].cities.includes(city)).map(row=>({
-    key:"office:"+row.id,id:row.id,name:C.OFFICES[row.id].name,buy:row.buy,sell:row.sell,
-    checkedAt:row.checkedAt,fresh:officeFresh(row.id),kind:"office",
+function offersForCity(currency=exchangeCurrency,city=chosenCity()){
+  const market=marketFor(currency);
+  const officeRows=(market.offices?.offers||[]).filter(row=>city==="all"||C.OFFICES[row.id].cities.includes(city)).map(row=>({
+    key:offerKey("office",currency,row.id),currency,id:row.id,name:C.OFFICES[row.id].name,buy:row.buy,sell:row.sell,
+    checkedAt:row.checkedAt,fresh:!market.officeFailed&&!market.offices.failures.includes(row.id)&&C.fresh(row.checkedAt,QUOTE_TTL),kind:"office",
     url:C.OFFICES[row.id].url,branches:C.OFFICES[row.id].branches
   }));
-  const bankRows=(banks?.offers||[]).map(row=>({
-    key:"bank:"+row.id,id:row.id,name:row.bank,buy:row.buy,sell:row.sell,checkedAt:banks.fetchedAt,
-    fresh:!bankFailed&&C.fresh(banks.fetchedAt,QUOTE_TTL),kind:"bank",
+  const bankRows=(market.banks?.offers||[]).map(row=>({
+    key:offerKey("bank",currency,row.id),currency,id:row.id,name:row.bank,buy:row.buy,sell:row.sell,checkedAt:market.banks.fetchedAt,
+    fresh:!market.bankFailed&&C.fresh(market.banks.fetchedAt,QUOTE_TTL),kind:"bank",
     url:"https://nbg.gov.ge/en/currency-rates",branches:null
   }));
-  const manualRows=!state.cashBankId&&!state.cashOfficeId&&C.positive(state.cashGelRate)?[{
-    key:"manual",id:"manual",name:"Мой курс",buy:C.number(state.cashGelRate),checkedAt:state.cashGelUpdated,
-    fresh:C.fresh(state.cashGelUpdated),kind:"manual",url:null,branches:null
+  const manual=currency==="USD"?(!state.cashBankId&&!state.cashOfficeId&&C.positive(state.cashGelRate)?{rate:C.number(state.cashGelRate),updatedAt:state.cashGelUpdated}:null):manualRecords[currency];
+  const manualRows=manual?[{
+    key:offerKey("manual",currency),currency,id:"manual",name:"Свой курс",buy:manual.rate,checkedAt:manual.updatedAt,
+    fresh:C.fresh(manual.updatedAt),kind:"manual",url:null,branches:null
   }]:[];
   const publicRows=[...officeRows,...bankRows].sort((a,b)=>Number(b.fresh)-Number(a.fresh)||b.buy-a.buy||a.name.localeCompare(b.name));
   const bestBuy=publicRows.find(row=>row.fresh)?.buy;
@@ -935,6 +1039,7 @@ function selectOffer(key){
 function toggleOfferLocation(key=selectedOffer){
   if(!offersForCity().some(row=>row.key===key))return;
   if(expandedOffer!==key&&$("ratePanel").classList.contains("show"))closeInline("ratePanel");
+  if(expandedOffer!==key&&$("exchangeManualPanel").classList.contains("show"))closeInline("exchangeManualPanel");
   expandedOffer=expandedOffer===key?"":key;
   renderOffers();
 }
@@ -972,7 +1077,7 @@ function renderOfferLocation(item){
   $("openDeviceMap").href=mapUrl||"";
   $("openDeviceMap").hidden=!mapUrl;
   $("openDeviceMap").target=androidMaps?"_self":"_blank";
-  $("branchMapHint").textContent=branch?(L.validPoint(branch.point)?"В картах выберите «Маршрут» → «Моё местоположение».":"Точка не подтверждена: откроется поиск адреса. Проверьте здание, затем выберите «Маршрут» → «Моё местоположение»."):links?"Откроется поиск отделений банка, не подтверждённая касса с этим курсом.":"";
+  $("branchMapHint").textContent=branch?(L.validPoint(branch.point)?"В картах выберите «Маршрут» → «Моё местоположение».":"Точка не подтверждена: откроется поиск адреса. Проверьте здание, затем выберите «Маршрут» → «Моё местоположение»."):links?"Откроется поиск отделений банка.":"";
   $("branchChecked").textContent=branch?"Адрес сверён "+new Date(branch.checkedAt).toLocaleDateString("ru-RU")+" · список неполный."+(C.fresh(branch.checkedAt,90*C.DAY)?"":" Адрес давно не проверялся — уточните его у сети."):"";
 }
 function selectBranch(){
@@ -984,17 +1089,24 @@ function selectBranch(){
   renderOfferLocation(item);
 }
 function toggleAllOffers(){allOffers=!allOffers;renderOffers();}
-function editingExchangeRate(){return currentView==="exchange"&&rateKind==="cash"&&$("ratePanel").classList.contains("show")&&$("ratePanel").parentElement===$("cashRateHost");}
+function editingExchangeRate(){return currentView==="exchange"&&($("exchangeManualPanel").classList.contains("show")||rateKind==="cash"&&$("ratePanel").classList.contains("show")&&$("ratePanel").parentElement===$("cashRateHost"));}
 function renderOffers(){
+  const meta=exchangeMeta[exchangeCurrency],market=marketFor(exchangeCurrency);
+  $("exchangeCurrency").value=exchangeCurrency;
+  $("exchangeAmountLabel").textContent="Сумма в "+meta.name;$("exchangeAmountUnit").textContent=meta.unit;
+  $("currencyCoverage").hidden=exchangeCurrency!=="RUB";
+  $("currencyCoverage").textContent="RUB: курсы обменников. Банковские курсы пока не подключены.";
+  $("legacyOfferDetails").hidden=exchangeCurrency!=="USD";
+  $("manualRateButton").setAttribute("aria-expanded",String(editingExchangeRate()));
   fitAmount($("exchangeAmount"));
   const rows=offersForCity();
   if(!offerSelectionExplicit||!rows.some(row=>row.key===selectedOffer)){
-    const active=state.cashOfficeId?"office:"+state.cashOfficeId:state.cashBankId?"bank:"+state.cashBankId:C.positive(state.cashGelRate)?"manual":"";
+    const active=exchangeCurrency==="USD"?(state.cashOfficeId?"office:"+state.cashOfficeId:state.cashBankId?"bank:"+state.cashBankId:C.positive(state.cashGelRate)?"manual":""):(manualRecords[exchangeCurrency]?offerKey("manual",exchangeCurrency):"");
     selectedOffer=rows.some(row=>row.key===active)?active:rows[0]?.key||"";
   }
   const amount=numberValue($("exchangeAmount").value);
   const valid=amount>0&&amount<=1e9;
-  $("exchangeError").textContent=valid?"":"Введите сумму от 0 до 1 млрд USD, больше нуля.";
+  $("exchangeError").textContent=valid?"":"Введите сумму больше нуля и не больше 1 млрд "+meta.unit+".";
   $("exchangeError").classList.toggle("show",!valid);
   $("exchangeAmount").setAttribute("aria-invalid",String(!valid));
   const shown=allOffers?rows:rows.slice(0,3);
@@ -1020,10 +1132,10 @@ function renderOffers(){
       const badge=document.createElement("span");badge.className="offer-best";badge.textContent="Лучший курс";
       heading.appendChild(badge);button.setAttribute("aria-describedby","bestOfferHelp");
     }
-    const total=document.createElement("b");total.textContent=valid?money(D.mul(amount,item.buy))+" ₾":"— ₾";
+    const total=document.createElement("b");total.textContent=valid?money(D.mul($("exchangeAmount").value,item.buy))+" ₾":"— ₾";
     top.appendChild(heading);top.appendChild(total);button.appendChild(top);
     const detail=document.createElement("small");
-    detail.textContent=(item.kind==="manual"?"Введён вами":item.kind==="office"?"Обменник · курс сети":"Банк · город уточните")+" · "+fmtRate(item.buy)+" ₾/$"+(item.fresh?"":" · нужна проверка");
+    detail.textContent=(item.kind==="manual"?"Введён вами":item.kind==="office"?"Обменник · курс сети":"Банк · город уточните")+" · "+quoteText(exchangeCurrency,item.buy)+(item.fresh?"":" · нужна проверка");
     button.appendChild(detail);button.classList.toggle("is-stale",!item.fresh);
     button.addEventListener("click",()=>selectOffer(item.key));return button;
   });
@@ -1039,33 +1151,35 @@ function renderOffers(){
   $("moreOffers").setAttribute("aria-expanded",String(allOffers));
   const available=rows.filter(row=>row.kind!=="manual"&&row.fresh).length;
   $("bestOfferHelp").hidden=!available;
-  $("offerStatus").textContent=available?"Актуальные предложения: "+available+" · до комиссий":officeBusy||bankBusy?"Загружаем курсы…":"Нет актуальных предложений. Сохранённые курсы — только для справки.";
-  if(officeFailed||offices?.failures.length)$("offerStatus").textContent+=" Часть обменников не прошла проверку.";
-  $("offerStatus").classList.toggle("stale",!available&&!officeBusy&&!bankBusy);
-  $("refreshOffersButton").disabled=officeBusy||bankBusy;
-  $("refreshOffersButton").textContent=officeBusy||bankBusy?"Проверяем…":"Обновить курсы";
+  const busy=market.officeBusy||market.bankBusy;
+  $("offerStatus").textContent=available?"Актуальные предложения: "+available+" · до комиссий":busy?"Загружаем курсы…":"Нет свежих курсов банков и обменников. Старые — для справки.";
+  if(market.officeFailed||market.offices?.failures.length)$("offerStatus").textContent+=" Часть обменников не прошла проверку.";
+  if(market.bankFailed)$("offerStatus").textContent+=" Банковские курсы не прошли проверку.";
+  $("offerStatus").classList.toggle("stale",!available&&!busy);
+  $("refreshOffersButton").disabled=busy;
+  $("refreshOffersButton").textContent=busy?"Проверяем…":"Обновить курсы";
   const item=rows.find(row=>row.key===selectedOffer);
   $("offerAddressButton").hidden=!item||item.kind==="manual";
   $("offerAddressButton").textContent=item?(item.kind==="bank"?"Отделения ":"Адреса ")+item.name:"Адреса";
   $("offerAddressButton").setAttribute("aria-expanded",String(Boolean(expandedOffer)));
-  $("exchangeReceive").textContent=item&&valid?"≈ "+money(D.mul(amount,item.buy))+" ₾":"— ₾";
-  $("exchangeResultLabel").textContent=item?(item.kind==="manual"?"Мой курс · "+fmtRate(item.buy)+" ₾/$"+(item.fresh?"":" · нужна проверка"):(item.fresh?"По предложению ":"Нужна проверка · ")+item.name):"Выберите предложение";
+  $("exchangeReceive").textContent=item&&valid?"≈ "+money(D.mul($("exchangeAmount").value,item.buy))+" ₾":"— ₾";
+  $("exchangeResultLabel").textContent=item?(item.kind==="manual"?"Свой курс · "+quoteText(exchangeCurrency,item.buy)+(item.fresh?"":" · нужна проверка"):(item.fresh?"По курсу ":"Нужна проверка · ")+item.name):"Выберите предложение";
   $("exchangeResultLabel").classList.toggle("stale",Boolean(item&&!item.fresh));
   const {usdCost,exact}=routeValues();
   $("exchangeBasis").textContent=valid&&item?(usdCost>0?"Эти USD стоили вам ≈ "+fmtRub(D.mul(amount,exact.usdCost))+" ₽ · 1 ₾ ≈ "+fmtRate(usdCost/item.buy)+" ₽":"Добавьте покупку USD, чтобы увидеть стоимость в рублях."):"";
-  $("selectedOfferDetail").textContent=item?(item.kind==="manual"?freshnessText(item.checkedAt,"USD→GEL").text+". Введён вами, не котировка банка или обменника."+(item.fresh?"":" Проверьте перед обменом."):"Проверено "+checkedText(item.checkedAt)+". "+(item.kind==="office"?"Курс сети. Наличие и условия уточните в отделении.":"Витрина НБГ: отделение, запрос на 1 000 GEL. Для вашей суммы условия могут отличаться.")+(item.fresh?"":" Применение отключено: данные устарели или не подтверждены.")):"Можно ввести свой проверенный курс ниже.";
+  $("selectedOfferDetail").textContent=item?(item.kind==="manual"?freshnessText(item.checkedAt,exchangeCurrency+"→GEL").text+". Введён вами, не котировка банка или обменника."+(item.fresh?"":" Проверьте перед обменом."):"Проверено "+checkedText(item.checkedAt)+". "+(item.kind==="office"?"Курс сети. Наличие и условия уточните в отделении.":"Витрина НБГ: отделение, запрос на 1 000 GEL. Для вашей суммы условия могут отличаться.")+(item.fresh?"":" Курс нельзя применить: данные устарели или не подтверждены.")):"Можно ввести свой проверенный курс выше.";
   $("selectedSource").hidden=!item?.url;$("selectedBranches").hidden=!item?.branches;
   $("selectedSource").href=item?.url||"";$("selectedBranches").href=item?.branches||"";
-  $("applyOfferButton").hidden=editingExchangeRate();
+  $("applyOfferButton").hidden=exchangeCurrency!=="USD"||editingExchangeRate();
   $("applyOfferButton").disabled=editingExchangeRate()||!(item&&(item.kind==="manual"||item.fresh)&&valid);
   $("planOfferButton").hidden=editingExchangeRate();
   $("planOfferButton").disabled=editingExchangeRate()||!(item&&(item.kind==="manual"||item.fresh)&&valid);
-  $("offerActionNote").textContent=!valid?"Введите сумму долларов выше.":item&&item.kind!=="manual"&&!item.fresh?"Расчёт недоступен: курс требует проверки.":"";
+  $("offerActionNote").textContent=!valid?"Введите сумму выше.":item&&item.kind!=="manual"&&!item.fresh?"Чтобы применить курс, обновите данные или введите свой.":"";
   $("offerActionNote").hidden=!$("offerActionNote").textContent;
-  $("applyOfferButton").textContent=item?.kind==="manual"?"Открыть расчёт в ₽ по моему курсу":item?"Выбрать "+item.name+" для расчёта в ₽":"Выбрать курс для пересчёта в ₽";
+  $("applyOfferButton").textContent="Применить курс";
 }
 async function applyOffer(){
-  if(editingExchangeRate())return;
+  if(exchangeCurrency!=="USD"||editingExchangeRate())return;
   const item=offersForCity().find(row=>row.key===selectedOffer);
   const amount=numberValue($("exchangeAmount").value);
   if(!item||!(amount>0&&amount<=1e9))return;
@@ -1095,9 +1209,31 @@ async function refreshOffices(){
   }catch{officeFailed=true;}
   finally{officeBusy=false;renderOffers();calc();}
 }
-function refreshAllRates(){return Promise.all([refreshOfficial(),refreshBanks(),refreshOffices()]);}
+const extraCacheKey=(currency,kind)=>"gelcost-v5.7-"+kind+"-"+currency;
+async function refreshCurrencyMarket(currency,kind){
+  const market=extraMarkets[currency],bank=kind==="banks";
+  if(!market||currency==="RUB"&&bank)return;
+  const busy=bank?"bankBusy":"officeBusy",failed=bank?"bankFailed":"officeFailed";
+  if(market[busy])return;
+  market[busy]=true;renderOffers();
+  const validate=data=>(bank?C.bankSnapshot:C.officeSnapshot)(data,Date.now(),currency);
+  try{
+    const data=validate(await fetchJson("./"+(bank?"market":"exchange")+"-rates-"+currency.toLowerCase()+".json"));
+    const old=market[kind];
+    if(old&&Date.parse(data.fetchedAt)<Date.parse(old.fetchedAt))throw Error("Snapshot moved backwards");
+    if(!bank)for(const row of data.offers){
+      const previous=old?.offers.find(item=>item.id===row.id);
+      if(previous&&Date.parse(row.checkedAt)<Date.parse(previous.checkedAt))throw Error("Provider timestamp moved backwards");
+    }
+    market[kind]=data;market[failed]=false;cachePublic(extraCacheKey(currency,kind),data,validate);
+  }catch{market[failed]=true;}
+  finally{market[busy]=false;renderOffers();if(currentView==="calculator")renderPlanner();}
+}
+function refreshAllRates(){return Promise.all([refreshOfficial(),refreshBanks(),refreshOffices(),refreshCurrencyMarket("EUR","banks"),refreshCurrencyMarket("EUR","offices"),refreshCurrencyMarket("RUB","offices")]);}
 
-$("exchangeAmount").addEventListener("input",()=>{renderOffers();if(rateKind==="cash"&&$("ratePanel").classList.contains("show"))updateRatePreview();});
+$("exchangeAmount").addEventListener("input",()=>{renderOffers();if(rateKind==="cash"&&$("ratePanel").classList.contains("show"))updateRatePreview();if($("exchangeManualPanel").classList.contains("show"))updateExchangeManualPreview();});
+$("exchangeCurrency").addEventListener("change",()=>changeExchangeCurrency());
+$("exchangeManualValue").addEventListener("input",updateExchangeManualPreview);
 $("exchangeCity").addEventListener("change",()=>{selectedOffer="";expandedOffer="";offerSelectionExplicit=false;allOffers=false;renderOffers();});
 $("branchChoice").addEventListener("change",selectBranch);
 $("quickGel").addEventListener("input",calc);
@@ -1114,6 +1250,13 @@ if(cachedOfficial)state.officialSnapshot=cachedOfficial;
 else if(state.officialSnapshot){try{cachePublic(C.CACHE_KEYS.official,C.official(state.officialSnapshot),C.official);}catch{}}
 banks=readCache(C.CACHE_KEYS.banks,C.bankSnapshot);
 offices=readCache(C.CACHE_KEYS.offices,C.officeSnapshot);
+for(const currency of ["EUR","RUB"]){
+  readManual(currency);
+  for(const kind of ["banks","offices"]){
+    if(currency==="RUB"&&kind==="banks")continue;
+    extraMarkets[currency][kind]=readCache(extraCacheKey(currency,kind),data=>(kind==="banks"?C.bankSnapshot:C.officeSnapshot)(data,Date.now(),currency));
+  }
+}
 applyCurrentBankQuote();
 restoreOfficial();
 calc();
@@ -1128,6 +1271,14 @@ function refreshRatesIfDue(minAge=REFRESH_INTERVAL){
 window.addEventListener("storage",event=>{
   if(event.storageArea&&event.storageArea!==storage)return;
   if(event.key===C.STORAGE_KEY||event.key===null)syncPersonal();
+  for(const currency of ["EUR","RUB"])if(event.key===manualKey(currency)||event.key===null){
+    readManual(currency);
+    if(manualEditorCurrency===currency&&$("exchangeManualPanel").classList.contains("show")&&$("exchangeManualValue").value===manualEditorBaseline){
+      const record=manualRecords[currency];manualEditorBaseline=record?inputValue(nominalQuote(record.rate,exchangeMeta[currency].nominal)):"";
+      $("exchangeManualValue").value=manualEditorBaseline;updateExchangeManualPreview();
+    }
+    renderOffers();if(currentView==="calculator")renderPlanner();
+  }
 });
 document.addEventListener("visibilitychange",()=>{
   if(!document.hidden){syncPersonal();refreshRatesIfDue(60000);}

@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
-  "currency": "USD",
-  "unit": "GEL per USD",
+  "currency": "RUB",
+  "unit": "GEL per RUB",
   "nominal": 1,
   "channel": "Cash",
   "side": "buy",
@@ -9,8 +9,8 @@
   "offers": [
     {
       "id": "mjc",
-      "buy": 2.61,
-      "sell": 2.614,
+      "buy": 0.02925,
+      "sell": 0.0294,
       "nominal": 1,
       "sourceNominal": 1,
       "checkedAt": "2026-09-07T17:58:00.972759Z",
@@ -18,10 +18,10 @@
     },
     {
       "id": "rico",
-      "buy": 2.609,
-      "sell": 2.614,
+      "buy": 0.0263,
+      "sell": 0.0303,
       "nominal": 1,
-      "sourceNominal": 1,
+      "sourceNominal": 100,
       "checkedAt": "2026-09-07T17:58:00.972759Z",
       "sourceUpdatedAt": null
     }

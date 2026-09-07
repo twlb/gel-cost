@@ -35,7 +35,7 @@ jobs:
 
       - name: Validate calculation and collection rules
         run: |
-          node --test tests/core.test.cjs tests/app.test.cjs tests/planner.test.cjs
+          node --test tests/*.test.cjs
           python3 -m unittest discover -s tests -p 'test_*.py'
 
       - name: Fetch official rates
@@ -56,7 +56,7 @@ jobs:
       - name: Commit changed rates
         id: commit
         run: |
-          git add rates.json market-rates.json exchange-rates.json
+          git add rates.json market-rates.json exchange-rates.json market-rates-eur.json exchange-rates-eur.json exchange-rates-rub.json
           if git diff --cached --quiet; then
             echo "Snapshots have not changed."
             exit 0
