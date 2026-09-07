@@ -5,20 +5,13 @@
   "channel": "Branch",
   "userType": "PhysicalPerson",
   "queryAmountGel": 1000,
-  "fetchedAt": "2026-09-07T08:16:10.045884Z",
+  "fetchedAt": "2026-09-07T10:10:14.293390Z",
   "source": {
     "name": "Банковская витрина НБГ",
     "url": "https://nbg.gov.ge/en/currency-rates",
     "api": "https://tariffcompare.nbg.gov.ge/api/Exchanges/get-exchanges"
   },
   "offers": [
-    {
-      "id": "6",
-      "bank": "Silk Bank",
-      "buy": 2.611,
-      "sell": 2.619,
-      "sourceUpdatedAt": null
-    },
     {
       "id": "5",
       "bank": "Tera Bank",
@@ -41,10 +34,17 @@
       "sourceUpdatedAt": null
     },
     {
+      "id": "6",
+      "bank": "Silk Bank",
+      "buy": 2.608,
+      "sell": 2.616,
+      "sourceUpdatedAt": null
+    },
+    {
       "id": "4",
       "bank": "Khalyk Bank Georgia",
-      "buy": 2.604,
-      "sell": 2.634,
+      "buy": 2.602,
+      "sell": 2.632,
       "sourceUpdatedAt": null
     },
     {
@@ -78,8 +78,8 @@
     {
       "id": "12",
       "bank": "Liberty Bank",
-      "buy": 2.565,
-      "sell": 2.665,
+      "buy": 2.566,
+      "sell": 2.666,
       "sourceUpdatedAt": null
     },
     {
@@ -99,8 +99,8 @@
     {
       "id": "11",
       "bank": "TBC Bank",
-      "buy": 2.56,
-      "sell": 2.651,
+      "buy": 2.559,
+      "sell": 2.649,
       "sourceUpdatedAt": null
     }
   ],
