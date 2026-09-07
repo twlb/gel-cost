@@ -1,28 +1,37 @@
 {
-  "schemaVersion": 1,
+  "schemaVersion": 2,
   "currency": "EUR",
   "unit": "GEL per EUR",
   "nominal": 1,
   "channel": "Cash",
   "side": "buy",
-  "fetchedAt": "2026-09-07T17:59:17.224144Z",
+  "fetchedAt": "2026-09-07T19:44:43.844678Z",
   "offers": [
     {
       "id": "mjc",
-      "buy": 3.031,
-      "sell": 3.036,
+      "buy": 3.03,
+      "sell": 3.035,
       "nominal": 1,
       "sourceNominal": 1,
-      "checkedAt": "2026-09-07T17:59:17.224144Z",
+      "checkedAt": "2026-09-07T19:44:43.844678Z",
       "sourceUpdatedAt": null
     },
     {
       "id": "rico",
-      "buy": 3.031,
-      "sell": 3.041,
+      "buy": 3.03,
+      "sell": 3.04,
       "nominal": 1,
       "sourceNominal": 1,
-      "checkedAt": "2026-09-07T17:59:17.224144Z",
+      "checkedAt": "2026-09-07T19:44:43.844678Z",
+      "sourceUpdatedAt": null
+    },
+    {
+      "id": "inteli",
+      "buy": 3.027,
+      "sell": 3.04,
+      "nominal": 1,
+      "sourceNominal": 1,
+      "checkedAt": "2026-09-07T19:44:43.844678Z",
       "sourceUpdatedAt": null
     }
   ],
