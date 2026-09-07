@@ -111,7 +111,7 @@ test('city changes close the old panel and cannot reuse an address from another 
   a.run('selectOffer("office:rico")');
   assert.equal(a.els.branchChoice.children.length,6);
   assert.match(a.els.branchAddress.textContent,/^Батуми,/);
-  assert.equal(new URL(a.els.branchGoogle.href).searchParams.get('destination'),'41.645256,41.6385689');
+  assert.equal(new URL(a.els.branchGoogle.href).searchParams.get('query'),'41.645256,41.6385689');
   a.els.branchChoice.value='mjc:rustavi:0';a.run('selectBranch()');
   assert.match(a.els.branchAddress.textContent,/^Батуми,/);
   a.run('selectOffer("office:mjc")');assert.equal(a.run('expandedOffer'),'office:rico');
@@ -143,7 +143,7 @@ test('a missing location bundle does not break calculations and keeps the offici
   assert.equal(a.els.branchMapActions.hidden,true);assert.match(a.els.branchNotice.textContent,/недоступны/);
   assert.equal(a.els.branchSource.href,'https://mjc.ge/contact');near(a.run('routeValues().cash'),88/3);
 });
-test('branch catalog and navigation URLs stay source-bound and disclose their date',()=>{
+test('branch catalog and map pins stay source-bound and disclose their date',()=>{
   const L=require('../locations.js');
   assert.equal(L.branches('mjc','batumi').length,0);
   assert.equal(L.branches('mjc','all').length,2);
@@ -156,10 +156,13 @@ test('branch catalog and navigation URLs stay source-bound and disclose their da
     assert.ok(['https://mjc.ge/contact','https://www.rico.ge/en/branches/'].includes(row.source));
     const links=L.branchLinks(row);
     if(row.point){assert.equal(row.point.length,2);assert.ok(row.point[0]>41&&row.point[0]<42);assert.ok(row.point[1]>41&&row.point[1]<46);}
-    for(const [provider,parameter] of [['google',row.point?'destination':'query'],['apple',row.point?'daddr':'q'],['yandex',row.point?'rtext':'text']]){
+    for(const [provider,parameter] of [['google','query'],['apple',row.point?'coordinate':'q'],['yandex',row.point?'whatshere[point]':'text']]){
       const url=new URL(links[provider]);assert.equal(url.protocol,'https:');
-      assert.equal(url.searchParams.get(parameter),row.point?(provider==='yandex'?'~':'')+row.point.join(','):row.destination);
-      assert.equal(url.searchParams.has('origin'),false);assert.equal(url.searchParams.has('saddr'),false);
+      assert.equal(url.searchParams.get(parameter),row.point?(provider==='yandex'?[row.point[1],row.point[0]]:row.point).join(','):row.destination);
+      for(const forbidden of ['origin','saddr','daddr','destination','rtext','dir_action','rtt'])assert.equal(url.searchParams.has(forbidden),false,`${provider}: ${forbidden}`);
+      if(provider==='google')assert.equal(url.pathname,'/maps/search/');
+      if(provider==='apple'&&row.point){assert.equal(url.pathname,'/place');assert.equal(url.searchParams.get('name'),row.address);}
+      if(provider==='yandex'&&row.point)assert.equal(url.searchParams.get('whatshere[zoom]'),'17');
     }
   }
   assert.equal(L.mapLinks(''),null);
@@ -171,11 +174,26 @@ test('ambiguous text and multi-place source links never become precise direction
   const L=require('../locations.js');
   const mjc=L.branches('mjc','tbilisi')[0];
   assert.deepEqual(mjc.point,[41.7102279,44.7970808]);
-  assert.equal(new URL(L.branchLinks(mjc).yandex).searchParams.get('rtext'),'~41.7102279,44.7970808');
+  assert.equal(new URL(L.branchLinks(mjc).yandex).searchParams.get('whatshere[point]'),'44.7970808,41.7102279');
   const ambiguous=L.branches('rico','tbilisi').find(b=>b.id==='rico:tbilisi:1');
   assert.equal(ambiguous.point,null);
   assert.equal(new URL(L.branchLinks(ambiguous).google).pathname,'/maps/search/');
   assert.equal(new URL(L.branchLinks(ambiguous).apple).searchParams.has('daddr'),false);
+});
+test('map buttons explain that they show a place and the route origin must be checked in maps',async()=>{
+  const a=await app();a.run('selectOffer("office:mjc")');
+  assert.match(a.els.branchMapHint.textContent,/без построения маршрута/);
+  assert.match(a.els.branchMapHint.textContent,/проверьте поле «Откуда»/);
+  const source=fs.readFileSync(path.join(root,'index.html'),'utf8');
+  assert.ok(source.indexOf('id="branchMapHint"')<source.indexOf('id="branchMapActions"'));
+  assert.doesNotMatch(fs.readFileSync(path.join(root,'app.js'),'utf8'),/navigator\.geolocation/);
+});
+test('malformed point coordinates fall back to address search rather than an incorrect pin',()=>{
+  const L=require('../locations.js'),branch=L.branches('mjc','tbilisi')[0];
+  for(const point of [[NaN,44],[41,Infinity],[91,44],[41,181],['41',44]]){
+    assert.deepEqual(L.branchLinks({...branch,point}),L.mapLinks(branch.destination));
+  }
+  assert.equal(L.branchLinks(null),null);
 });
 test('a newly opened purchase can save while the previous editor submission is still pending',async()=>{
   const a=await app();a.run('showView("data")');

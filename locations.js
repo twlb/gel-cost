@@ -63,22 +63,33 @@
         point:points[office+":"+key+":"+address]||null
       })));
   }
-  function mapLinks(destination,searchOnly=true){
+  // Open a place, never directions with an implicit/guessed starting point.
+  // The user can choose and verify the route origin inside their map app.
+  function mapLinks(destination){
     if(typeof destination!=="string"||!destination.trim())return null;
     const query=encodeURIComponent(destination);
     return {
-      google:"https://www.google.com/maps/"+(searchOnly?"search/?api=1&query=":"dir/?api=1&destination=")+query,
-      apple:"https://maps.apple.com/?"+(searchOnly?"q=":"daddr=")+query,
-      yandex:"https://yandex.ru/maps/?"+(searchOnly?"text=":"rtext=~")+query
+      google:"https://www.google.com/maps/search/?api=1&query="+query,
+      apple:"https://maps.apple.com/?q="+query,
+      yandex:"https://yandex.ru/maps/?text="+query
     };
   }
   function branchLinks(branch){
     if(!branch)return null;
-    return branch.point?mapLinks(branch.point.join(","),false):mapLinks(branch.destination,true);
+    if(!branch.point)return mapLinks(branch.destination);
+    const [lat,lon]=branch.point;
+    if(!Number.isFinite(lat)||!Number.isFinite(lon)||Math.abs(lat)>90||Math.abs(lon)>180)return mapLinks(branch.destination);
+    const latLon=encodeURIComponent(lat+","+lon),lonLat=encodeURIComponent(lon+","+lat);
+    return {
+      google:"https://www.google.com/maps/search/?api=1&query="+latLon,
+      apple:"https://maps.apple.com/place?coordinate="+latLon+"&name="+encodeURIComponent(branch.address),
+      // Yandex place cards use longitude,latitude (unlike route/search coordinates).
+      yandex:"https://yandex.ru/maps/?whatshere%5Bpoint%5D="+lonLat+"&whatshere%5Bzoom%5D=17"
+    };
   }
   function bankSearch(name,city){
     const place=Object.hasOwn(cities,city)?cities[city].map:"Georgia";
-    return mapLinks(String(name).slice(0,120)+" bank branches, "+place+(place==="Georgia"?"":", Georgia"),true);
+    return mapLinks(String(name).slice(0,120)+" bank branches, "+place+(place==="Georgia"?"":", Georgia"));
   }
   const api={checkedAt,branches,mapLinks,branchLinks,bankSearch};
   if(typeof module!=="undefined"&&module.exports)module.exports=api;

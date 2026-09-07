@@ -94,15 +94,15 @@
 <div class="offer-list" id="offerList" aria-label="Предложения обмена"></div>
 <div id="locationPanelHome">
 <section class="offer-location" id="offerLocationPanel" aria-labelledby="branchHeading" hidden>
-<div class="branch-header"><h3 id="branchHeading">Адреса и маршрут</h3><button type="button" class="text-button" id="closeLocationButton" onclick="closeOfferLocation()">Свернуть адреса</button></div>
+<div class="branch-header"><h3 id="branchHeading">Адреса и карты</h3><button type="button" class="text-button" id="closeLocationButton" onclick="closeOfferLocation()">Свернуть адреса</button></div>
 <div id="branchChoiceGroup"><label for="branchChoice">Отделение</label><select id="branchChoice" aria-describedby="branchNotice"></select></div>
 <p class="branch-address" id="branchAddress"></p>
+<p class="note" id="branchMapHint"></p>
 <div class="map-actions" id="branchMapActions">
 <a id="branchGoogle" target="_blank" rel="noopener noreferrer">Google Maps</a>
 <a id="branchApple" target="_blank" rel="noopener noreferrer">Apple Maps</a>
 <a id="branchYandex" target="_blank" rel="noopener noreferrer">Яндекс Карты</a>
 </div>
-<p class="note" id="branchMapHint"></p>
 <p class="note" id="branchNotice"></p>
 <p class="note" id="branchChecked"></p>
 <a id="branchSource" target="_blank" rel="noopener noreferrer" hidden>Все адреса на сайте сети ↗</a>
@@ -124,7 +124,7 @@
 <p class="note">Обменники: публичный курс сети, не конкретной кассы. Банки: отделения, запрос на 1 000 GEL в витрине НБГ; город и наличный обмен для вашей суммы нужно уточнить. Список не охватывает весь рынок.</p>
 <p class="note">Проверяем опубликованные данные в фоне. Если проверка не удалась или курсам больше двух часов, выбор отключается. Время проверки — не время изменения курса на стороне обменника.</p>
 <p class="note">USDT → наличные здесь пока не подключено. Карту Bybit считаем отдельно, по вашему списанию или прогнозному курсу.</p>
-<p class="note">Карты открываются отдельно и получают только адрес. Покупки и суммы им не передаются; местоположение калькулятор не запрашивает. Точку, маршрут и часы работы проверяйте в картах. Список адресов неполный и обновляется отдельно от курсов.</p>
+<p class="note">Карты открываются отдельно и получают только адрес или координаты обменника, без готового маршрута. Покупки и суммы им не передаются; местоположение калькулятор не запрашивает. Для маршрута проверьте своё местоположение или введите начальный адрес в картах. Список адресов неполный и обновляется отдельно от курсов.</p>
 <button class="secondary full" onclick="openRate('cash')">Ввести свой USD → GEL</button>
 <button class="text-button full" onclick="refreshAllRates()">Повторить проверку курсов</button>
 </details>
@@ -174,7 +174,7 @@
 <div class="actions"><button type="submit" class="primary">Сохранить курс</button><button type="button" class="secondary" onclick="closeInline('ratePanel')">Закрыть</button></div>
 </form>
 <script src="core.js?v=5.6-exact-money"></script>
-<script src="locations.js?v=2026-09-06"></script>
-<script src="app.js?v=5.6-locations-1"></script>
+<script src="locations.js?v=2026-09-07-map-pin-2"></script>
+<script src="app.js?v=5.6-map-pin-2"></script>
 </body>
 </html>
