@@ -94,12 +94,11 @@ test('branch selection survives amount changes and refreshes without changing pu
   assert.equal(a.els.branchChoiceGroup.hidden,false);
   a.els.branchChoice.value='rico:tbilisi:1';a.run('selectBranch()');
   assert.match(a.els.branchAddress.textContent,/12 Ilia Chavchavadze/);
-  const destination=new URL(a.els.branchGoogle.href).searchParams.get('query');
+  const destination=new URL(a.els.openDeviceMap.href).searchParams.get('query');
   assert.equal(destination,'12 Ilia Chavchavadze Avenue, Tbilisi, Georgia');
   a.els.exchangeAmount.value='200,50';a.run('renderOffers()');await a.run('refreshOffices()');
   assert.equal(a.els.branchChoice.value,'rico:tbilisi:1');
-  assert.equal(new URL(a.els.branchApple.href).searchParams.get('q'),destination);
-  assert.equal(new URL(a.els.branchYandex.href).searchParams.get('text'),destination);
+  assert.equal(new URL(a.els.openDeviceMap.href).searchParams.get('query'),destination);
   assert.equal(a.writes[C.STORAGE_KEY],before);
   a.run('selectOffer("office:rico")');assert.equal(a.els.offerLocationPanel.hidden,true);
   a.run('selectOffer("office:rico")');assert.equal(a.els.branchChoice.value,'rico:tbilisi:1');
@@ -112,7 +111,7 @@ test('city changes close the old panel and cannot reuse an address from another 
   a.run('selectOffer("office:rico")');
   assert.equal(a.els.branchChoice.children.length,6);
   assert.match(a.els.branchAddress.textContent,/^Батуми,/);
-  assert.equal(new URL(a.els.branchGoogle.href).searchParams.get('query'),'41.645256,41.6385689');
+  assert.equal(new URL(a.els.openDeviceMap.href).searchParams.get('query'),'41.645256,41.6385689');
   a.els.branchChoice.value='mjc:rustavi:0';a.run('selectBranch()');
   assert.match(a.els.branchAddress.textContent,/^Батуми,/);
   a.run('selectOffer("office:mjc")');assert.equal(a.run('expandedOffer'),'office:rico');
@@ -121,27 +120,27 @@ test('banks offer an explicitly labelled search, not an invented branch route',a
   const a=await app();a.els.exchangeCity.value='batumi';a.run('toggleAllOffers();selectOffer("bank:1")');
   assert.equal(a.els.branchAddress.hidden,true);assert.equal(a.els.branchChoiceGroup.hidden,true);
   assert.match(a.els.branchNotice.textContent,/не указывает конкретное отделение/);
-  const url=new URL(a.els.branchGoogle.href);
+  const url=new URL(a.els.openDeviceMap.href);
   assert.equal(url.pathname,'/maps/search/');assert.equal(url.searchParams.has('destination'),false);
   assert.equal(url.searchParams.get('query'),'A bank branches, Batumi, Georgia');
   assert.equal(a.els.branchSource.hidden,true);
   a.els.exchangeCity.value='all';a.run('renderOffers()');
-  assert.equal(new URL(a.els.branchGoogle.href).searchParams.get('query'),'A bank branches, Georgia');
+  assert.equal(new URL(a.els.openDeviceMap.href).searchParams.get('query'),'A bank branches, Georgia');
 });
 test('manual rate has no fabricated address, and stale network quotes do not block address viewing',async()=>{
   const a=await app();await cash(a,3);a.run('selectOffer("manual")');
   assert.match(a.els.branchNotice.textContent,/не привязан/);
-  assert.equal(a.els.branchMapActions.hidden,true);assert.equal(a.els.branchSource.hidden,true);
+  assert.equal(a.els.openDeviceMap.hidden,true);assert.equal(a.els.branchSource.hidden,true);
   a.responses['./exchange-rates.json'].fetchedAt=new Date(Date.now()-3*3600000).toISOString();
   for(const row of a.responses['./exchange-rates.json'].offers)row.checkedAt=a.responses['./exchange-rates.json'].fetchedAt;
   await a.run('refreshOffices()');a.run('toggleAllOffers();selectOffer("office:mjc")');
-  assert.equal(a.els.applyOfferButton.disabled,true);assert.equal(a.els.branchMapActions.hidden,false);
+  assert.equal(a.els.applyOfferButton.disabled,true);assert.equal(a.els.openDeviceMap.hidden,false);
   assert.match(a.els.branchChecked.textContent,/06\.09\.2026/);
 });
 test('a missing location bundle does not break calculations and keeps the official directory link',async()=>{
   const a=await app({},false,{noLocations:true});await purchase(a,'usd',8800,100);await cash(a,3);
   a.run('selectOffer("office:mjc")');
-  assert.equal(a.els.branchMapActions.hidden,true);assert.match(a.els.branchNotice.textContent,/недоступны/);
+  assert.equal(a.els.openDeviceMap.hidden,true);assert.match(a.els.branchNotice.textContent,/недоступны/);
   assert.equal(a.els.branchSource.href,'https://mjc.ge/contact');near(a.run('routeValues().cash'),88/3);
 });
 test('branch catalog and map pins stay source-bound and disclose their date',()=>{
@@ -181,18 +180,16 @@ test('ambiguous text and multi-place source links never become precise direction
   assert.equal(new URL(L.branchLinks(ambiguous).google).pathname,'/maps/search/');
   assert.equal(new URL(L.branchLinks(ambiguous).apple).searchParams.has('daddr'),false);
 });
-test('one map button reveals an inline chooser without querying location or installed apps',async()=>{
-  let requests=0;
-  const a=await app({},false,{geolocation:{getCurrentPosition(){requests++;}}});
+test('one direct map link needs no chooser, location permission, app detection or save',async()=>{
+  let requests=0;const a=await app({},false,{geolocation:{getCurrentPosition(){requests++;}}});
   a.run('selectOffer("office:mjc")');
-  assert.equal(a.els.branchMapLaunch.hidden,false);assert.equal(a.els.mapChooser.hidden,true);
-  assert.equal(a.els.openMapChooser.hidden,false);assert.equal(a.els.openPreferredMap.hidden,true);
-  a.run('toggleMapChooser()');assert.equal(a.els.mapChooser.hidden,false);
-  assert.equal(a.els.openMapChooser.attrs['aria-expanded'],'true');
-  a.run('toggleMapChooser()');assert.equal(a.els.mapChooser.hidden,true);
-  assert.equal(requests,0);
-  const source=fs.readFileSync(path.join(root,'app.js'),'utf8');
-  assert.doesNotMatch(source,/navigator\.geolocation|watchPosition|getInstalledRelatedApps|window\.open/);
+  assert.equal(a.els.openDeviceMap.hidden,false);assert.equal(a.els.openDeviceMap.target,'_blank');
+  assert.match(a.els.openDeviceMap.href,/^https:/);assert.equal(a.els.openDeviceMap.events.click,undefined);
+  assert.equal(requests,0);assert.equal(a.writes[C.STORAGE_KEY],undefined);
+  const source=fs.readFileSync(path.join(root,'app.js'),'utf8'),html=fs.readFileSync(path.join(root,'index.html'),'utf8');
+  assert.doesNotMatch(source,/navigator\.geolocation|watchPosition|getInstalledRelatedApps|window\.open|toggleMapChooser|gelcost-map-preference/);
+  assert.match(html,/<a[^>]*id="openDeviceMap"[^>]*>Посмотреть на карту<\/a>/);
+  assert.doesNotMatch(html,/id="(?:mapChooser|rememberMap|openMapChooser|changeMapChoice|mapSystem)"/);
   assert.match(a.els.branchMapHint.textContent,/«Моё местоположение»/);
 });
 test('Batumi remains the HTML default and empty-city fallback',async()=>{
@@ -218,56 +215,53 @@ test('Android hands the same point or search to the OS without choosing a packag
   assert.equal(injected.split('#Intent;').length,2);
   assert.equal(injected.split(';package=').length,1);
   const a=await app({},false,{userAgent:'Mozilla/5.0 (Linux; Android 15) Chrome/140 Mobile'});
-  a.run('selectOffer("office:mjc");toggleMapChooser()');
-  assert.equal(a.els.mapSystem.hidden,false);assert.match(a.els.mapSystem.href,/^intent:/);
-  assert.match(a.els.mapChoiceHelp.textContent,/не список установленных/);
+  a.run('selectOffer("office:mjc")');
+  assert.equal(a.els.openDeviceMap.hidden,false);assert.equal(a.els.openDeviceMap.target,'_self');
+  assert.equal(a.els.openDeviceMap.href,L.deviceMapLink(L.branchLinks(L.branches('mjc','tbilisi')[0])));
 });
-test('iPhone and desktop offer named services without pretending to detect installed apps',async()=>{
-  for(const userAgent of ['Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X)','Mozilla/5.0 (Macintosh; Intel Mac OS X)']){
-    const a=await app({},false,{userAgent});a.run('selectOffer("office:mjc");toggleMapChooser()');
-    assert.equal(a.els.mapSystem.hidden,true);assert.equal(a.els.mapSystem.href,'');
-    assert.match(a.els.mapChoiceHelp.textContent,/не видит установленные/);
-    for(const id of ['branchGoogle','branchApple','branchYandex'])assert.match(a.els[id].href,/^https:/);
+test('Apple devices get a direct Apple place link; other desktops get Google',async()=>{
+  const L=require('../locations.js'),branch=L.branches('mjc','tbilisi')[0];
+  for(const userAgent of ['Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X)','iPad','iPod','Mozilla/5.0 (Macintosh; Intel Mac OS X)','Windows NT 10.0','Linux x86_64','']){
+    const a=await app({},false,{userAgent});a.run('selectOffer("office:mjc")');
+    const provider=/(iPhone|iPad|iPod|Macintosh)/.test(userAgent)?'apple':'google';
+    assert.equal(a.els.openDeviceMap.href,L.branchLinks(branch)[provider]);
+    assert.equal(a.els.openDeviceMap.target,'_blank');
   }
 });
-test('remembering a provider is optional and never rewrites financial history',async()=>{
-  const a=await app();await purchase(a,'usd',8800,100);await cash(a,3);
-  const before=a.writes[C.STORAGE_KEY];
-  a.run('selectOffer("office:mjc");toggleMapChooser();rememberMapPreference("google")');
-  assert.equal(a.writes['gelcost-map-preference'],undefined);
-  a.els.rememberMap.checked=true;a.run('rememberMapPreference("google");renderMapChooser()');
-  assert.equal(a.writes['gelcost-map-preference'],'google');assert.equal(a.writes[C.STORAGE_KEY],before);
-  assert.equal(a.els.openMapChooser.hidden,true);assert.equal(a.els.openPreferredMap.hidden,false);
-  assert.equal(a.els.openPreferredMap.href,a.els.branchGoogle.href);assert.equal(a.els.openPreferredMap.target,'_blank');
-  const b=await app(a.writes);b.run('toggleAllOffers();selectOffer("office:rico")');
-  assert.equal(b.els.openPreferredMap.hidden,false);assert.equal(b.els.openPreferredMap.href,b.els.branchGoogle.href);
-  b.run('toggleMapChooser();forgetMapPreference()');
-  assert.equal(b.els.mapChooser.hidden,false);assert.equal(b.els.openMapChooser.hidden,false);
-  const c=await app(b.writes);c.run('toggleAllOffers();selectOffer("office:rico")');assert.equal(c.els.openPreferredMap.hidden,true);
-});
-test('preference survives changing branch/city but the destination and chooser state do not leak',async()=>{
-  const a=await app({'gelcost-map-preference':'yandex'});
-  a.run('toggleAllOffers();selectOffer("office:rico");toggleMapChooser()');a.els.branchChoice.value='rico:tbilisi:1';a.run('selectBranch()');
-  assert.equal(a.els.mapChooser.hidden,true);assert.equal(a.els.openPreferredMap.href,a.els.branchYandex.href);
-  const old=a.els.openPreferredMap.href;
-  a.els.exchangeCity.value='batumi';a.els.exchangeCity.events.change();a.run('selectOffer("office:rico")');
-  assert.notEqual(a.els.openPreferredMap.href,old);assert.match(a.els.branchAddress.textContent,/^Батуми,/);
-  assert.equal(a.els.mapChooser.hidden,true);assert.equal(a.els.openPreferredMap.href,a.els.branchYandex.href);
-});
-test('invalid preferences are ignored, and storage failure does not block opening a map',async()=>{
-  for(const saved of ['__proto__','constructor','javascript:alert(1)','system']){
-    const a=await app({'gelcost-map-preference':saved});a.run('selectOffer("office:mjc")');
-    assert.equal(a.els.openPreferredMap.hidden,true);
+test('old preferences cannot override direct Android maps or alter financial history',async()=>{
+  const L=require('../locations.js'),branch=L.branches('mjc','tbilisi')[0];
+  for(const saved of ['google','apple','yandex','system','__proto__','javascript:alert(1)']){
+    const a=await app({'gelcost-map-preference':saved},false,{userAgent:'Android'});
+    await purchase(a,'usd',8800,100);await cash(a,3);const before=a.writes[C.STORAGE_KEY];
+    a.run('selectOffer("office:mjc")');
+    assert.equal(a.els.openDeviceMap.href,L.deviceMapLink(L.branchLinks(branch)));
+    assert.equal(a.els.openDeviceMap.target,'_self');
+    assert.equal(a.writes[C.STORAGE_KEY],before);assert.equal(a.writes['gelcost-map-preference'],saved);
+    const b=await app(a.writes,false,{userAgent:'Android'});b.run('selectOffer("office:mjc")');
+    assert.equal(b.els.openDeviceMap.href,a.els.openDeviceMap.href);assert.equal(b.writes[C.STORAGE_KEY],before);
   }
-  const a=await app({},true);a.run('selectOffer("office:mjc");toggleMapChooser()');
-  a.els.rememberMap.checked=true;a.run('rememberMapPreference("google")');
-  assert.equal(a.els.mapChoiceStatus.hidden,false);assert.match(a.els.mapChoiceStatus.textContent,/Не удалось запомнить/);
-  assert.match(a.els.branchGoogle.href,/^https:/);
 });
-test('system preference is Android-only and keeps a direct user-gesture link',async()=>{
-  const a=await app({'gelcost-map-preference':'system'},false,{userAgent:'Android'});
-  a.run('toggleAllOffers();selectOffer("office:rico")');assert.match(a.els.openPreferredMap.href,/^intent:/);
-  assert.equal(a.els.openPreferredMap.target,'_self');assert.equal(a.els.openPreferredMap.textContent,'Открыть · Карты телефона');
+test('direct Android maps follow the branch and clear when no address is shown',async()=>{
+  const a=await app({},false,{userAgent:'Android'}),L=require('../locations.js');
+  a.run('toggleAllOffers();selectOffer("office:rico")');
+  a.els.branchChoice.value='rico:tbilisi:1';a.run('selectBranch()');
+  assert.equal(a.els.openDeviceMap.href,L.deviceMapLink(L.branchLinks(L.branches('rico','tbilisi')[1])));
+  a.els.exchangeCity.value='batumi';a.els.exchangeCity.events.change();
+  assert.equal(a.els.openDeviceMap.hidden,true);assert.equal(a.els.openDeviceMap.href,'');
+  a.run('selectOffer("office:rico")');a.els.branchChoice.value='rico:batumi:3';a.run('selectBranch()');
+  const expected=L.deviceMapLink(L.branchLinks(L.branches('rico','batumi')[3]));
+  assert.equal(a.els.openDeviceMap.href,expected);
+  a.run('showView("purchase");showView("data");showView("exchange")');assert.equal(a.els.openDeviceMap.href,expected);
+  await cash(a,3);a.run('selectOffer("manual")');
+  assert.equal(a.els.openDeviceMap.hidden,true);assert.equal(a.els.openDeviceMap.href,'');
+});
+test('denied storage cannot prevent direct map opening',async()=>{
+  for(const userAgent of ['Android','iPhone','Windows']){
+    const a=await app({},true,{userAgent});a.run('selectOffer("office:mjc")');
+    assert.equal(a.els.openDeviceMap.hidden,false);
+    assert.match(a.els.openDeviceMap.href,userAgent==='Android'?/^intent:/:/^https:/);
+    assert.equal(a.els.openDeviceMap.events.click,undefined);
+  }
 });
 test('malformed point coordinates fall back to address search rather than an incorrect pin',()=>{
   const L=require('../locations.js'),branch=L.branches('mjc','tbilisi')[0];
