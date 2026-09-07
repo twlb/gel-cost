@@ -14,9 +14,16 @@ class Element{
   constructor(){this.dataset={};this.value='';this.textContent='';this.hidden=false;this.innerHTML='';this.children=[];this.events={};this.attrs={};this.classes=new Set();this.classList={contains:k=>this.classes.has(k),add:k=>this.classes.add(k),remove:k=>this.classes.delete(k),toggle:(k,on)=>{if(on===undefined)on=!this.classes.has(k);on?this.classes.add(k):this.classes.delete(k);}};}
   setAttribute(k,v){this.attrs[k]=v;}
   addEventListener(k,fn){this.events[k]=fn;}
-  appendChild(node){node.parentElement=this;this.children.push(node);}
-  replaceChildren(...nodes){this.children=nodes;this.value=nodes[0]?.value||'';}
-  add(node){this.children.push(node);}
+  appendChild(node){
+    if(node.parentElement){const old=node.parentElement.children,index=old.indexOf(node);if(index>=0)old.splice(index,1);}
+    node.parentElement=this;this.children.push(node);return node;
+  }
+  replaceChildren(...nodes){
+    for(const child of this.children)if(child.parentElement===this)child.parentElement=null;
+    this.children=[];for(const node of nodes)this.appendChild(node);
+    this.value=nodes[0]?.value||'';
+  }
+  add(node){this.appendChild(node);}
   focus(){}
   click(){this.clicked=true;}
 }
@@ -1077,4 +1084,266 @@ test('delayed editor focus cannot steal focus after navigating or closing the fo
   for(const timer of a.timers.values())if(timer.ms===50)timer.fn();assert.equal(focused,0);
   a.run('showView("purchase");closeInline("purchasePanel")');
   for(const timer of a.timers.values())if(timer.ms===50)timer.fn();assert.equal(focused,0);
+});
+
+test('imported stale personal quote retains its date and caution across refresh and reversed drafts',async()=>{
+  const a=await app();await cash(a,'2,6000');a.advance(2*C.DAY);
+  const saved=a.writes[C.STORAGE_KEY],stamp=a.state().cashGelUpdated;
+  a.run('showView("exchange");selectOffer("manual");useOfferForPlan()');
+  assert.equal(a.run('plan.quoteMeta.gelBuy.checkedAt'),stamp);
+  assert.match(a.els.planSource0.textContent,/Мой сохранённый курс.*нужна проверка/);
+  assert.ok(a.els.planSource0.textContent.includes(a.run(`checkedText(${stamp})`)));
+  assert.equal(a.els.planSource0.classes.has('stale'),true);
+  assert.equal(a.els.planCaution.hidden,false);
+  assert.match(a.els.planCaution.textContent,/старый личный курс/);
+  assert.equal(a.els.planResult.textContent,'≈ 260,00 ₾');
+  await a.run('refreshAllRates()');
+  assert.equal(a.els.planCaution.hidden,false);
+  a.run('reversePlan()');
+  assert.equal(a.els.planQuote0.value,'','A personal BUY is not a reverse SELL quote');
+  assert.equal(a.els.planCaution.hidden,true,'A warning only describes a quote used by the active route');
+  a.els.planQuote0.value='2,7000';a.run('editPlanQuote(0);reversePlan()');
+  assert.equal(a.els.planQuote0.value,'2,6000');
+  assert.equal(a.run('plan.quoteMeta.gelBuy.checkedAt'),stamp,'Editing SELL must not clear BUY provenance');
+  assert.equal(a.els.planCaution.hidden,false);
+  assert.equal(a.writes[C.STORAGE_KEY],saved,'Transfer, refresh and reversal do not restamp personal data');
+});
+
+test('editing another leg keeps stale personal provenance; editing that exact quote clears it',async()=>{
+  const a=await app();await cash(a,2.6);a.advance(2*C.DAY);
+  a.run('selectOffer("manual");useOfferForPlan()');
+  a.els.planFrom.value='RUB';a.run('changePlanRoute()');
+  a.els.planQuote0.value='90';a.run('editPlanQuote(0)');
+  assert.equal(a.els.planCaution.hidden,false);
+  assert.match(a.els.planSource1.textContent,/нужна проверка/);
+  a.els.planQuote1.value='2,65';a.run('editPlanQuote(1)');
+  assert.equal(a.els.planSource1.textContent,'Ваш курс');
+  assert.equal(a.els.planSource1.classes.has('stale'),false);
+  assert.equal(a.els.planCaution.hidden,true);
+  assert.equal(a.run('Object.hasOwn(plan.quoteMeta,"gelBuy")'),false);
+  await a.run('refreshAllRates()');assert.equal(a.els.planQuote1.value,'2,65');
+  assert.equal(a.els.planCaution.hidden,true);
+});
+
+test('fresh imported personal quote becomes visibly stale when its own timestamp expires',async()=>{
+  const a=await app();await cash(a,2.6);a.run('selectOffer("manual");useOfferForPlan()');
+  assert.match(a.els.planSource0.textContent,/Мой сохранённый курс/);
+  assert.equal(a.els.planCaution.hidden,true);
+  a.advance(2*C.DAY);a.run('calc()');
+  assert.equal(a.els.planCaution.hidden,false);assert.match(a.els.planSource0.textContent,/нужна проверка/);
+  a.els.exchangeAmount.value='100';a.run('showView("exchange")');
+  a.responses['./exchange-rates.json']=officeData();
+  a.responses['./exchange-rates.json'].fetchedAt=a.run('new Date().toISOString()');
+  a.responses['./exchange-rates.json'].offers.forEach(row=>row.checkedAt=a.run('new Date().toISOString()'));
+  await a.run('refreshOffices()');a.run('selectOffer("office:mjc");useOfferForPlan()');
+  assert.equal(a.els.planCaution.hidden,true);assert.equal(a.run('Object.hasOwn(plan.quoteMeta,"gelBuy")'),false);
+  assert.match(a.els.planSource0.textContent,/MJC/);
+});
+
+test('want display prepares enough money and explains ceiling, while give keeps ordinary rounding',async()=>{
+  const a=await app();a.run('showView("calculator")');
+  a.els.planFrom.value='USD';a.els.planTo.value='GEL';a.run('changePlanRoute();setPlanMode("want")');
+  a.els.planAmount.value='100';a.els.planQuote0.value='2,61';a.run('editPlanQuote(0)');
+  assert.equal(a.els.planResult.textContent,'≈ 38,32 USD');
+  assert.equal(a.els.planRounding.hidden,false);assert.match(a.els.planRounding.textContent,/вверх до 0,01 USD/);
+  assert.equal(a.els.planStepResult0.textContent,'','Do not show a contradictory rounded-down payment breakdown');
+  a.els.planAmount.value='261';a.run('renderPlanner()');
+  assert.equal(a.els.planResult.textContent,'≈ 100,00 USD');assert.equal(a.els.planRounding.hidden,true);
+  a.run('setPlanMode("give")');a.els.planAmount.value='38,31';a.run('renderPlanner()');
+  assert.equal(a.els.planResult.textContent,'≈ 99,99 ₾');assert.equal(a.els.planRounding.hidden,true);
+  assert.match(a.els.planStepResult0.textContent,/38,31 USD → 99,99 ₾/);
+  a.els.planAmount.value='bad';a.run('renderPlanner()');assert.equal(a.els.planRounding.hidden,true);
+});
+
+test('settings draft survives toggle and another editor, then saves and reloads explicitly',async()=>{
+  const a=await app();a.run('showView("data");openSettings()');
+  a.els.feePct.value='1,5';a.els.cashbackPct.value='0,5';
+  const saved=a.writes[C.STORAGE_KEY];
+  a.run('openSettings();openSettings()');
+  assert.equal(a.els.feePct.value,'1,5');assert.equal(a.els.cashbackPct.value,'0,5');
+  a.run('openPurchase("usd");closeInline("purchasePanel");openSettings()');
+  assert.equal(a.els.feePct.value,'1,5');assert.equal(a.els.cashbackPct.value,'0,5');
+  a.run('showView("exchange");showView("data")');
+  assert.equal(a.els.feePct.value,'1,5');assert.equal(a.writes[C.STORAGE_KEY],saved);
+  await a.run('saveSettings()');
+  assert.equal(a.state().feePct,1.5);assert.equal(a.state().cashbackPct,0.5);
+  a.run('closeInline("settingsPanel");openSettings()');
+  assert.equal(C.number(a.els.feePct.value),1.5);assert.equal(C.number(a.els.cashbackPct.value),0.5);
+  const b=await app(a.writes);b.run('showView("data");openSettings()');
+  assert.equal(b.els.feePct.value,'1.5');assert.equal(b.els.cashbackPct.value,'0.5');
+});
+
+test('untouched settings forms use external changes instead of stale draft values',async()=>{
+  const shared=sharedBrowser(),a=await app({},false,{shared}),b=await app({},false,{shared});
+  a.run('showView("data");openSettings();closeInline("settingsPanel")');
+  b.run('showView("data");openSettings()');b.els.feePct.value='2';b.els.cashbackPct.value='1';
+  await b.run('saveSettings()');shared.flush();
+  a.run('openSettings()');assert.equal(a.els.feePct.value,'2');assert.equal(a.els.cashbackPct.value,'1');
+  b.els.feePct.value='3';await b.run('saveSettings()');shared.flush();
+  a.run('closeInline("settingsPanel");openSettings()');
+  assert.equal(a.els.feePct.value,'3');assert.equal(a.els.cashbackPct.value,'1');
+});
+
+test('dirty settings survive external synchronization and invalid input remains editable',async()=>{
+  const shared=sharedBrowser(),a=await app({},false,{shared}),b=await app({},false,{shared});
+  a.run('showView("data");openSettings()');a.els.feePct.value='1,5';a.els.cashbackPct.value='0,5';
+  a.run('closeInline("settingsPanel")');
+  b.run('showView("data");openSettings()');b.els.feePct.value='3';b.els.cashbackPct.value='1';await b.run('saveSettings()');shared.flush();
+  a.run('openSettings()');assert.equal(a.els.feePct.value,'1,5');assert.equal(a.els.cashbackPct.value,'0,5');
+  a.els.feePct.value='bad';await a.run('saveSettings()');
+  assert.equal(a.els.settingsError.classes.has('show'),true);assert.equal(a.state().feePct,3);
+  a.run('openPurchase("usdt");closeInline("purchasePanel");openSettings()');assert.equal(a.els.feePct.value,'bad');
+  a.els.feePct.value='1,5';await a.run('saveSettings()');
+  assert.equal(a.els.settingsError.classes.has('show'),false);assert.equal(a.state().feePct,1.5);
+});
+
+test('entering an amount does not invalidate an empty quote and bad quotes get a local error',async()=>{
+  const a=await app();a.run('showView("calculator")');
+  a.els.planAmount.value='100';a.run('renderPlanner()');
+  assert.equal(a.els.planQuote0.value,'');assert.equal(a.els.planQuote0.attrs['aria-invalid'],'false');
+  assert.equal(a.els.planQuoteError0.classes.has('show'),false);
+  assert.equal(a.els.planNext.textContent,'Введите курс на шаге 1.');
+  for(const value of ['bad','0','0,000000001','1000000001']){
+    a.els.planQuote0.value=value;a.run('editPlanQuote(0)');
+    assert.equal(a.els.planQuote0.attrs['aria-invalid'],'true');
+    assert.equal(a.els.planQuoteError0.classes.has('show'),true);
+    assert.match(a.els.planQuoteError0.textContent,/Курс — от/);
+    assert.equal(a.els.planResult.textContent,'— ₾');
+  }
+  a.els.planQuote0.value='90';a.run('editPlanQuote(0)');
+  assert.equal(a.els.planQuoteError0.classes.has('show'),false);
+  assert.equal(a.els.planQuote0.attrs['aria-invalid'],'false');
+  a.els.planQuote0.value='';a.run('editPlanQuote(0)');
+  assert.equal(a.els.planQuote0.attrs['aria-invalid'],'false');assert.equal(a.els.planQuoteError0.textContent,'');
+});
+
+test('a single action panel follows the selected row, including after list collapse and refresh',async()=>{
+  const a=await app();
+  const assertAdjacent=()=>{
+    const list=a.els.offerList.children,index=list.findIndex(row=>row.dataset.offerKey===a.run('selectedOffer'));
+    assert.ok(index>=0);assert.equal(list[index+1],a.els.offerActions);
+    assert.equal(a.els.offerActions.parentElement,a.els.offerList);
+    assert.equal(a.els.offerActions.hidden,false);
+    assert.equal(list.filter(node=>node===a.els.offerActions).length,1);
+    assert.equal(a.els.offerActionsHome.children.includes(a.els.offerActions),false);
+  };
+  assertAdjacent();a.run('toggleAllOffers();selectOffer("bank:1")');assertAdjacent();
+  a.run('toggleAllOffers()');assert.equal(a.run('allOffers'),false);assertAdjacent();
+  assert.equal(a.els.offerList.children.filter(row=>row.dataset.offerKey).length,4,'Top three plus an explicitly selected lower row remain visible');
+  for(let i=0;i<3;i++){await a.run('refreshAllRates()');assertAdjacent();}
+  a.run('selectOffer("office:mjc")');assertAdjacent();
+  assert.equal(a.els.offerList.children.some(node=>node.children.includes(a.els.offerActions)),false,'Actions must not be nested in a rate button');
+});
+
+test('moving selected actions retains expanded branch, destination and focused action on refresh',async()=>{
+  const a=await app();a.run('toggleAllOffers();selectOffer("office:rico");toggleOfferLocation()');
+  a.els.branchChoice.value='rico:tbilisi:1';a.run('selectBranch()');
+  const destination=a.els.openDeviceMap.href,before=a.writes[C.STORAGE_KEY];
+  let focuses=0;a.els.planOfferButton.focus=()=>focuses++;
+  a.run('document.activeElement=document.getElementById("planOfferButton");toggleAllOffers()');
+  await a.run('refreshAllRates()');
+  assert.equal(a.run('expandedOffer'),'office:rico');assert.equal(a.els.offerLocationPanel.hidden,false);
+  assert.equal(a.els.branchChoice.value,'rico:tbilisi:1');assert.equal(a.els.openDeviceMap.href,destination);
+  assert.ok(focuses>0);assert.equal(a.writes[C.STORAGE_KEY],before);
+  const index=a.els.offerList.children.findIndex(row=>row.dataset.offerKey==='office:rico');
+  assert.equal(a.els.offerList.children[index+1],a.els.offerActions);
+});
+
+test('invalid exchange amounts disable and guard transfer to the calculator',async()=>{
+  const a=await app();a.run('selectOffer("office:mjc")');
+  const before=a.run('JSON.stringify(plan)'),saved=a.writes[C.STORAGE_KEY];
+  for(const value of ['','bad','0','-1','1000000001']){
+    a.els.exchangeAmount.value=value;a.els.exchangeAmount.events.input();
+    assert.equal(a.els.planOfferButton.disabled,true);
+    assert.equal(a.els.offerActionNote.hidden,false);assert.match(a.els.offerActionNote.textContent,/Введите сумму/);
+    a.run('useOfferForPlan()');assert.equal(a.run('currentView'),'exchange');
+    assert.equal(a.run('JSON.stringify(plan)'),before);
+  }
+  a.els.exchangeAmount.value='125,50';a.els.exchangeAmount.events.input();
+  assert.equal(a.els.planOfferButton.disabled,false);assert.equal(a.els.offerActionNote.hidden,true);
+  a.run('useOfferForPlan()');assert.equal(a.els.planAmount.value,'125,50');
+  assert.equal(a.writes[C.STORAGE_KEY],saved);
+});
+
+test('visible offer refresh action remains busy until both offer sources finish',async()=>{
+  const a=await app();let releaseBanks,releaseOffices;
+  const bank=bankData(),office=officeData();
+  a.responses['./market-rates.json']=new Promise(resolve=>releaseBanks=resolve);
+  a.responses['./exchange-rates.json']=new Promise(resolve=>releaseOffices=resolve);
+  const pending=a.run('refreshAllRates()');await a.settle();
+  assert.equal(a.els.refreshOffersButton.disabled,true);assert.equal(a.els.refreshOffersButton.textContent,'Проверяем…');
+  releaseBanks(bank);await a.settle();assert.equal(a.els.refreshOffersButton.disabled,true);
+  releaseOffices(office);await pending;
+  assert.equal(a.els.refreshOffersButton.disabled,false);assert.equal(a.els.refreshOffersButton.textContent,'Обновить курсы');
+  a.responses['./market-rates.json']=new Error('offline');a.responses['./exchange-rates.json']=new Error('offline');
+  await a.run('refreshAllRates()');assert.equal(a.els.refreshOffersButton.disabled,false);
+  assert.equal(a.els.offerStatus.classes.has('stale'),true);assert.match(a.els.offerStatus.textContent,/Нет актуальных предложений/);
+});
+
+test('an open untouched settings form reflects external updates before it can overwrite them',async()=>{
+  const shared=sharedBrowser(),a=await app({},false,{shared}),b=await app({},false,{shared});
+  a.run('showView("data");openSettings()');
+  b.run('showView("data");openSettings()');b.els.feePct.value='3';b.els.cashbackPct.value='1';
+  await b.run('saveSettings()');shared.flush();
+  assert.equal(a.state().feePct,3,'The application state already received the new value');
+  const shown={fee:a.els.feePct.value,cashback:a.els.cashbackPct.value};
+  await a.run('saveSettings()');
+  assert.equal(JSON.parse(shared.writes[C.STORAGE_KEY]).feePct,3,'Saving an untouched form must not overwrite an external update');
+  assert.equal(JSON.parse(shared.writes[C.STORAGE_KEY]).cashbackPct,1);
+  assert.deepEqual(shown,{fee:'3',cashback:'1'},'The visible clean fields must follow their synchronized values');
+});
+
+test('an open dirty settings form retains its draft through external updates and repeated saves',async()=>{
+  const shared=sharedBrowser(),a=await app({},false,{shared}),b=await app({},false,{shared});
+  a.run('showView("data");openSettings()');a.els.feePct.value='1,5';a.els.cashbackPct.value='0,5';
+  b.run('showView("data");openSettings()');b.els.feePct.value='3';b.els.cashbackPct.value='1';
+  await b.run('saveSettings()');shared.flush();
+  assert.equal(a.state().feePct,3);assert.equal(a.els.feePct.value,'1,5');assert.equal(a.els.cashbackPct.value,'0,5');
+  await a.run('saveSettings()');shared.flush();
+  assert.equal(JSON.parse(shared.writes[C.STORAGE_KEY]).feePct,1.5);
+  assert.equal(JSON.parse(shared.writes[C.STORAGE_KEY]).cashbackPct,0.5);
+  await a.run('saveSettings()');shared.flush();
+  assert.equal(a.state().feePct,1.5);assert.equal(a.run('settingsDraft'),null);
+  b.els.feePct.value='4';b.els.cashbackPct.value='2';await b.run('saveSettings()');shared.flush();
+  assert.equal(a.els.feePct.value,'4');assert.equal(a.els.cashbackPct.value,'2');
+  await a.run('saveSettings()');
+  assert.equal(JSON.parse(shared.writes[C.STORAGE_KEY]).feePct,4);
+  assert.equal(JSON.parse(shared.writes[C.STORAGE_KEY]).cashbackPct,2);
+});
+
+test('completion of a settings save cannot replace a newer draft, even if it matches the old baseline',async()=>{
+  const a=await app();a.run('showView("data");openSettings()');
+  a.els.feePct.value='1,5';a.els.cashbackPct.value='0,5';
+  const pending=a.run('saveSettings()');
+  a.els.feePct.value='0';a.els.cashbackPct.value='0';
+  await pending;
+  assert.equal(a.state().feePct,1.5);assert.equal(a.state().cashbackPct,0.5);
+  assert.equal(a.els.feePct.value,'0');assert.equal(a.els.cashbackPct.value,'0');
+  a.run('closeInline("settingsPanel");openSettings()');
+  assert.equal(a.els.feePct.value,'0');assert.equal(a.els.cashbackPct.value,'0');
+  await a.run('saveSettings()');assert.equal(a.state().feePct,0);assert.equal(a.state().cashbackPct,0);
+  assert.equal(a.run('settingsDraft'),null);
+  // Restoring and saving the old baseline while the first save still waits is
+  // an intentional second edit, not a clean-form no-op.
+  const b=await app();b.run('showView("data");openSettings()');
+  b.els.feePct.value='1,5';const first=b.run('saveSettings()');
+  b.els.feePct.value='0';const second=b.run('saveSettings()');
+  await Promise.all([first,second]);assert.equal(b.state().feePct,0);
+  assert.equal(b.run('settingsDraft'),null);assert.equal(b.run('settingsPending'),0);
+});
+
+test('saving a clean settings form is a no-op even before an external storage event arrives',async()=>{
+  const shared=sharedBrowser(),a=await app({},false,{shared}),b=await app({},false,{shared});
+  a.run('showView("data");openSettings()');
+  b.run('showView("data");openSettings()');b.els.feePct.value='3';b.els.cashbackPct.value='1';
+  await b.run('saveSettings()');
+  const latest=shared.writes[C.STORAGE_KEY];
+  assert.equal(a.state().feePct,0,'The delayed storage event has intentionally not been delivered');
+  await a.run('saveSettings()');
+  assert.equal(shared.writes[C.STORAGE_KEY],latest,'Untouched fields cannot replace newer persisted settings');
+  assert.equal(a.els.feePct.value,'3');assert.equal(a.els.cashbackPct.value,'1');
+  assert.equal(a.state().feePct,3);assert.equal(a.state().cashbackPct,1);
+  assert.match(a.els.actionStatus.textContent,/не изменились/);
+  a.els.feePct.value='4';await a.run('saveSettings()');
+  assert.equal(JSON.parse(shared.writes[C.STORAGE_KEY]).feePct,4,'An intentional dirty edit still saves');
 });

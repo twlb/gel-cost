@@ -52,6 +52,14 @@
     mul:(a,b)=>decimalOperation(a,b,"mul"),div:(a,b)=>decimalOperation(a,b,"div"),
     compare:(a,b)=>{a=decimalFrom(a);b=decimalFrom(b);if(!a||!b)return NaN;const n=a.n*b.d-b.n*a.d;return n<0n?-1:n>0n?1:0;},
     abs:value=>{const a=decimalFrom(value);return a?fraction(a.n<0n?-a.n:a.n,a.d):null;},
+    // Presentation only: a target's required payment must never round down.
+    // Return a new exact fraction; do not change the plan or its intermediate legs.
+    ceil:(value,places=2)=>{
+      const a=decimalFrom(value);
+      if(!a||!Number.isInteger(places)||places<0||places>18)return null;
+      const scale=10n**BigInt(places),scaled=a.n*scale;
+      return fraction(scaled/a.d+(scaled%a.d>0n?1n:0n),scale);
+    },
     format:value=>{
       const a=decimalFrom(value);if(!a)return "—";
       // Round half away from zero exactly once, at the kopeck/tetri boundary.

@@ -7,7 +7,7 @@
 <meta name="description" content="Курсы обменников и банков, адреса на карте. Расчёт обмена рублей, USD, USDT и лари в обе стороны.">
 <title>GEL Cost</title>
 <link rel="icon" href="data:,">
-<link rel="stylesheet" href="styles.css?v=5.7-polish-1">
+<link rel="stylesheet" href="styles.css?v=5.7-audit-1">
 </head>
 <body>
 <a class="skip" href="#main">К расчёту</a>
@@ -31,11 +31,14 @@
 </div>
 <div id="planViaGroup"><label for="planVia">Через</label><select id="planVia" onchange="changePlanRoute()"><option value="USD">Наличные USD</option><option value="USDT">USDT</option></select></div>
 <label id="planAmountLabel" for="planAmount">Сколько рублей отдаю</label><div class="input amount"><input id="planAmount" type="text" inputmode="decimal" maxlength="18" autocomplete="off" placeholder="Сумма" aria-describedby="planError" oninput="renderPlanner()"><span class="unit" id="planAmountUnit">₽</span></div>
-<div class="exchange-result plan-result is-pending" id="planResultBox" aria-live="polite" aria-atomic="true"><p id="planResultLabel">Получите</p><strong id="planResult">— ₾</strong><p class="note" id="planNext">Введите сумму обмена.</p></div>
-<div class="error" id="planError" role="alert"></div>
 <h2 id="planPath">Рубли → доллары → лари</h2>
-<article class="plan-step" id="planStep0"><h3 id="planStepTitle0">1. Рубли → доллары</h3><label id="planQuoteLabel0" for="planQuote0">Покупаю 1 USD за рубли</label><div class="input"><input id="planQuote0" type="text" inputmode="decimal" maxlength="18" placeholder="Введите курс" aria-describedby="planSource0" oninput="editPlanQuote(0)" onblur="finishPlanQuote(0)"><span class="unit" id="planQuoteUnit0">₽</span></div><p class="note" id="planSource0"></p><p class="plan-step-result" id="planStepResult0"></p><details class="disclosure" id="planFee0"><summary id="planFeeSummary0">Комиссия</summary><p class="note" id="planFeeHelp0"></p><div class="grid"><div><label for="planPct0">Процент, %</label><input id="planPct0" type="text" inputmode="decimal" maxlength="12" value="0" oninput="editPlanFee(0)"></div><div><label id="planFixedLabel0" for="planFixed0">Фиксированная, ₽</label><input id="planFixed0" type="text" inputmode="decimal" maxlength="18" value="0" oninput="editPlanFee(0)"></div></div><p class="note">Укажите только комиссию, не включённую в курс.</p></details></article>
-<article class="plan-step" id="planStep1"><h3 id="planStepTitle1">2. Доллары → лари</h3><label id="planQuoteLabel1" for="planQuote1">Продаю 1 USD за лари</label><div class="input"><input id="planQuote1" type="text" inputmode="decimal" maxlength="18" placeholder="Введите курс" aria-describedby="planSource1" oninput="editPlanQuote(1)" onblur="finishPlanQuote(1)"><span class="unit" id="planQuoteUnit1">₾</span></div><p class="note" id="planSource1"></p><p class="plan-step-result" id="planStepResult1"></p><details class="disclosure" id="planFee1"><summary id="planFeeSummary1">Комиссия</summary><p class="note" id="planFeeHelp1"></p><div class="grid"><div><label for="planPct1">Процент, %</label><input id="planPct1" type="text" inputmode="decimal" maxlength="12" value="0" oninput="editPlanFee(1)"></div><div><label id="planFixedLabel1" for="planFixed1">Фиксированная, USD</label><input id="planFixed1" type="text" inputmode="decimal" maxlength="18" value="0" oninput="editPlanFee(1)"></div></div><p class="note">Укажите только комиссию, не включённую в курс.</p></details></article>
+<article class="plan-step" id="planStep0"><h3 id="planStepTitle0">1. Рубли → доллары</h3><label id="planQuoteLabel0" for="planQuote0">Покупаю 1 USD за рубли</label><div class="input"><input id="planQuote0" type="text" inputmode="decimal" maxlength="18" placeholder="Введите курс" aria-describedby="planSource0 planQuoteError0" oninput="editPlanQuote(0)" onblur="finishPlanQuote(0)"><span class="unit" id="planQuoteUnit0">₽</span></div><p class="note" id="planSource0"></p><p class="error" id="planQuoteError0"></p><p class="plan-step-result" id="planStepResult0"></p><details class="disclosure" id="planFee0"><summary id="planFeeSummary0">Комиссия</summary><p class="note" id="planFeeHelp0"></p><div class="grid"><div><label for="planPct0">Процент, %</label><input id="planPct0" type="text" inputmode="decimal" maxlength="12" value="0" oninput="editPlanFee(0)"></div><div><label id="planFixedLabel0" for="planFixed0">Фиксированная, ₽</label><input id="planFixed0" type="text" inputmode="decimal" maxlength="18" value="0" oninput="editPlanFee(0)"></div></div><p class="note">Укажите только комиссию, не включённую в курс.</p></details></article>
+<article class="plan-step" id="planStep1"><h3 id="planStepTitle1">2. Доллары → лари</h3><label id="planQuoteLabel1" for="planQuote1">Продаю 1 USD за лари</label><div class="input"><input id="planQuote1" type="text" inputmode="decimal" maxlength="18" placeholder="Введите курс" aria-describedby="planSource1 planQuoteError1" oninput="editPlanQuote(1)" onblur="finishPlanQuote(1)"><span class="unit" id="planQuoteUnit1">₾</span></div><p class="note" id="planSource1"></p><p class="error" id="planQuoteError1"></p><p class="plan-step-result" id="planStepResult1"></p><details class="disclosure" id="planFee1"><summary id="planFeeSummary1">Комиссия</summary><p class="note" id="planFeeHelp1"></p><div class="grid"><div><label for="planPct1">Процент, %</label><input id="planPct1" type="text" inputmode="decimal" maxlength="12" value="0" oninput="editPlanFee(1)"></div><div><label id="planFixedLabel1" for="planFixed1">Фиксированная, USD</label><input id="planFixed1" type="text" inputmode="decimal" maxlength="18" value="0" oninput="editPlanFee(1)"></div></div><p class="note">Укажите только комиссию, не включённую в курс.</p></details></article>
+<div class="plan-feedback">
+<div class="exchange-result plan-result is-pending" id="planResultBox" aria-live="polite" aria-atomic="true"><p id="planResultLabel">Получите</p><strong id="planResult">— ₾</strong><p class="note" id="planNext">Введите сумму обмена.</p><p class="note" id="planRounding" hidden></p></div>
+<div class="error" id="planError" role="alert"></div>
+<p class="note stale" id="planCaution" hidden></p>
+</div>
 <div class="actions"><button class="secondary" id="planChooseOffice" onclick="showView('exchange')">Выбрать обменник</button><button class="secondary" id="planAddress" onclick="showPlanLocation()" hidden>Адреса обменника</button></div>
 <p class="footnote">Черновик исчезнет после перезагрузки. Ваши покупки не изменятся.</p>
 <details class="disclosure" id="planHelp"><summary>О расчёте</summary>
@@ -117,13 +120,16 @@
 <div class="exchange-result" aria-live="polite"><p id="exchangeResultLabel">По выбранному предложению</p><strong id="exchangeReceive">— ₾</strong></div>
 <div class="section-head"><h2>Где обменять</h2><span class="note">За вашу сумму</span></div>
 <p class="note" id="offerStatus"></p>
+<div class="offer-tools"><button class="text-button" id="refreshOffersButton" onclick="refreshAllRates()">Обновить курсы</button><button class="text-button" id="manualRateButton" onclick="openRate('cash')">Свой курс</button></div>
+<div id="cashRateHost"></div>
 <div class="offer-list" id="offerList" aria-label="Предложения обмена"></div>
 <button class="text-button full" id="moreOffers" onclick="toggleAllOffers()">Показать все предложения</button>
+<div id="offerActionsHome"><div class="offer-actions-panel" id="offerActions" hidden>
 <div class="actions exchange-actions">
-<button class="secondary" id="manualRateButton" onclick="openRate('cash')">Свой курс</button>
 <button class="secondary" id="offerAddressButton" onclick="toggleOfferLocation()" aria-expanded="false" aria-controls="offerLocationPanel" hidden>Адреса</button>
+<button class="primary" id="planOfferButton" onclick="useOfferForPlan()" aria-describedby="offerActionNote" disabled>В калькулятор</button>
 </div>
-<div id="cashRateHost"></div>
+<p class="note" id="offerActionNote" hidden></p>
 <div id="locationPanelHome">
 <section class="offer-location" id="offerLocationPanel" aria-labelledby="branchHeading" hidden>
 <div class="branch-header"><h3 id="branchHeading">Адреса и карты</h3><button type="button" class="text-button" id="closeLocationButton" onclick="closeOfferLocation()">Свернуть</button></div>
@@ -136,8 +142,8 @@
 <a id="branchSource" target="_blank" rel="noopener noreferrer" hidden>Все адреса на сайте сети ↗</a>
 </section>
 </div>
-<button class="primary full" id="planOfferButton" onclick="useOfferForPlan()" disabled>Открыть в калькуляторе</button>
-<details class="disclosure" id="legacyOfferDetails"><summary>Для покупок в рублях</summary><p id="exchangeBasis" class="note"></p><button class="secondary full" id="applyOfferButton" onclick="applyOffer()" disabled>Выбрать курс для пересчёта в ₽</button><p class="note">Этот курс можно использовать в «Моих данных» → «Цена покупок в рублях».</p></details>
+</div></div>
+<details class="disclosure" id="legacyOfferDetails"><summary>Для покупок в рублях</summary><p id="exchangeBasis" class="note"></p><button class="secondary full" id="applyOfferButton" onclick="applyOffer()" disabled>Выбрать курс для пересчёта в ₽</button><p class="note">Этот курс можно использовать в «Моих данных» → «Пересчитать цену в рубли».</p></details>
 <p class="footnote">Перед поездкой уточните курс, комиссию и наличие валюты.</p>
 <div class="offer-detail"><p class="note" id="selectedOfferDetail"></p><div class="actions"><a id="selectedSource" target="_blank" rel="noopener noreferrer" hidden>Источник курса</a><a id="selectedBranches" target="_blank" rel="noopener noreferrer" hidden>Отделения</a></div></div>
 <div id="bankPanel" hidden>
@@ -159,7 +165,7 @@
 </section>
 <section id="dataView" hidden aria-labelledby="dataHeading">
 <h1 id="dataHeading" tabindex="-1">Ваши данные</h1><p class="subtitle">По какой цене вы купили валюту</p>
-<button class="secondary full" onclick="showView('purchase')">Цена покупок в рублях</button><p class="note">Пересчёт цен в лари по прошлым покупкам USD/USDT. Для будущего обмена используйте «Калькулятор».</p>
+<button class="secondary full" onclick="showView('purchase')">Пересчитать цену в рубли</button><p class="note">Цена с ценника или из меню — по вашим покупкам валюты. Будущий обмен — во вкладке «Калькулятор».</p>
 <p class="note">Средняя взвешена по суммам покупок за период. Расходы не уменьшают её; остаток здесь не учитывается.</p>
 <div class="data-group"><div class="pathrow"><h2>Наличные USD</h2><b id="dataUsdAvg">—</b></div><button class="text-button" onclick="openPurchase('usd')">Добавить покупку USD</button><details><summary>История покупок USD</summary><div id="usdHistory"></div></details></div>
 <div class="data-group"><div class="pathrow"><h2>USDT</h2><b id="dataUsdtAvg">—</b></div><button class="text-button" onclick="openPurchase('usdt')">Добавить покупку USDT</button><details><summary>История покупок USDT</summary><div id="usdtHistory"></div></details></div>
@@ -201,8 +207,8 @@
 <p class="note" id="ratePreview" aria-live="polite"></p><div class="error" id="rateError" role="alert"></div>
 <div class="actions"><button type="submit" class="primary" id="saveRateButton">Сохранить курс</button><button type="button" class="secondary" onclick="closeInline('ratePanel')">Закрыть</button></div>
 </form>
-<script src="core.js?v=5.7-planner-1"></script>
+<script src="core.js?v=5.7-audit-1"></script>
 <script src="locations.js?v=2026-09-07-map-choice-1"></script>
-<script src="app.js?v=5.7-polish-1"></script>
+<script src="app.js?v=5.7-audit-1"></script>
 </body>
 </html>

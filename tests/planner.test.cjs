@@ -48,3 +48,50 @@ test('four-place input and very large totals retain kopecks',()=>{
   assert.equal(a.ok,true);
   assert.equal(D.compare(a.receive,D.div(D.mul('999999999.99','2.6789'),'87.1234')),0);
 });
+
+test('target payment presentation rounds up without changing the exact plan',()=>{
+  const target=solve({from:'USD',to:'GEL',mode:'want',amount:100,quotes:{gelBuy:'2.61'}});
+  const original=structuredClone(target);
+  const prepared=D.ceil(target.give);
+  assert.equal(D.format(prepared),'38,32');
+  const funded=solve({from:'USD',to:'GEL',amount:D.format(prepared),quotes:{gelBuy:'2.61'}});
+  assert.equal(funded.ok,true);
+  assert.ok(D.compare(funded.receive,100)>=0);
+  assert.deepEqual(target,original,'Presentation must not mutate give, receive, or any step');
+  assert.equal(D.compare(target.give,D.div(100,'2.61')),0);
+});
+
+test('payment ceiling keeps exact money unchanged and handles tiny, huge, and negative fractions',()=>{
+  for(const value of ['0','0.01','38.32','100','999999999999999999999999999999.99']){
+    assert.equal(D.compare(D.ceil(value),value),0);
+  }
+  assert.equal(D.compare(D.ceil('0.000000000000000001'),'0.01'),0);
+  assert.equal(D.compare(D.ceil('999999999999999999999999999999.00000001'),'999999999999999999999999999999.01'),0);
+  assert.equal(D.compare(D.ceil(D.div(-1231,1000)),D.div(-123,100)),0);
+  assert.equal(D.compare(D.ceil(D.div(-1,1000)),0),0);
+});
+
+test('payment ceiling has explicit precision and rejects invalid values or precision',()=>{
+  assert.equal(D.compare(D.ceil('1.001',0),2),0);
+  assert.equal(D.compare(D.ceil('0.123456789',8),'0.12345679'),0);
+  assert.equal(D.compare(D.ceil('0.000000000000000001',18),'0.000000000000000001'),0);
+  for(const value of ['',null,undefined,NaN,Infinity,'bad'])assert.equal(D.ceil(value),null);
+  for(const places of [-1,0.5,19,Infinity,NaN,'2'])assert.equal(D.ceil('1.01',places),null);
+});
+
+test('rounded-up target payments fund every direction with both commissions',()=>{
+  const fees=Object.fromEntries(['RUBUSD','USDRUB','USDGEL','GELUSD','RUBUSDT','USDTRUB','USDTGEL','GELUSDT','USDUSDT','USDTUSD'].map(k=>[k,{pct:'1,25',fixed:'0,03'}]));
+  for(const from of ['RUB','USD','USDT','GEL'])for(const to of ['RUB','USD','USDT','GEL'])if(from!==to){
+    for(const via of ['USD','USDT'])for(const amount of ['0.0001','1','100','9876.54321']){
+      const target=solve({from,to,via,mode:'want',amount,fees});
+      assert.equal(target.ok,true);
+      const original=structuredClone(target),prepared=D.ceil(target.give);
+      assert.ok(D.compare(prepared,target.give)>=0);
+      assert.ok(D.compare(D.sub(prepared,target.give),'0.01')<0);
+      const funded=solve({from,to,via,amount:D.format(prepared),fees});
+      assert.equal(funded.ok,true);
+      assert.ok(D.compare(funded.receive,amount)>=0,`${from} → ${to} via ${via}, target ${amount}`);
+      assert.deepEqual(target,original,'The rounded presentation must not alter an exact step');
+    }
+  }
+});

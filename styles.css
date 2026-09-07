@@ -28,6 +28,9 @@ header{min-height:66px}.amount{min-height:64px}.amount input{height:62px;line-he
 .plan-result.is-pending strong,.plan-result.is-pending>p:first-child{display:none}
 .plan-result.is-pending .note{margin:0}
 .plan-step-result{font-size:14px;line-height:1.5;font-variant-numeric:tabular-nums;overflow-wrap:anywhere;color:var(--text)}
+.plan-feedback{margin:20px 0 16px;padding-top:16px;border-top:1px solid var(--border)}
+.plan-feedback .error{margin-top:0}
+.mode-switch .active{background:#163448;color:#edf8ff;box-shadow:inset 0 0 0 1px #41728f}
 .plan-result strong{display:block;font-size:40px;font-variant-numeric:tabular-nums}
 .plan-result strong[data-money-size=medium]{font-size:32px;letter-spacing:-.5px}
 .plan-result strong[data-money-size=long]{font-size:24px;letter-spacing:0}
@@ -84,6 +87,15 @@ html{scroll-padding-top:16px;scroll-padding-bottom:110px}
 .offer-hint{font-size:12px;margin:0 0 10px}
 .exchange-actions{margin:4px 0 16px}
 .exchange-actions>button{flex:1 1 145px;min-width:0;overflow-wrap:anywhere}
+.offer-tools{display:flex;flex-wrap:wrap;justify-content:space-between;gap:4px 16px;margin:0 0 10px}
+.offer-tools .text-button{font-size:13px}
+.offer-actions-panel{padding:0 12px 12px;border-left:3px solid var(--accent);background:#10232e}
+.offer-actions-panel .exchange-actions{margin:0;gap:8px}
+.offer-actions-panel .exchange-actions>button{flex:1 1 110px;font-size:13px;padding:10px 8px}
+.offer-actions-panel+.offer-row{border-top:1px solid var(--border)}
+.offer-actions-panel .offer-location{margin:12px 0 0!important}
+.offer-row.is-stale small{color:var(--warning)}
+.offer-row small,.offer-location .note{font-size:13px}
 #locationPanelHome .offer-location{border:1px solid var(--border);border-radius:12px;margin-bottom:16px}
 #setupProgress{font-size:13px;color:var(--accent)}
 .offer-name{display:grid;justify-items:start;gap:4px;max-width:100%}
@@ -93,7 +105,7 @@ html{scroll-padding-top:16px;scroll-padding-bottom:110px}
 .branch-header{display:flex;align-items:baseline;justify-content:space-between;flex-wrap:wrap;gap:4px 12px}
 .branch-header h3{margin:0;min-width:0;overflow-wrap:anywhere;font-size:15px}
 .branch-header button{font-size:12px;padding:8px 0;text-align:left}
-.offer-location .note{font-size:12px;line-height:1.5}
+.offer-location .note{font-size:13px;line-height:1.5}
 .offer-location select{width:100%;min-width:0;max-width:100%;font-size:14px}
 .branch-address{font-weight:650;font-size:15px;line-height:1.5;overflow-wrap:anywhere;margin:14px 0}
 .map-launch-link{display:flex;align-items:center;justify-content:center;min-height:44px;border-radius:10px;text-decoration:none;font-weight:600;overflow-wrap:anywhere}
