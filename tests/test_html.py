@@ -32,11 +32,11 @@ class HTMLTests(unittest.TestCase):
         self.assertEqual(p.stack,[])
         self.assertTrue(all(n == 1 for n in Counter(p.ids).values()))
         self.assertTrue(all(i in p.labels for i in p.inputs))
-        self.assertEqual(p.scripts,["core.js?v=5.8-release-1","locations.js?v=5.8-release-1","app.js?v=5.8-release-1"])
+        self.assertEqual(p.scripts,["core.js?v=5.8-release-1","locations.js?v=5.8-release-1","app.js?v=5.9-test-2","insurance-core.js?v=5.9-test-2","insurance.js?v=5.9-test-2"])
         source=(ROOT/"app.js").read_text(encoding="utf-8")
         for handler in p.handlers:
             self.assertRegex(source,r"function\s+"+re.escape(handler)+r"\(")
-        self.assertIn("<title>GEL Cost</title>",(ROOT/"index.html").read_text(encoding="utf-8"))
+        self.assertIn("<title>Жизнь в Грузии</title>",(ROOT/"index.html").read_text(encoding="utf-8"))
 
     def test_exchange_starts_first_and_optional_details_are_collapsed(self):
         source=(ROOT/"index.html").read_text(encoding="utf-8")
@@ -60,7 +60,7 @@ class HTMLTests(unittest.TestCase):
         for field, label in [('officialRub', 'USD/RUB — ЦБ РФ'), ('officialGel', 'USD/GEL — НБГ')]:
             self.assertIn(f'<div><label for="{field}">{label}</label><input id="{field}" type="text" readonly></div>', official)
         self.assertIn('href="styles.css?v=5.8-release-1"', source)
-        self.assertIn('<span class="badge">V5.8</span>', source)
+        self.assertIn('<span class="badge">V5.9.1 · тест</span>', source)
 
     def test_audit_actions_feedback_and_warnings_stay_near_the_task(self):
         source=(ROOT/"index.html").read_text(encoding="utf-8")

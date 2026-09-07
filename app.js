@@ -219,13 +219,15 @@ function calculationFeedback(message,method,view=currentView){
   return message+(price>0&&price<=1e9&&Number.isFinite(price*cost)?" Цена в рублях пересчитана.":" Введите корректную цену в лари для расчёта.");
 }
 function showView(view){
-  if(!["purchase","exchange","data","calculator"].includes(view))return;
+  if(!["purchase","exchange","data","calculator","insurance"].includes(view))return;
   currentView=view;
   for(const name of ["purchase","exchange","data"]){
     $(name+"View").hidden=name!==view;
     $(name+"Nav").setAttribute("aria-current",name===view?"page":"false");
   }
   $("calculatorView").hidden=view!=="calculator";
+  $("insuranceView").hidden=view!=="insurance";
+  $("insuranceNav").setAttribute("aria-current",view==="insurance"?"page":"false");
   $("purchaseNav").setAttribute("aria-current",view==="calculator"?"page":"false");
   if(view==="calculator"){
     if(!plan.initialized){const item=offersForCity("USD").find(row=>row.key===selectedOffer&&row.kind!=="manual"&&row.fresh);if(item){plan.sourceKey=item.key;plan.sourceCity=chosenCity();}plan.initialized=true;}

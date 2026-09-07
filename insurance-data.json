@@ -1,0 +1,710 @@
+{
+  "schemaVersion": 1,
+  "catalogVersion": "0.1.0",
+  "preparedOn": "2026-09-08",
+  "status": "reference_draft_not_deployed",
+  "description": "Published information only; not an offer, full policy or personal recommendation.",
+  "sources": {
+    "unison": {
+      "url": "https://unison.ge/en/portfolio-items/health-insurance-2/",
+      "checkedOn": "2026-09-08",
+      "method": "official_page_read",
+      "locator": "Package cards and Premium table row",
+      "documentVersion": null
+    },
+    "family": {
+      "url": "https://unison.ge/en/portfolio-items/family-health-insurance/",
+      "checkedOn": "2026-09-08",
+      "method": "official_page_read",
+      "locator": "Family package cards and monthly premium rows",
+      "documentVersion": null
+    },
+    "ardi": {
+      "url": "https://ardi.ge/en/products/vitamini",
+      "checkedOn": "2026-09-08",
+      "method": "official_page_read",
+      "locator": "Vitamin A–E cards; guided/free choice prices",
+      "documentVersion": null
+    },
+    "ardiA": {
+      "url": "https://ardi.ge/storage/media//VITAMIN%20Information%20Leaflet%20-%20A%20-%20Georgian%20Citizens%20For%20up%20to%2070%20Years.pdf",
+      "checkedOn": "2026-09-08",
+      "method": "official_document_link_and_scope",
+      "locator": "Document title; scope Georgian citizens",
+      "documentVersion": null
+    },
+    "gpi": {
+      "url": "https://www.gpih.ge/en/individual-insurance/medi-policy/",
+      "checkedOn": "2026-09-08",
+      "method": "official_page_read",
+      "locator": "Package cards; page header; Personal Doctor/Pediatrician",
+      "documentVersion": null
+    }
+  },
+  "products": [
+    {
+      "id": "unison-classic",
+      "insurer": "Unison",
+      "plan": "Classic",
+      "channel": "official_public_website",
+      "scope": "medical_reference_only",
+      "sourceIds": [
+        "unison"
+      ],
+      "price": {
+        "value": 49,
+        "currency": "GEL",
+        "period": "month",
+        "kind": "published_amount",
+        "status": "published_not_personal_quote",
+        "sourceId": "unison",
+        "annualTotal": null
+      },
+      "foreignResidentEligibility": {
+        "status": "unknown",
+        "value": null
+      },
+      "familyQuote": {
+        "status": "unknown",
+        "value": null
+      },
+      "batumiNetwork": {
+        "status": "unknown",
+        "clinics": null
+      },
+      "issues": [],
+      "personalizedRankingAllowed": false
+    },
+    {
+      "id": "unison-advance",
+      "insurer": "Unison",
+      "plan": "Advance",
+      "channel": "official_public_website",
+      "scope": "medical_reference_only",
+      "sourceIds": [
+        "unison"
+      ],
+      "price": {
+        "value": 65,
+        "currency": "GEL",
+        "period": "month",
+        "kind": "published_amount",
+        "status": "published_not_personal_quote",
+        "sourceId": "unison",
+        "annualTotal": null
+      },
+      "foreignResidentEligibility": {
+        "status": "unknown",
+        "value": null
+      },
+      "familyQuote": {
+        "status": "unknown",
+        "value": null
+      },
+      "batumiNetwork": {
+        "status": "unknown",
+        "clinics": null
+      },
+      "issues": [],
+      "personalizedRankingAllowed": false
+    },
+    {
+      "id": "unison-premium",
+      "insurer": "Unison",
+      "plan": "Premium",
+      "channel": "official_public_website",
+      "scope": "medical_reference_only",
+      "sourceIds": [
+        "unison"
+      ],
+      "price": {
+        "value": 85,
+        "currency": "GEL",
+        "period": "month",
+        "kind": "published_amount",
+        "status": "published_not_personal_quote",
+        "sourceId": "unison",
+        "annualTotal": null
+      },
+      "foreignResidentEligibility": {
+        "status": "unknown",
+        "value": null
+      },
+      "familyQuote": {
+        "status": "unknown",
+        "value": null
+      },
+      "batumiNetwork": {
+        "status": "unknown",
+        "clinics": null
+      },
+      "issues": [
+        "Planned hospitalization percentage differs: card 100, table 90. Do not infer reimbursement."
+      ],
+      "personalizedRankingAllowed": false
+    },
+    {
+      "id": "unison-unique",
+      "insurer": "Unison",
+      "plan": "Unique",
+      "channel": "official_public_website",
+      "scope": "medical_reference_only",
+      "sourceIds": [
+        "unison"
+      ],
+      "price": {
+        "value": 120,
+        "currency": "GEL",
+        "period": "month",
+        "kind": "published_amount",
+        "status": "published_not_personal_quote",
+        "sourceId": "unison",
+        "annualTotal": null
+      },
+      "foreignResidentEligibility": {
+        "status": "unknown",
+        "value": null
+      },
+      "familyQuote": {
+        "status": "unknown",
+        "value": null
+      },
+      "batumiNetwork": {
+        "status": "unknown",
+        "clinics": null
+      },
+      "issues": [],
+      "personalizedRankingAllowed": false
+    },
+    {
+      "id": "ardi-vitamin-a",
+      "insurer": "ARDI",
+      "plan": "Vitamin A",
+      "channel": "official_public_website",
+      "scope": "medical_reference_only",
+      "sourceIds": [
+        "ardi",
+        "ardiA"
+      ],
+      "price": null,
+      "foreignResidentEligibility": {
+        "status": "unknown",
+        "value": null
+      },
+      "familyQuote": {
+        "status": "unknown",
+        "value": null
+      },
+      "batumiNetwork": {
+        "status": "unknown",
+        "clinics": null
+      },
+      "issues": [
+        "Price period not explicit in inspected card; do not infer monthly.",
+        "Published scheme prices are not confirmed tariffs for foreign residents.",
+        "Linked leaflet explicitly targets Georgian citizens; do not apply it to foreigners."
+      ],
+      "personalizedRankingAllowed": false,
+      "priceOptions": [
+        {
+          "value": 49,
+          "currency": "GEL",
+          "period": null,
+          "kind": "from",
+          "status": "published_not_personal_quote",
+          "sourceId": "ardi",
+          "annualTotal": null,
+          "scheme": "family_doctor"
+        },
+        {
+          "value": 59,
+          "currency": "GEL",
+          "period": null,
+          "kind": "from",
+          "status": "published_not_personal_quote",
+          "sourceId": "ardi",
+          "annualTotal": null,
+          "scheme": "free_choice"
+        }
+      ]
+    },
+    {
+      "id": "ardi-vitamin-b",
+      "insurer": "ARDI",
+      "plan": "Vitamin B",
+      "channel": "official_public_website",
+      "scope": "medical_reference_only",
+      "sourceIds": [
+        "ardi"
+      ],
+      "price": null,
+      "foreignResidentEligibility": {
+        "status": "unknown",
+        "value": null
+      },
+      "familyQuote": {
+        "status": "unknown",
+        "value": null
+      },
+      "batumiNetwork": {
+        "status": "unknown",
+        "clinics": null
+      },
+      "issues": [
+        "Price period not explicit in inspected card; do not infer monthly.",
+        "Published scheme prices are not confirmed tariffs for foreign residents."
+      ],
+      "personalizedRankingAllowed": false,
+      "priceOptions": [
+        {
+          "value": 59,
+          "currency": "GEL",
+          "period": null,
+          "kind": "from",
+          "status": "published_not_personal_quote",
+          "sourceId": "ardi",
+          "annualTotal": null,
+          "scheme": "family_doctor"
+        },
+        {
+          "value": 69,
+          "currency": "GEL",
+          "period": null,
+          "kind": "from",
+          "status": "published_not_personal_quote",
+          "sourceId": "ardi",
+          "annualTotal": null,
+          "scheme": "free_choice"
+        }
+      ]
+    },
+    {
+      "id": "ardi-vitamin-c",
+      "insurer": "ARDI",
+      "plan": "Vitamin C",
+      "channel": "official_public_website",
+      "scope": "medical_reference_only",
+      "sourceIds": [
+        "ardi"
+      ],
+      "price": null,
+      "foreignResidentEligibility": {
+        "status": "unknown",
+        "value": null
+      },
+      "familyQuote": {
+        "status": "unknown",
+        "value": null
+      },
+      "batumiNetwork": {
+        "status": "unknown",
+        "clinics": null
+      },
+      "issues": [
+        "Price period not explicit in inspected card; do not infer monthly.",
+        "Published scheme prices are not confirmed tariffs for foreign residents."
+      ],
+      "personalizedRankingAllowed": false,
+      "priceOptions": [
+        {
+          "value": 85,
+          "currency": "GEL",
+          "period": null,
+          "kind": "from",
+          "status": "published_not_personal_quote",
+          "sourceId": "ardi",
+          "annualTotal": null,
+          "scheme": "family_doctor"
+        },
+        {
+          "value": 99,
+          "currency": "GEL",
+          "period": null,
+          "kind": "from",
+          "status": "published_not_personal_quote",
+          "sourceId": "ardi",
+          "annualTotal": null,
+          "scheme": "free_choice"
+        }
+      ]
+    },
+    {
+      "id": "ardi-vitamin-d",
+      "insurer": "ARDI",
+      "plan": "Vitamin D",
+      "channel": "official_public_website",
+      "scope": "medical_reference_only",
+      "sourceIds": [
+        "ardi"
+      ],
+      "price": null,
+      "foreignResidentEligibility": {
+        "status": "unknown",
+        "value": null
+      },
+      "familyQuote": {
+        "status": "unknown",
+        "value": null
+      },
+      "batumiNetwork": {
+        "status": "unknown",
+        "clinics": null
+      },
+      "issues": [
+        "Price period not explicit in inspected card; do not infer monthly.",
+        "Published scheme prices are not confirmed tariffs for foreign residents."
+      ],
+      "personalizedRankingAllowed": false,
+      "priceOptions": [
+        {
+          "value": 95,
+          "currency": "GEL",
+          "period": null,
+          "kind": "from",
+          "status": "published_not_personal_quote",
+          "sourceId": "ardi",
+          "annualTotal": null,
+          "scheme": "family_doctor"
+        },
+        {
+          "value": 115,
+          "currency": "GEL",
+          "period": null,
+          "kind": "from",
+          "status": "published_not_personal_quote",
+          "sourceId": "ardi",
+          "annualTotal": null,
+          "scheme": "free_choice"
+        }
+      ]
+    },
+    {
+      "id": "ardi-vitamin-e",
+      "insurer": "ARDI",
+      "plan": "Vitamin E",
+      "channel": "official_public_website",
+      "scope": "medical_reference_only",
+      "sourceIds": [
+        "ardi"
+      ],
+      "price": null,
+      "foreignResidentEligibility": {
+        "status": "unknown",
+        "value": null
+      },
+      "familyQuote": {
+        "status": "unknown",
+        "value": null
+      },
+      "batumiNetwork": {
+        "status": "unknown",
+        "clinics": null
+      },
+      "issues": [
+        "Price period not explicit in inspected card; do not infer monthly.",
+        "Published scheme prices are not confirmed tariffs for foreign residents."
+      ],
+      "personalizedRankingAllowed": false,
+      "priceOptions": [
+        {
+          "value": 119,
+          "currency": "GEL",
+          "period": null,
+          "kind": "from",
+          "status": "published_not_personal_quote",
+          "sourceId": "ardi",
+          "annualTotal": null,
+          "scheme": "family_doctor"
+        },
+        {
+          "value": 139,
+          "currency": "GEL",
+          "period": null,
+          "kind": "from",
+          "status": "published_not_personal_quote",
+          "sourceId": "ardi",
+          "annualTotal": null,
+          "scheme": "free_choice"
+        }
+      ]
+    },
+    {
+      "id": "gpi-medi-standard",
+      "insurer": "GPI Holding",
+      "plan": "Medi Standard",
+      "channel": "official_public_website",
+      "scope": "medical_reference_only",
+      "sourceIds": [
+        "gpi"
+      ],
+      "price": {
+        "value": null,
+        "currency": "GEL",
+        "period": "month",
+        "kind": "published_amount",
+        "status": "ambiguous",
+        "sourceId": "gpi",
+        "annualTotal": null,
+        "observedValues": [
+          39,
+          40
+        ]
+      },
+      "foreignResidentEligibility": {
+        "status": "unknown",
+        "value": null
+      },
+      "familyQuote": {
+        "status": "unknown",
+        "value": null
+      },
+      "batumiNetwork": {
+        "status": "unknown",
+        "clinics": null
+      },
+      "issues": [
+        "Standard card shows 39/month; line header from 40/month and promotion. Applicability unresolved."
+      ],
+      "personalizedRankingAllowed": false,
+      "minimumChildAge": {
+        "value": 1,
+        "unit": "year",
+        "status": "published_line_level",
+        "sourceId": "gpi",
+        "notIndividualApproval": true
+      }
+    },
+    {
+      "id": "gpi-medi-classic",
+      "insurer": "GPI Holding",
+      "plan": "Medi Classic",
+      "channel": "official_public_website",
+      "scope": "medical_reference_only",
+      "sourceIds": [
+        "gpi"
+      ],
+      "price": {
+        "value": 58,
+        "currency": "GEL",
+        "period": "month",
+        "kind": "published_amount",
+        "status": "published_not_personal_quote",
+        "sourceId": "gpi",
+        "annualTotal": null
+      },
+      "foreignResidentEligibility": {
+        "status": "unknown",
+        "value": null
+      },
+      "familyQuote": {
+        "status": "unknown",
+        "value": null
+      },
+      "batumiNetwork": {
+        "status": "unknown",
+        "clinics": null
+      },
+      "issues": [
+        "Promotion and foreign-resident price applicability not confirmed."
+      ],
+      "personalizedRankingAllowed": false,
+      "minimumChildAge": {
+        "value": 1,
+        "unit": "year",
+        "status": "published_line_level",
+        "sourceId": "gpi",
+        "notIndividualApproval": true
+      }
+    },
+    {
+      "id": "gpi-medi-premium",
+      "insurer": "GPI Holding",
+      "plan": "Medi Premium",
+      "channel": "official_public_website",
+      "scope": "medical_reference_only",
+      "sourceIds": [
+        "gpi"
+      ],
+      "price": {
+        "value": 70,
+        "currency": "GEL",
+        "period": "month",
+        "kind": "published_amount",
+        "status": "published_not_personal_quote",
+        "sourceId": "gpi",
+        "annualTotal": null
+      },
+      "foreignResidentEligibility": {
+        "status": "unknown",
+        "value": null
+      },
+      "familyQuote": {
+        "status": "unknown",
+        "value": null
+      },
+      "batumiNetwork": {
+        "status": "unknown",
+        "clinics": null
+      },
+      "issues": [
+        "Promotion and foreign-resident price applicability not confirmed."
+      ],
+      "personalizedRankingAllowed": false,
+      "minimumChildAge": {
+        "value": 1,
+        "unit": "year",
+        "status": "published_line_level",
+        "sourceId": "gpi",
+        "notIndividualApproval": true
+      }
+    },
+    {
+      "id": "unison-family-1",
+      "insurer": "Unison",
+      "plan": "UNI FAMILY+",
+      "channel": "official_public_website",
+      "scope": "medical_reference_only",
+      "sourceIds": [
+        "family"
+      ],
+      "price": {
+        "value": null,
+        "currency": "GEL",
+        "period": "month",
+        "kind": "family",
+        "status": "ambiguous_mapping",
+        "sourceId": "family",
+        "annualTotal": null
+      },
+      "foreignResidentEligibility": {
+        "status": "unknown",
+        "value": null
+      },
+      "familyQuote": {
+        "status": "unknown",
+        "value": null
+      },
+      "batumiNetwork": {
+        "status": "unknown",
+        "clinics": null
+      },
+      "issues": [
+        "Table duplicates family package column headings; prices not assigned by column position.",
+        "Family composition and foreign-resident eligibility require verification."
+      ],
+      "personalizedRankingAllowed": false
+    },
+    {
+      "id": "unison-family-2",
+      "insurer": "Unison",
+      "plan": "UNI FAMILY++",
+      "channel": "official_public_website",
+      "scope": "medical_reference_only",
+      "sourceIds": [
+        "family"
+      ],
+      "price": {
+        "value": null,
+        "currency": "GEL",
+        "period": "month",
+        "kind": "family",
+        "status": "ambiguous_mapping",
+        "sourceId": "family",
+        "annualTotal": null
+      },
+      "foreignResidentEligibility": {
+        "status": "unknown",
+        "value": null
+      },
+      "familyQuote": {
+        "status": "unknown",
+        "value": null
+      },
+      "batumiNetwork": {
+        "status": "unknown",
+        "clinics": null
+      },
+      "issues": [
+        "Table duplicates family package column headings; prices not assigned by column position.",
+        "Family composition and foreign-resident eligibility require verification."
+      ],
+      "personalizedRankingAllowed": false
+    },
+    {
+      "id": "unison-family-3",
+      "insurer": "Unison",
+      "plan": "UNI FAMILY+++",
+      "channel": "official_public_website",
+      "scope": "medical_reference_only",
+      "sourceIds": [
+        "family"
+      ],
+      "price": {
+        "value": null,
+        "currency": "GEL",
+        "period": "month",
+        "kind": "family",
+        "status": "ambiguous_mapping",
+        "sourceId": "family",
+        "annualTotal": null
+      },
+      "foreignResidentEligibility": {
+        "status": "unknown",
+        "value": null
+      },
+      "familyQuote": {
+        "status": "unknown",
+        "value": null
+      },
+      "batumiNetwork": {
+        "status": "unknown",
+        "clinics": null
+      },
+      "issues": [
+        "Table duplicates family package column headings; prices not assigned by column position.",
+        "Family composition and foreign-resident eligibility require verification."
+      ],
+      "personalizedRankingAllowed": false
+    }
+  ],
+  "unassignedObservations": [
+    {
+      "sourceId": "family",
+      "status": "ambiguous_column_mapping",
+      "currency": "GEL",
+      "period": "month",
+      "threeMembers": [
+        80,
+        110,
+        140
+      ],
+      "fourOrMoreMembers": [
+        100,
+        130,
+        180
+      ],
+      "useForCalculation": false
+    }
+  ],
+  "researchQueue": [
+    {
+      "insurer": "Imedi L",
+      "plans": [
+        "Uno Active",
+        "Uno Comfort",
+        "Uno Select"
+      ],
+      "reason": "Previously found in search index; direct current page extraction returned JavaScript shell. Excluded from verified catalogue until direct content capture."
+    },
+    {
+      "insurer": "ARDI / Imedi L",
+      "channel": "Credo",
+      "reason": "Direct fetch blocked by Cloudflare; do not use indexed values as production quotes."
+    },
+    {
+      "insurer": "IRAO",
+      "plan": "Pulse",
+      "reason": "Current applicable primary tariff not captured in this iteration."
+    }
+  ]
+}

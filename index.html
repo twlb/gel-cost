@@ -5,16 +5,17 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#111316">
 <meta name="description" content="Обмен рублей, долларов и евро на лари: курсы банков и обменников, адреса на карте и расчёт с комиссиями.">
-<title>GEL Cost</title>
+<title>Жизнь в Грузии</title>
 <link rel="icon" href="data:,">
 <link rel="stylesheet" href="styles.css?v=5.8-release-1">
+<link rel="stylesheet" href="insurance.css?v=5.9-test-2">
 </head>
 <body>
-<a class="skip" href="#main">К расчёту</a>
+<a class="skip" href="#main">К содержимому</a>
 <div class="app">
-<header><a class="brand" href="#exchange" onclick="showView('exchange')">GEL Cost <span class="badge">V5.8</span></a><button class="text-button" id="dataNav" onclick="showView('data')">Мои данные</button></header>
+<header><a class="brand" href="#exchange" onclick="showView('exchange')">Жизнь в Грузии <span class="badge">V5.9.1 · тест</span></a><button class="text-button" id="dataNav" onclick="showView('data')">Мои данные</button></header>
 <main id="main">
-<noscript><p class="notice">Для расчётов включите JavaScript в браузере.</p></noscript>
+<noscript><p class="notice">Для работы сервиса включите JavaScript в браузере.</p></noscript>
 <div class="notice" id="storageNotice" role="status" hidden></div>
 <div class="notice" id="migrationNotice" hidden>Курс из V5.4 пересчитан без неподтверждённого кешбэка. История покупок сохранена. При необходимости уточните курс USDT по операции.</div>
 <div id="actionStatus" class="action-status" role="status" aria-live="polite"></div>
@@ -198,8 +199,20 @@
 <div class="data-group"><button class="text-button" onclick="exportData()">Скачать резервную копию</button><p class="note">Покупки хранятся только в этом браузере. Они не отправляются банкам или обменникам. Перед очисткой браузера сохраните копию.</p><p class="note">После перехода на V5.6 вносите покупки здесь: старая открытая V5.5 хранится отдельно, изменения из неё повторно не переносятся.</p></div>
 <details class="disclosure"><summary>Начать новый период</summary><p class="note">Удаляет покупки выбранной валюты из этого браузера. Сначала скачайте копию. Нужны два нажатия в течение четырёх секунд.</p><button class="danger full" onclick="resetPeriod('usd',this)">Очистить покупки USD</button><button class="danger full" onclick="resetPeriod('usdt',this)">Очистить покупки USDT</button></details>
 </section>
+<section id="insuranceView" hidden aria-labelledby="insuranceHeading">
+<h1 id="insuranceHeading" tabindex="-1">Медицинская страховка</h1>
+<p class="subtitle">Для жизни в Грузии. Сравните открытые условия.</p>
+<p class="notice">Это справочник, не персональный подбор. Приём иностранцев и клиники Батуми нужно уточнить.</p>
+<label for="insuranceCompany">Страховая компания</label>
+<select id="insuranceCompany"><option value="">Все компании</option><option>Unison</option><option>ARDI</option><option>GPI Holding</option></select>
+<p id="insuranceStatus" class="note" role="status">Загрузка справочника…</p>
+<button id="insuranceRetry" class="secondary" hidden>Повторить загрузку</button>
+<div id="insuranceSelection" class="insurance-selection"><span id="insuranceSelectedCount">Выберите два плана</span><button id="insuranceCompare" class="primary" disabled>Сравнить</button><button id="insuranceClear" class="text-button" hidden>Снять выбор</button></div>
+<section id="insuranceComparison" hidden aria-labelledby="insuranceCompareHeading"><h2 id="insuranceCompareHeading" tabindex="-1">Сравнение планов</h2><button id="insuranceBack" class="secondary">К списку</button><div id="insuranceComparisonRows"></div></section>
+<div id="insuranceList"></div>
+</section>
 </main>
-<nav class="bottom-nav" aria-label="Разделы"><button id="exchangeNav" aria-current="page" onclick="showView('exchange')">Обмен</button><button id="purchaseNav" onclick="showView('calculator')">Калькулятор</button></nav>
+<nav class="bottom-nav" aria-label="Разделы"><button id="exchangeNav" aria-current="page" onclick="showView('exchange')">Обмен</button><button id="purchaseNav" onclick="showView('calculator')">Калькулятор</button><button id="insuranceNav" aria-current="false" onclick="showView('insurance')">Страховки</button></nav>
 </div>
 <form class="inline" id="purchasePanel" onsubmit="event.preventDefault();savePurchase()">
 <h3 id="purchaseTitle">Купил валюту</h3>
@@ -217,6 +230,8 @@
 </form>
 <script src="core.js?v=5.8-release-1"></script>
 <script src="locations.js?v=5.8-release-1"></script>
-<script src="app.js?v=5.8-release-1"></script>
+<script src="app.js?v=5.9-test-2"></script>
+<script src="insurance-core.js?v=5.9-test-2"></script>
+<script src="insurance.js?v=5.9-test-2"></script>
 </body>
 </html>
