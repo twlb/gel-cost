@@ -5,7 +5,7 @@
   "channel": "Branch",
   "userType": "PhysicalPerson",
   "queryAmountGel": 1000,
-  "fetchedAt": "2026-09-07T11:24:28.263982Z",
+  "fetchedAt": "2026-09-07T12:30:41.396277Z",
   "source": {
     "name": "Банковская витрина НБГ",
     "url": "https://nbg.gov.ge/en/currency-rates",
@@ -27,17 +27,17 @@
       "sourceUpdatedAt": null
     },
     {
-      "id": "2",
-      "bank": "Credo Bank",
-      "buy": 2.608,
-      "sell": 2.622,
-      "sourceUpdatedAt": null
-    },
-    {
       "id": "6",
       "bank": "Silk Bank",
       "buy": 2.608,
       "sell": 2.616,
+      "sourceUpdatedAt": null
+    },
+    {
+      "id": "2",
+      "bank": "Credo Bank",
+      "buy": 2.607,
+      "sell": 2.621,
       "sourceUpdatedAt": null
     },
     {
@@ -50,8 +50,8 @@
     {
       "id": "10",
       "bank": "Basisbank",
-      "buy": 2.598,
-      "sell": 2.628,
+      "buy": 2.595,
+      "sell": 2.625,
       "sourceUpdatedAt": null
     },
     {
