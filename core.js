@@ -190,7 +190,38 @@
     if(Object.keys(OFFICES).some(id=>!ids.has(id)&&!data.failures.includes(id)))throw Error("Пропущен статус источника");
     return {...data,offers:data.offers.map(row=>({...row,buy:number(row.buy),sell:number(row.sell)}))};
   }
-  const api={DAY,STORAGE_KEY,CACHE_KEYS,OFFICES,number,positive,decimal,fresh,weighted,defaults,migrate,load,personal,actualRate,routes,official,bankSnapshot,officeSnapshot};
+  // Independent planning: no purchase history, official-rate fallback or USD/USDT parity.
+  function exchangePlan({from,to,via="USD",mode="give",amount,quotes={},fees={}}={}){
+    const currencies=["RUB","USD","USDT","GEL"];
+    if(!currencies.includes(from)||!currencies.includes(to)||from===to||!["USD","USDT"].includes(via)||!["give","want"].includes(mode))return {ok:false,error:"direction"};
+    if(!(number(amount)>0&&number(amount)<=1e9))return {ok:false,error:"amount"};
+    const path=[from,to].every(c=>c==="RUB"||c==="GEL")?[from,via,to]:[from,to];
+    const definitions={RUBUSD:["rubBuy",true],USDRUB:["rubSell",false],USDGEL:["gelBuy",false],GELUSD:["gelSell",true],RUBUSDT:["rubUsdtBuy",true],USDTRUB:["rubUsdtSell",false],USDTGEL:["gelUsdtBuy",false],GELUSDT:["gelUsdtSell",true],USDUSDT:["usdUsdtBuy",true],USDTUSD:["usdUsdtSell",false]};
+    const steps=[];
+    for(let i=0;i<path.length-1;i++){
+      const key=path[i]+path[i+1],[quote,invert]=definitions[key],value=quotes[quote];
+      if(!(number(value)>=1e-8&&number(value)<=1e9))return {ok:false,error:"quote",step:i,quote};
+      const pct=fees[key]?.pct??0,fixed=fees[key]?.fixed??0;
+      if(!(number(pct)>=0&&number(pct)<100&&number(fixed)>=0&&number(fixed)<=1e9))return {ok:false,error:"fee",step:i};
+      steps.push({key,from:path[i],to:path[i+1],quote,rate:decimal.from(value),factor:invert?decimal.div(1,value):decimal.from(value),mult:decimal.sub(1,decimal.div(pct,100)),fixed:decimal.from(fixed)});
+    }
+    let current=decimal.from(amount);
+    const ordered=mode==="want"?[...steps].reverse():steps;
+    for(const step of ordered){
+      if(mode==="give"){
+        step.input=current;
+        if(decimal.compare(current,step.fixed)<=0)return {ok:false,error:"consumed",step:steps.indexOf(step)};
+        step.net=decimal.mul(decimal.sub(current,step.fixed),step.mult);
+        step.output=decimal.mul(step.net,step.factor);current=step.output;
+      }else{
+        step.output=current;step.net=decimal.div(current,step.factor);
+        step.input=decimal.add(decimal.div(step.net,step.mult),step.fixed);current=step.input;
+      }
+      step.commission=decimal.sub(step.input,step.net);
+    }
+    return {ok:true,path,steps,give:steps[0].input,receive:steps[steps.length-1].output};
+  }
+  const api={DAY,STORAGE_KEY,CACHE_KEYS,OFFICES,number,positive,decimal,fresh,weighted,defaults,migrate,load,personal,actualRate,routes,exchangePlan,official,bankSnapshot,officeSnapshot};
   if(typeof module!=="undefined"&&module.exports)module.exports=api;
   else root.GelCore=api;
 })(typeof window!=="undefined"?window:this);

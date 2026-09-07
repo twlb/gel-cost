@@ -4,10 +4,10 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#111316">
-<meta name="description" content="Стоимость покупок в Грузии в ваших рублях: наличные через USD и карта Bybit через USDT. Курсы обменников и банков.">
+<meta name="description" content="Курсы обменников и банков, адреса на карте. Расчёт обмена рублей, USD, USDT и лари в обе стороны.">
 <title>GEL Cost</title>
 <link rel="icon" href="data:,">
-<link rel="stylesheet" href="styles.css?v=5.6-ux-fixes-1">
+<link rel="stylesheet" href="styles.css?v=5.7-planner-1">
 </head>
 <body>
 <a class="skip" href="#main">К расчёту</a>
@@ -16,8 +16,26 @@
 <main id="main">
 <noscript><p class="notice">Для расчётов включите JavaScript в браузере.</p></noscript>
 <div class="notice" id="storageNotice" role="status" hidden></div>
-<div class="notice" id="migrationNotice" hidden>Курс из V5.4 пересчитан без неподтверждённого cashback. История покупок сохранена. При необходимости обновите Bybit по операции.</div>
+<div class="notice" id="migrationNotice" hidden>Курс из V5.4 пересчитан без неподтверждённого cashback. История покупок сохранена. При необходимости обновите USDT по операции.</div>
 <div id="actionStatus" class="action-status" role="status" aria-live="polite"></div>
+<section id="calculatorView" hidden aria-labelledby="calculatorHeading">
+<h1 id="calculatorHeading" tabindex="-1">Рассчитать обмен</h1>
+<p class="subtitle">Выберите валюты и сумму. Покажем весь путь.</p>
+<div class="mode-switch" role="group" aria-label="Задача расчёта"><button id="planGive" aria-pressed="true" onclick="setPlanMode('give')">Сколько получу</button><button id="planWant" aria-pressed="false" onclick="setPlanMode('want')">Сколько нужно</button></div>
+<div class="grid plan-currencies"><div><label for="planFrom">Отдаю</label><select id="planFrom" onchange="changePlanRoute()"><option value="RUB">Рубли</option><option value="USD">USD</option><option value="USDT">USDT</option><option value="GEL">Лари</option></select></div><div><label for="planTo">Получаю</label><select id="planTo" onchange="changePlanRoute()"><option value="GEL">Лари</option><option value="USD">USD</option><option value="USDT">USDT</option><option value="RUB">Рубли</option></select></div></div>
+<button class="text-button full" id="planReverse" onclick="reversePlan()">Поменять направление</button>
+<div id="planViaGroup"><label for="planVia">Через какую валюту</label><select id="planVia" onchange="changePlanRoute()"><option value="USD">Наличные доллары · USD</option><option value="USDT">USDT</option></select></div>
+<label id="planAmountLabel" for="planAmount">Сколько рублей отдаю</label><div class="input amount"><input id="planAmount" type="text" inputmode="decimal" maxlength="18" autocomplete="off" placeholder="Введите сумму" aria-describedby="planError" oninput="renderPlanner()"><span class="unit" id="planAmountUnit">₽</span></div>
+<div class="exchange-result plan-result" aria-live="polite" aria-atomic="true"><p id="planResultLabel">Получите примерно</p><strong id="planResult">— ₾</strong><p class="note" id="planNext">Укажите сумму и курсы ниже.</p></div>
+<div class="error" id="planError" role="alert"></div>
+<h2 id="planPath">Рубли → доллары → лари</h2>
+<p class="note">Курсы указаны за 1 USD или 1 USDT. Для обратного обмена нужен курс продажи, а не покупки.</p>
+<article class="plan-step" id="planStep0"><h3 id="planStepTitle0">1. Рубли → доллары</h3><label id="planQuoteLabel0" for="planQuote0">За 1 USD отдаю рублей</label><div class="input"><input id="planQuote0" type="text" inputmode="decimal" maxlength="18" placeholder="Ваш доступный курс" oninput="editPlanQuote(0)" onblur="finishPlanQuote(0)"><span class="unit" id="planQuoteUnit0">₽</span></div><p class="note" id="planSource0"></p><p class="plan-step-result" id="planStepResult0"></p><details class="disclosure"><summary>Комиссия этого обмена</summary><p class="note" id="planFeeHelp0"></p><div class="grid"><div><label for="planPct0">Комиссия, %</label><input id="planPct0" type="text" inputmode="decimal" maxlength="12" value="0" oninput="editPlanFee(0)"></div><div><label id="planFixedLabel0" for="planFixed0">Фиксированная сумма, ₽</label><input id="planFixed0" type="text" inputmode="decimal" maxlength="18" value="0" oninput="editPlanFee(0)"></div></div></details></article>
+<article class="plan-step" id="planStep1"><h3 id="planStepTitle1">2. Доллары → лари</h3><label id="planQuoteLabel1" for="planQuote1">За 1 USD получаю лари</label><div class="input"><input id="planQuote1" type="text" inputmode="decimal" maxlength="18" placeholder="Выберите обменник или введите" oninput="editPlanQuote(1)" onblur="finishPlanQuote(1)"><span class="unit" id="planQuoteUnit1">₾</span></div><p class="note" id="planSource1"></p><p class="plan-step-result" id="planStepResult1"></p><details class="disclosure"><summary>Комиссия этого обмена</summary><p class="note" id="planFeeHelp1"></p><div class="grid"><div><label for="planPct1">Комиссия, %</label><input id="planPct1" type="text" inputmode="decimal" maxlength="12" value="0" oninput="editPlanFee(1)"></div><div><label id="planFixedLabel1" for="planFixed1">Фиксированная сумма, USD</label><input id="planFixed1" type="text" inputmode="decimal" maxlength="18" value="0" oninput="editPlanFee(1)"></div></div></details></article>
+<div class="actions"><button class="secondary" id="planChooseOffice" onclick="showView('exchange')">Выбрать обменник</button><button class="secondary" id="planAddress" onclick="showPlanLocation()" hidden>Адреса обменника</button></div>
+<p class="note">Результат — оценка, не заявка на обмен. Курсы наличного USD подгружаются из обменников. Доступные вам курсы USDT и рубля задайте сами.</p>
+<p class="footnote">Это черновик до перезагрузки. В историю покупок он не записывается. Комиссии задайте, только если они не включены в курс.</p>
+</section>
 <section id="purchaseView" hidden aria-labelledby="purchaseHeading">
 <h1 id="purchaseHeading" tabindex="-1">Сколько это в рублях?</h1>
 <p class="subtitle">Введите цену с ценника, меню или счёта.</p>
@@ -27,7 +45,7 @@
 <p class="field-label" id="paymentLabel">Как будете платить?</p>
 <div class="payment-switch" role="group" aria-labelledby="paymentLabel">
 <button id="cashPaymentButton" aria-pressed="true" onclick="setPayment('cash')">Наличными</button>
-<button id="bybitPaymentButton" aria-pressed="false" onclick="setPayment('bybit')">Картой Bybit</button>
+<button id="bybitPaymentButton" aria-pressed="false" onclick="setPayment('bybit')">Через USDT</button>
 </div>
 <p class="note" id="setupProgress" hidden></p>
 <div class="rubles-result" aria-live="polite" aria-atomic="true">
@@ -46,9 +64,9 @@
 <details class="disclosure" id="comparisonDetails"><summary>Сравнить с другим способом оплаты</summary>
 <div class="comparison" aria-label="Стоимость покупки по способам оплаты">
 <article class="method" id="bybitCard">
-<div class="method-head"><div><h2>Карта Bybit</h2><p>Через купленный USDT</p></div><strong class="total" id="bybitTotal">— ₽</strong></div>
+<div class="method-head"><div><h2>Оплата через USDT</h2><p>Через купленный USDT</p></div><strong class="total" id="bybitTotal">— ₽</strong></div>
 <div class="method-footer"><p class="method-note" id="bybitSummary">Добавьте покупку USDT и курс</p>
-<button class="text-button" id="bybitCompareAction" onclick="editComparison('bybit')">Обновить Bybit</button></div>
+<button class="text-button" id="bybitCompareAction" onclick="editComparison('bybit')">Обновить USDT</button></div>
 </article>
 <article class="method" id="cashCard">
 <div class="method-head"><div><h2>Наличные</h2><p>Через купленный USD</p></div><strong class="total" id="cashTotal">— ₽</strong></div>
@@ -91,8 +109,8 @@
 <div class="exchange-result" aria-live="polite"><p id="exchangeResultLabel">По выбранному предложению</p><strong id="exchangeReceive">— ₾</strong><p id="exchangeBasis" class="note"></p></div>
 <div class="section-head"><h2>Где обменять</h2><span class="note">За вашу сумму</span></div>
 <p class="note" id="offerStatus"></p>
-<p class="note offer-hint" id="bestOfferHelp" hidden>Лучший курс — среди свежих предложений банков и обменников. Условия в кассе уточните.</p>
-<p class="note offer-hint">Нажмите на курс для расчёта. Адреса открываются отдельной кнопкой ниже.</p>
+<p class="note offer-hint" id="bestOfferHelp" hidden>Лучший из загруженных свежих курсов, до комиссий.</p>
+<p class="note offer-hint">Выберите курс. Адреса открываются отдельной кнопкой под списком.</p>
 <div class="offer-list" id="offerList" aria-label="Предложения обмена"></div>
 <button class="text-button full" id="moreOffers" onclick="toggleAllOffers()">Показать все предложения</button>
 <div class="actions exchange-actions">
@@ -112,7 +130,8 @@
 <a id="branchSource" target="_blank" rel="noopener noreferrer" hidden>Все адреса на сайте сети ↗</a>
 </section>
 </div>
-<button class="primary full" id="applyOfferButton" onclick="applyOffer()" disabled>Выбрать курс для пересчёта в ₽</button>
+<button class="primary full" id="planOfferButton" onclick="useOfferForPlan()" disabled>Продолжить в калькуляторе</button>
+<details class="disclosure" id="legacyOfferDetails"><summary>Применить к моим прошлым покупкам</summary><button class="secondary full" id="applyOfferButton" onclick="applyOffer()" disabled>Выбрать курс для пересчёта в ₽</button><p class="note">Для отдельного инструмента «Цена покупок в рублях» в «Моих данных». Не нужно для планирования обмена.</p></details>
 <p class="footnote">Без гарантии наличия валюты и возможных комиссий. Перед поездкой уточните условия.</p>
 <div class="offer-detail"><p class="note" id="selectedOfferDetail"></p><div class="actions"><a id="selectedSource" target="_blank" rel="noopener noreferrer" hidden>Источник курса</a><a id="selectedBranches" target="_blank" rel="noopener noreferrer" hidden>Отделения</a></div></div>
 <div id="bankPanel" hidden>
@@ -126,13 +145,14 @@
 <details class="disclosure"><summary>Источники и ограничения курсов</summary>
 <p class="note">Обменники: публичный курс сети, не конкретной кассы. Банки: отделения, запрос на 1 000 GEL в витрине НБГ; город и наличный обмен для вашей суммы нужно уточнить. Список не охватывает весь рынок.</p>
 <p class="note">Проверяем опубликованные данные в фоне. Если проверка не удалась или курсам больше двух часов, выбор отключается. Время проверки — не время изменения курса на стороне обменника.</p>
-<p class="note">USDT → наличные здесь пока не подключено. Карту Bybit считаем отдельно, по вашему списанию или прогнозному курсу.</p>
+<p class="note">USDT → наличные здесь пока не подключено. Оплату через USDT считаем отдельно, по вашему списанию или прогнозному курсу.</p>
 <p class="note">«Смотреть на карте» сразу открывает место: на Android — через карты телефона, на устройствах Apple — Apple Maps, на остальных — Google Maps. Открытие приложения или веб-версии зависит от браузера и настроек устройства. Калькулятор не запрашивает вашу геопозицию и не строит маршрут; в картах выберите «Маршрут» и «Моё местоположение». Передаётся только точка обменника или адрес поиска, без покупок и сумм. Список адресов неполный и обновляется отдельно от курсов.</p>
 <button class="text-button full" onclick="refreshAllRates()">Повторить проверку курсов</button>
 </details>
 </section>
 <section id="dataView" hidden aria-labelledby="dataHeading">
 <h1 id="dataHeading" tabindex="-1">Ваши данные</h1><p class="subtitle">По какой цене вы купили валюту</p>
+<button class="secondary full" onclick="showView('purchase')">Цена покупок в рублях</button><p class="note">Пересчёт цен в лари по прошлым покупкам USD/USDT. Для будущего обмена используйте «Калькулятор».</p>
 <p class="note">Средняя взвешена по суммам покупок за период. Расходы не уменьшают её; остаток здесь не учитывается.</p>
 <div class="data-group"><div class="pathrow"><h2>Наличные USD</h2><b id="dataUsdAvg">—</b></div><button class="text-button" onclick="openPurchase('usd')">Добавить покупку USD</button><details><summary>История покупок USD</summary><div id="usdHistory"></div></details></div>
 <div class="data-group"><div class="pathrow"><h2>USDT</h2><b id="dataUsdtAvg">—</b></div><button class="text-button" onclick="openPurchase('usdt')">Добавить покупку USDT</button><details><summary>История покупок USDT</summary><div id="usdtHistory"></div></details></div>
@@ -141,7 +161,7 @@
 <div class="pathrow"><b id="marketPrice">—</b><span class="note" id="marketStatus">загрузка</span></div><p class="note" id="marketStamp"></p><p class="note" id="marketNote"></p>
 <p class="note">ЦБ РФ и НБГ — только для сравнения. По этому курсу нельзя гарантированно обменять деньги.</p>
 </details>
-<button class="secondary full" onclick="openSettings()">Условия прогноза Bybit</button>
+<button class="secondary full" onclick="openSettings()">Условия прогноза USDT</button>
 <div class="inline" id="settingsPanel">
 <h3>Проценты для прогноза</h3><p class="note">Только для режима «Ввести курс». Оба процента от базовой стоимости. В расчёте по операции повторно их не учитываем.</p>
 <div class="grid settings-grid"><div><label for="feePct">Комиссия, %</label><input id="feePct" type="text" inputmode="decimal" value="0"></div><div><label for="cashbackPct">Ожидаемый cashback, %</label><input id="cashbackPct" type="text" inputmode="decimal" value="0"></div></div>
@@ -158,7 +178,7 @@
 <details class="disclosure"><summary>Начать новый период</summary><p class="note">Удаляет покупки выбранной валюты из этого браузера. Сначала скачайте копию. Нужны два нажатия в течение четырёх секунд.</p><button class="danger full" onclick="resetPeriod('usd',this)">Очистить покупки USD</button><button class="danger full" onclick="resetPeriod('usdt',this)">Очистить покупки USDT</button></details>
 </section>
 </main>
-<nav class="bottom-nav" aria-label="Разделы"><button id="exchangeNav" aria-current="page" onclick="showView('exchange')">Обмен</button><button id="purchaseNav" onclick="showView('purchase')">Цена в рублях</button></nav>
+<nav class="bottom-nav" aria-label="Разделы"><button id="exchangeNav" aria-current="page" onclick="showView('exchange')">Обмен</button><button id="purchaseNav" onclick="showView('calculator')">Калькулятор</button></nav>
 </div>
 <form class="inline" id="purchasePanel" onsubmit="event.preventDefault();savePurchase()">
 <h3 id="purchaseTitle">Купил валюту</h3>
@@ -170,12 +190,12 @@
 <h3 id="rateTitle">Обновить курс</h3>
 <div class="mode-switch" id="bybitModeSwitch"><button type="button" id="actualModeButton" onclick="setRateMode('actual')">По операции</button><button type="button" id="quoteModeButton" onclick="setRateMode('quote')">Ввести курс</button></div>
 <div class="mode" id="quoteMode"><label id="rateLabel" for="rateValue">За 1 USD дают</label><div class="input"><input id="rateValue" type="text" inputmode="decimal" maxlength="18"><span class="unit">₾</span></div><p class="note" id="quoteHelp">Базовый курс до комиссии и cashback. Проценты — в «Данных».</p></div>
-<div class="mode" id="actualMode"><p class="note">Откройте последнюю покупку в Bybit и перенесите две суммы. Так комиссия уже попадёт в расчёт.</p><div class="grid"><div><label for="actualGel">Сумма покупки</label><div class="input"><input id="actualGel" type="text" inputmode="decimal" maxlength="18"><span class="unit">₾</span></div></div><div><label for="actualUsdt">Списано Bybit</label><div class="input"><input id="actualUsdt" type="text" inputmode="decimal" maxlength="18"><span class="unit">USDT</span></div></div></div><details id="rewardDetails"><summary>Уже получил cashback за эту покупку</summary><label for="actualReward">Подтверждённый возврат, USDT</label><input id="actualReward" type="text" inputmode="decimal" placeholder="0" maxlength="18"><p class="note">Только полученные USDT. Баллы и ожидаемый cashback не вычитаем. Если возврата нет, оставьте 0.</p></details></div>
+<div class="mode" id="actualMode"><p class="note">Откройте последнюю оплату через USDT и перенесите две суммы. Так комиссия уже попадёт в расчёт.</p><div class="grid"><div><label for="actualGel">Сумма покупки</label><div class="input"><input id="actualGel" type="text" inputmode="decimal" maxlength="18"><span class="unit">₾</span></div></div><div><label for="actualUsdt">Списано USDT</label><div class="input"><input id="actualUsdt" type="text" inputmode="decimal" maxlength="18"><span class="unit">USDT</span></div></div></div><details id="rewardDetails"><summary>Уже получил cashback за эту покупку</summary><label for="actualReward">Подтверждённый возврат, USDT</label><input id="actualReward" type="text" inputmode="decimal" placeholder="0" maxlength="18"><p class="note">Только полученные USDT. Баллы и ожидаемый cashback не вычитаем. Если возврата нет, оставьте 0.</p></details></div>
 <p class="note" id="ratePreview" aria-live="polite"></p><div class="error" id="rateError" role="alert"></div>
 <div class="actions"><button type="submit" class="primary" id="saveRateButton">Сохранить курс</button><button type="button" class="secondary" onclick="closeInline('ratePanel')">Закрыть</button></div>
 </form>
-<script src="core.js?v=5.6-exact-money"></script>
+<script src="core.js?v=5.7-planner-1"></script>
 <script src="locations.js?v=2026-09-07-map-choice-1"></script>
-<script src="app.js?v=5.6-ux-fixes-1"></script>
+<script src="app.js?v=5.7-planner-1"></script>
 </body>
 </html>

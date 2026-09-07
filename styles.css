@@ -11,6 +11,21 @@ h1{font-size:28px}.subtitle{margin-bottom:20px}.amount{margin-bottom:16px}.amoun
 header{min-height:66px}.amount{min-height:64px}.amount input{height:62px;line-height:1.1}.method-head{padding-top:18px;padding-bottom:12px}#purchaseView .disclosure{margin:12px 0}#purchaseView .disclosure>summary{padding:12px 0}#exchangeView .subtitle{display:none}#exchangeHeading{margin-bottom:22px}.offer-row small{font-size:12px}.exchange-result{border-bottom:0;margin-bottom:10px;padding-bottom:8px}.exchange-result .note{margin-bottom:0}
 /* Ruble view follows the same input → answer hierarchy as the exchange view. */
 .field-label{color:#bdc3cc;font-size:13px;margin:0 0 8px}
+.plan-currencies{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+.plan-currencies select{padding-left:10px;padding-right:24px;font-size:14px}
+#planViaGroup{margin:0 0 20px}
+#planAmount[data-amount-size=medium]{font-size:22px;letter-spacing:0}
+#planAmount[data-amount-size=long]{font-size:16px;letter-spacing:0}
+.plan-step{border:1px solid var(--border);border-radius:12px;padding:16px;margin:16px 0;background:var(--surface)}
+.plan-step h3{margin:0 0 16px}
+.plan-step .disclosure{margin:12px 0 0}
+.plan-step .disclosure>summary{font-size:13px}
+.plan-step-result{font-size:14px;line-height:1.5;font-variant-numeric:tabular-nums;overflow-wrap:anywhere;color:var(--text)}
+.plan-result strong{display:block;font-size:40px;font-variant-numeric:tabular-nums}
+.plan-result strong[data-money-size=medium]{font-size:32px;letter-spacing:-.5px}
+.plan-result strong[data-money-size=long]{font-size:24px;letter-spacing:0}
+.plan-result strong[data-money-size=extra-long]{font-size:18px;letter-spacing:0}
+@media(max-width:370px){.plan-result strong{font-size:32px}.plan-result strong[data-money-size=medium]{font-size:24px}.plan-result strong[data-money-size=long]{font-size:22px}}
 /* Focus belongs to the whole amount/rate field, including its currency suffix. */
 .input:focus-within{outline:2px solid var(--accent);outline-offset:2px}
 .input input:focus-visible{outline:none}

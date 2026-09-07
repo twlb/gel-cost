@@ -35,7 +35,7 @@ jobs:
 
       - name: Validate calculation and collection rules
         run: |
-          node --test tests/core.test.cjs tests/app.test.cjs
+          node --test tests/core.test.cjs tests/app.test.cjs tests/planner.test.cjs
           python3 -m unittest discover -s tests -p 'test_*.py'
 
       - name: Fetch official rates

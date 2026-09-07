@@ -40,6 +40,98 @@ const branchSelection={};
 const androidMaps=/Android/i.test(navigator.userAgent||"");
 const appleMaps=/(iPhone|iPad|iPod|Macintosh)/i.test(navigator.userAgent||"");
 const QUOTE_TTL=2*3600000;
+const plan={from:"RUB",to:"GEL",via:"USD",mode:"give",quotes:{},fees:{},sourceKey:"",initialized:false};
+const planNames={RUB:"Рубли",USD:"Доллары",USDT:"USDT",GEL:"Лари"};
+const planUnits={RUB:"₽",USD:"USD",USDT:"USDT",GEL:"₾"};
+const planLegs={
+  RUBUSD:{quote:"rubBuy",label:"За 1 USD отдаю рублей",unit:"₽"},
+  USDRUB:{quote:"rubSell",label:"За 1 USD получаю рублей",unit:"₽"},
+  USDGEL:{quote:"gelBuy",label:"За 1 USD получаю лари",unit:"₾",side:"buy"},
+  GELUSD:{quote:"gelSell",label:"Покупаю 1 USD за лари",unit:"₾",side:"sell"},
+  RUBUSDT:{quote:"rubUsdtBuy",label:"За 1 USDT отдаю рублей",unit:"₽"},
+  USDTRUB:{quote:"rubUsdtSell",label:"За 1 USDT получаю рублей",unit:"₽"},
+  USDTGEL:{quote:"gelUsdtBuy",label:"За 1 USDT получаю лари",unit:"₾"},
+  GELUSDT:{quote:"gelUsdtSell",label:"Покупаю 1 USDT за лари",unit:"₾"},
+  USDUSDT:{quote:"usdUsdtBuy",label:"За 1 USDT отдаю долларов",unit:"USD"},
+  USDTUSD:{quote:"usdUsdtSell",label:"За 1 USDT получаю долларов",unit:"USD"}
+};
+function plannerPath(){return [plan.from,plan.to].every(c=>c==="RUB"||c==="GEL")&&plan.from!==plan.to?[plan.from,plan.via,plan.to]:[plan.from,plan.to];}
+function plannerRows(){const path=plannerPath();return path.slice(0,-1).map((from,i)=>({from,to:path[i+1],key:from+path[i+1],...planLegs[from+path[i+1]]}));}
+function setPlanMode(mode){if(!["give","want"].includes(mode))return;plan.mode=mode;renderPlanner();}
+function changePlanRoute(){plan.from=$("planFrom").value;plan.to=$("planTo").value;plan.via=$("planVia").value;renderPlanner();}
+function reversePlan(){[plan.from,plan.to]=[plan.to,plan.from];renderPlanner();}
+function editPlanQuote(index){const row=plannerRows()[index];if(row?.quote){plan.quotes[row.quote]=$("planQuote"+index).value;renderPlanner();}}
+function finishPlanQuote(index){
+  const row=plannerRows()[index];if(!row?.quote||!Object.hasOwn(plan.quotes,row.quote)||!C.positive(plan.quotes[row.quote]))return;
+  const [whole,fraction=""]=plan.quotes[row.quote].replace(/\s/g,"").replace(".",",").split(",");
+  plan.quotes[row.quote]=whole+","+fraction.padEnd(4,"0");renderPlanner();
+}
+function editPlanFee(index){const row=plannerRows()[index];if(row?.quote){plan.fees[row.key]={pct:$("planPct"+index).value,fixed:$("planFixed"+index).value};renderPlanner();}}
+function useOfferForPlan(){
+  const item=offersForCity().find(row=>row.key===selectedOffer);
+  if(!item||editingExchangeRate()||item.kind!=="manual"&&!item.fresh)return;
+  if(!plan.initialized){plan.from="USD";plan.to="GEL";plan.mode="give";$("planAmount").value=$("exchangeAmount").value;}
+  if(item.kind==="manual"){
+    plan.sourceKey="";plan.quotes.gelBuy=inputValue(item.buy);delete plan.quotes.gelSell;
+  }else{
+    plan.sourceKey=item.key;delete plan.quotes.gelBuy;delete plan.quotes.gelSell;
+  }
+  // An explicitly chosen cash offer starts a cash route, never a USDT route.
+  if(plan.from==="USDT"||plan.to==="USDT"||plan.from===plan.to){plan.from="RUB";plan.to="GEL";}
+  plan.via="USD";
+  plan.initialized=true;showView("calculator");
+}
+function showPlanLocation(){
+  const item=offersForCity().find(row=>row.key===plan.sourceKey);
+  if(!item||item.kind==="manual")return;
+  selectedOffer=item.key;offerSelectionExplicit=true;expandedOffer=item.key;
+  showView("exchange");$("branchHeading").scrollIntoView?.({block:"start"});$("closeLocationButton").focus({preventScroll:true});
+}
+function renderPlanner(){
+  $("planFrom").value=plan.from;$("planTo").value=plan.to;$("planVia").value=plan.via;
+  const path=plannerPath(),rows=plannerRows(),source=offersForCity().find(row=>row.key===plan.sourceKey);
+  const sourceOk=source&&source.kind!=="manual"&&source.fresh;
+  const quotes={...plan.quotes},fees={};
+  $("planViaGroup").hidden=path.length!==3;
+  $("planGive").setAttribute("aria-pressed",String(plan.mode==="give"));$("planWant").setAttribute("aria-pressed",String(plan.mode==="want"));
+  $("planGive").classList.toggle("active",plan.mode==="give");$("planWant").classList.toggle("active",plan.mode==="want");
+  const amountCurrency=plan.mode==="give"?plan.from:plan.to,resultCurrency=plan.mode==="give"?plan.to:plan.from;
+  $("planAmountLabel").textContent=(plan.mode==="give"?"Отдаю · ":"Хочу получить · ")+planNames[amountCurrency];
+  $("planAmountUnit").textContent=planUnits[amountCurrency];
+  $("planAmount").dataset.amountSize=$("planAmount").value.length>14?"long":$("planAmount").value.length>10?"medium":"normal";
+  $("planResultLabel").textContent=plan.mode==="give"?"Получите примерно":"Нужно отдать примерно";
+  $("planPath").textContent=path.map(c=>planNames[c]).join(" → ");
+  let usesPublic=false;
+  for(let i=0;i<2;i++){
+    const row=rows[i];$("planStep"+i).hidden=!row?.quote;if(!row?.quote)continue;
+    const manual=Object.hasOwn(plan.quotes,row.quote),auto=row.side&&!manual;
+    if(auto){quotes[row.quote]=sourceOk?source[row.side]:NaN;usesPublic=true;}
+    $("planStepTitle"+i).textContent=(i+1)+". "+planNames[row.from]+" → "+planNames[row.to];
+    $("planQuoteLabel"+i).textContent=row.label;$("planQuoteUnit"+i).textContent=row.unit;
+    $("planQuote"+i).value=manual?plan.quotes[row.quote]:auto&&source?inputValue(source[row.side]):"";
+    $("planQuote"+i).setAttribute("placeholder",row.side?"Выберите обменник или введите курс":"Ваш доступный курс");
+    $("planSource"+i).textContent=auto?(source?(source.name+" · "+(sourceOk?"проверено "+checkedText(source.checkedAt):"свежесть не подтверждена")+" · "+(row.side==="buy"?"обменник покупает USD":"обменник продаёт USD")):"Выберите обменник или введите свой курс."):(row.quote.startsWith("rub")?"Доступный вам курс. Не подставляем официальный курс или прошлую среднюю цену.":"Ваш курс для этого направления. USD и USDT не приравниваем.");
+    const fee=plan.fees[row.key]||{pct:"0",fixed:"0"};fees[row.key]={pct:fee.pct===""?0:fee.pct,fixed:fee.fixed===""?0:fee.fixed};
+    $("planPct"+i).value=fee.pct;$("planFixed"+i).value=fee.fixed;
+    $("planFixedLabel"+i).textContent="Фиксированная сумма, "+planUnits[row.from];
+    $("planFeeHelp"+i).textContent="Из отдаваемых "+planUnits[row.from]+" сначала вычитаем фиксированную сумму, затем процент из остатка. Остальное обмениваем.";
+    $("planStepResult"+i).textContent="";
+    $("planQuote"+i).setAttribute("aria-invalid",String(C.number(quotes[row.quote])<=0||!C.positive(quotes[row.quote])));
+  }
+  $("planChooseOffice").hidden=!rows.some(row=>row.side);
+  $("planAddress").hidden=!usesPublic||!source;
+  $("planAddress").textContent=source?"Адреса "+source.name:"Адреса обменника";
+  const result=C.exchangePlan({from:plan.from,to:plan.to,via:plan.via,mode:plan.mode,amount:$("planAmount").value,quotes,fees});
+  const messages={direction:"Выберите разные валюты.",amount:"Введите сумму больше нуля и не больше 1 млрд.",quote:"Укажите доступный курс для шага "+((result.step??0)+1)+".",fee:"Проверьте комиссию шага "+((result.step??0)+1)+": процент от 0 до 100 (не включая 100), сумма неотрицательная.",consumed:"Комиссия шага "+((result.step??0)+1)+" забирает всю сумму. Увеличьте сумму или проверьте комиссию."};
+  const message=result.ok?"":result.error==="amount"&&!$("planAmount").value.trim()?"Введите сумму, которую хотите обменять.":messages[result.error];
+  $("planResult").textContent=result.ok?"≈ "+fmtRub(plan.mode==="give"?result.receive:result.give)+" "+planUnits[resultCurrency]:"— "+planUnits[resultCurrency];fitMoney($("planResult"));
+  $("planNext").textContent=result.ok?"Учтены оба курса и указанные комиссии. Подробности по шагам ниже.":message;
+  if(result.ok&&result.steps.length===1)$("planNext").textContent="Учтены курс и указанная комиссия. Подробности ниже.";
+  const hasInput=$("planAmount").value.trim()!=="";
+  $("planAmount").setAttribute("aria-invalid",String(hasInput&&result.error==="amount"));
+  $("planError").textContent=message;$("planError").classList.toggle("show",hasInput&&["amount","fee","consumed","direction"].includes(result.error));
+  if(result.ok)result.steps.forEach((step,i)=>$("planStepResult"+i).textContent=fmtRub(step.input)+" "+planUnits[step.from]+" → "+fmtRub(step.output)+" "+planUnits[step.to]+(D.compare(step.commission,0)>0?" · комиссия "+fmtRub(step.commission)+" "+planUnits[step.from]:""));
+}
 function announce(message){
   $("actionStatus").textContent=message;
   clearTimeout(statusTimer);statusTimer=setTimeout(()=>$("actionStatus").textContent="",6000);
@@ -55,16 +147,22 @@ function calculationFeedback(message,method,view=currentView){
   const values=routeValues(),cash=method==="cash";
   const basis=cash?values.usdCost:values.usdtAvg,rate=cash?state.cashGelRate:values.bybitRate;
   if(!(basis>0&&Number.isFinite(basis)))return message+" Осталось указать покупку "+(cash?"USD":"USDT")+" за рубли.";
-  if(!(rate>0&&Number.isFinite(Number(rate))))return message+(cash?" Осталось выбрать курс USD → GEL.":" Осталось указать списание Bybit или прогнозный курс.");
+  if(!(rate>0&&Number.isFinite(Number(rate))))return message+(cash?" Осталось выбрать курс USD → GEL.":" Осталось указать списание USDT или прогнозный курс.");
   const price=numberValue($("quickGel").value),cost=cash?values.cash:values.bybit;
   return message+(price>0&&price<=1e9&&Number.isFinite(price*cost)?" Цена в рублях пересчитана.":" Введите корректную цену в лари для расчёта.");
 }
 function showView(view){
-  if(!["purchase","exchange","data"].includes(view))return;
+  if(!["purchase","exchange","data","calculator"].includes(view))return;
   currentView=view;
   for(const name of ["purchase","exchange","data"]){
     $(name+"View").hidden=name!==view;
     $(name+"Nav").setAttribute("aria-current",name===view?"page":"false");
+  }
+  $("calculatorView").hidden=view!=="calculator";
+  $("purchaseNav").setAttribute("aria-current",view==="calculator"?"page":"false");
+  if(view==="calculator"){
+    if(!plan.initialized){const item=offersForCity().find(row=>row.key===selectedOffer&&row.kind!=="manual"&&row.fresh);if(item)plan.sourceKey=item.key;plan.initialized=true;}
+    renderPlanner();
   }
   // Section changes leave unfinished fields intact.
   renderOffers();
@@ -223,7 +321,7 @@ function calc(){
   const benchmark=hasOfficial?Number(state.officialUsdRub)/Number(state.officialUsdGel):Infinity;
   const cashOrder=exact.cash&&exact.bybit?D.compare(exact.cash,exact.bybit):cash===bybit?0:cash<bybit?-1:1;
   const best=cashOrder<=0?cash:bybit;
-  const bestName=cashOrder<=0?"Наличные":"Bybit";
+  const bestName=cashOrder<=0?"Наличные":"USDT";
   const rawQuantity=numberValue($("quickGel").value);
   const invalidQuantity=!(rawQuantity>0)||rawQuantity>1e9||[cash,bybit].some(rate=>Number.isFinite(rate)&&!Number.isFinite(rawQuantity*rate));
   const quantity=!invalidQuantity?rawQuantity:0;
@@ -243,13 +341,13 @@ function calc(){
   $("usdtAvg").textContent=Number.isFinite(usdtAvg)?`${fmtRate(usdtAvg)} ₽/USDT`:"Добавьте покупку";
   $("cashGelRate").textContent=Number(state.cashGelRate)>0?`${fmtRate(state.cashGelRate)} ₾`:"Обновите курс";
   $("bybitGelRate").textContent=bybitRate>0?`${fmtRate(bybitRate)} ₾`:"Обновите курс";
-  $("bybitRateLabel").textContent=state.bybitRateMode==="actual"?"Эффективно за 1 USDT":"Bybit за 1 USDT";
+  $("bybitRateLabel").textContent=state.bybitRateMode==="actual"?"Эффективно за 1 USDT":"Прогноз за 1 USDT";
   $("cashPrice").textContent=Number.isFinite(cash)?`${fmtRate(cash)} ₽/₾`:"—";
   $("bybitPrice").textContent=Number.isFinite(bybit)?`${fmtRate(bybit)} ₽/₾`:"—";
   $("cashExplain").textContent=Number.isFinite(cash)?`${fmtRate(cash)} ₽`:"Недостаточно данных";
   $("bybitExplain").textContent=Number.isFinite(bybit)?`${fmtRate(bybit)} ₽`:"Недостаточно данных";
   showFreshness("cashFreshness",state.cashGelUpdated,"USD→₾");
-  showFreshness("bybitFreshness",state.bybitGelUpdated,"Bybit");
+  showFreshness("bybitFreshness",state.bybitGelUpdated,"USDT");
   if(state.cashBankId){
     $("cashFreshness").textContent=cashStale?"Банковские данные устарели или не подтверждены — проверьте курс":"Витрина проверена "+new Date(state.cashGelUpdated).toLocaleString("ru-RU",{day:"numeric",month:"short",hour:"2-digit",minute:"2-digit"});
     $("cashFreshness").classList.toggle("stale",cashStale);
@@ -267,9 +365,9 @@ function calc(){
   fitMoney($("cashTotal"));fitMoney($("bybitTotal"));
   const cashSource=state.cashOfficeId?(C.OFFICES[state.cashOfficeId]?.name||"Обменник"):(state.cashBankId?state.cashBankName:"Ваш курс");
   $("cashSummary").textContent=!(usdCost>0)?"Не указана цена покупки USD":!(Number(state.cashGelRate)>0)?"Выберите курс USD → лари":cashSource+" · "+(cashStale?"нужна проверка":checkedText(state.cashGelUpdated))+(Number.isFinite(usdAvg)?"":" · цена USD — оценка");
-  $("bybitSummary").textContent=!Number.isFinite(usdtAvg)?"Не указана цена покупки USDT":!(bybitRate>0)?"Укажите списание по покупке в Bybit":(state.bybitRateMode==="actual"?"По операции":"Прогноз")+" · "+(bybitStale?"обновите Bybit":checkedText(state.bybitGelUpdated));
+  $("bybitSummary").textContent=!Number.isFinite(usdtAvg)?"Не указана цена покупки USDT":!(bybitRate>0)?"Укажите списание по оплате через USDT":(state.bybitRateMode==="actual"?"По операции":"Прогноз")+" · "+(bybitStale?"обновите USDT":checkedText(state.bybitGelUpdated));
   $("cashCompareAction").textContent=!(usdCost>0)?"Добавить покупку USD":"Изменить курс";
-  $("bybitCompareAction").textContent=!Number.isFinite(usdtAvg)?"Добавить покупку USDT":"Обновить Bybit";
+  $("bybitCompareAction").textContent=!Number.isFinite(usdtAvg)?"Добавить покупку USDT":"Обновить USDT";
   $("cashSummary").classList.toggle("stale",Number.isFinite(cash)&&cashStale);
   $("bybitSummary").classList.toggle("stale",Number.isFinite(bybit)&&bybitStale);
   $("dataUsdAvg").textContent=(!Number.isFinite(usdAvg)&&usdCost>0?"Оценка: ":"")+$("cashAvg").textContent;
@@ -289,7 +387,7 @@ function calc(){
     $("heroDetail").textContent="Добавьте данные второго способа для сравнения.";
   }else{
     $("heroRoute").textContent="Сначала укажите покупку USD или USDT";
-    $("heroDetail").textContent="Затем выберите курс наличных или обновите Bybit.";
+    $("heroDetail").textContent="Затем выберите курс наличных или обновите USDT.";
   }
 
   $("heroRoute").classList.toggle("caution",comparisonStale||invalidQuantity);
@@ -297,7 +395,7 @@ function calc(){
     $("heroRoute").textContent="Оценка по сохранённым курсам — обновите их перед обменом";
     $("heroDetail").textContent="Свежесть не подтверждена. Выгодный способ пока не выбираем.";
   }else if(state.bybitRateMode==="quote"&&Number.isFinite(bybit)){
-    $("heroDetail").textContent+=" · Bybit — прогноз с указанными процентами";
+    $("heroDetail").textContent+=" · USDT — прогноз с указанными процентами";
   }
   if(state.cashBankId&&Number.isFinite(cash)&&!comparisonStale)$("heroDetail").textContent+=" · банк: до возможных комиссий";
   if(invalidQuantity)$("heroRoute").textContent="Укажите стоимость покупки в лари";
@@ -330,6 +428,7 @@ function calc(){
   renderHistory("usd");
   renderHistory("usdt");
   if(currentView==="exchange")renderOffers();
+  if(currentView==="calculator")renderPlanner();
 }
 
 function fitMoney(element){
@@ -352,15 +451,15 @@ function renderRubles(values){
   $("bybitPaymentButton").setAttribute("aria-pressed",String(!isCash));
   $("rublesResultLabel").textContent=invalidQuantity?"Введите цену в лари":ready?"Для вас это примерно":"Для пересчёта нужны ваши данные";
   $("setupProgress").hidden=ready;
-  $("setupProgress").textContent=!hasBasis?"Шаг 1 из 2 · покупка "+currency+" за рубли":"Шаг 2 из 2 · "+(isCash?"курс USD → GEL":"списание Bybit");
+  $("setupProgress").textContent=!hasBasis?"Шаг 1 из 2 · покупка "+currency+" за рубли":"Шаг 2 из 2 · "+(isCash?"курс USD → GEL":"списание USDT");
   $("comparisonDetails").hidden=!Number.isFinite(cash)&&!Number.isFinite(bybit);
   $("rublesResult").textContent=ready&&!invalidQuantity?"≈ "+fmtRub(isCash?totals.cash:totals.bybit)+" ₽":"— ₽";
   fitMoney($("rublesResult"));
-  $("rublesRate").textContent=ready?"1 ₾ = "+fmtRate(rate)+" ₽ · "+(isCash?"наличными":"картой Bybit"):isCash?"Рубли → доллары → лари":"Рубли → USDT → оплата картой";
+  $("rublesRate").textContent=ready?"1 ₾ = "+fmtRate(rate)+" ₽ · "+(isCash?"наличными":"через USDT"):isCash?"Рубли → доллары → лари":"Рубли → USDT → оплата картой";
   let status;
   if(!hasBasis)status=isCash?"Укажите, сколько рублей потратили на доллары. Тогда посчитаем вашу цену, а не официальный курс.":"Укажите, сколько рублей потратили на USDT для карты.";
-  else if(!hasRate)status=isCash?"Выберите обменник во вкладке «Обмен». Его курс подставится сюда.":"Укажите сумму прошлой покупки в лари и списание в USDT из Bybit.";
-  else if(stale)status=isCash?(state.cashBankId||state.cashOfficeId?"Расчёт по сохранённому курсу. Проверьте его во вкладке «Обмен».":"Расчёт по сохранённому курсу. Обновите свой USD → GEL перед обменом."):"Расчёт по сохранённым данным Bybit. Обновите курс или укажите недавнюю операцию.";
+  else if(!hasRate)status=isCash?"Выберите обменник во вкладке «Обмен». Его курс подставится сюда.":"Укажите сумму прошлой покупки в лари и списание в USDT из вашей операции.";
+  else if(stale)status=isCash?(state.cashBankId||state.cashOfficeId?"Расчёт по сохранённому курсу. Проверьте его во вкладке «Обмен».":"Расчёт по сохранённому курсу. Обновите свой USD → GEL перед обменом."):"Расчёт по сохранённым данным USDT. Обновите курс или укажите недавнюю операцию.";
   else status=isCash?"Учтены цена ваших долларов и выбранный курс обмена.":state.bybitRateMode==="actual"?"Учтены цена ваших USDT и списание по прошлой операции.":"Это прогноз по введённому курсу и вашим процентам, не гарантия списания.";
   if(isCash&&hasRate)status+=" Источник: "+(state.cashOfficeId?(C.OFFICES[state.cashOfficeId]?.name||"обменник"):state.cashBankId?state.cashBankName:"мой ручной курс")+".";
   if(estimated&&hasRate)status+=" Цена доллара пока взята из вашей оценки, не из покупок.";
@@ -369,7 +468,7 @@ function renderRubles(values){
   const action=!hasBasis?"basis":!hasRate||stale?"rate":estimated?"basis":"";
   $("rublesNextAction").hidden=!action||invalidQuantity;
   $("rublesNextAction").dataset.action=action;
-  const editRateLabel=isCash?(hasRate&&!state.cashBankId&&!state.cashOfficeId?"Обновить мой курс":"Выбрать курс обмена"):state.bybitRateMode==="quote"&&hasRate?"Обновить курс Bybit":"Указать списание Bybit";
+  const editRateLabel=isCash?(hasRate&&!state.cashBankId&&!state.cashOfficeId?"Обновить мой курс":"Выбрать курс обмена"):state.bybitRateMode==="quote"&&hasRate?"Обновить курс USDT":"Указать списание USDT";
   $("rublesNextAction").textContent=action==="basis"?"Указать покупку "+currency:editRateLabel;
   $("paymentSetupTitle").textContent=ready?"Мой курс: откуда взялась сумма":"Что нужно для расчёта";
   $("paymentSetupHelp").textContent=isCash?"Сначала вы купили доллары за рубли, затем обменяли их на лари. Учитываем оба обмена.":"Сначала вы купили USDT за рубли, затем оплатили покупку картой. Учитываем цену USDT и фактическое списание или ваш прогноз.";
@@ -492,7 +591,7 @@ async function savePurchase(){
 
 function setRateMode(mode){
   rateMode=mode;
-  $("rateTitle").textContent=rateKind==="cash"?"Обновить USD → ₾":mode==="actual"?"Последняя оплата Bybit":"Курс для прогноза Bybit";
+  $("rateTitle").textContent=rateKind==="cash"?"Обновить USD → ₾":mode==="actual"?"Последняя оплата USDT":"Курс для прогноза USDT";
   $("saveRateButton").textContent=rateKind==="cash"?"Сохранить курс":mode==="actual"?"Использовать операцию":"Сохранить прогноз";
   $("quoteMode").classList.toggle("show",mode==="quote");
   $("actualMode").classList.toggle("show",mode==="actual");
@@ -516,7 +615,7 @@ function openRate(kind){
   rateKind=kind;
   rateEditorSequence++;
   rateEditorReady=true;
-  $("rateTitle").textContent=kind==="cash"?"Обновить USD → ₾":"Обновить Bybit → ₾";
+  $("rateTitle").textContent=kind==="cash"?"Обновить USD → ₾":"Обновить USDT → ₾";
   $("rateLabel").textContent=kind==="cash"?"Сейчас за 1 USD дают":"Сейчас за 1 USDT дают";
   $("bybitModeSwitch").hidden=kind==="cash";
   $("quoteHelp").hidden=kind==="cash";
@@ -575,7 +674,7 @@ async function saveRate(){
     patch={cashGelRate:value,cashGelUpdated:Date.now(),cashBankId:null,cashBankName:null,cashOfficeId:null};
   }else if(rateMode==="quote"){
     const value=numberValue($("rateValue").value);
-    if(!(value>0))return showRateError("Введите, сколько лари Bybit даёт за 1 USDT.");
+    if(!(value>0))return showRateError("Введите, сколько лари получаете за 1 USDT.");
     patch={bybitGelRate:value,bybitRateMode:"quote",bybitGelUpdated:Date.now()};
   }else{
     const gel=numberValue($("actualGel").value);
@@ -678,6 +777,7 @@ async function fetchJson(url){
   }finally{clearTimeout(timer);}
 }
 function openBanks(){
+  if(currentView==="purchase")$("legacyOfferDetails").open=true;
   showView("exchange");renderBanks();
 }
 function renderBanks(){
@@ -747,12 +847,12 @@ async function exportData(){
 function offersForCity(){
   const city=$("exchangeCity").value||"batumi";
   const officeRows=(offices?.offers||[]).filter(row=>city==="all"||C.OFFICES[row.id].cities.includes(city)).map(row=>({
-    key:"office:"+row.id,id:row.id,name:C.OFFICES[row.id].name,buy:row.buy,
+    key:"office:"+row.id,id:row.id,name:C.OFFICES[row.id].name,buy:row.buy,sell:row.sell,
     checkedAt:row.checkedAt,fresh:officeFresh(row.id),kind:"office",
     url:C.OFFICES[row.id].url,branches:C.OFFICES[row.id].branches
   }));
   const bankRows=(banks?.offers||[]).map(row=>({
-    key:"bank:"+row.id,id:row.id,name:row.bank,buy:row.buy,checkedAt:banks.fetchedAt,
+    key:"bank:"+row.id,id:row.id,name:row.bank,buy:row.buy,sell:row.sell,checkedAt:banks.fetchedAt,
     fresh:!bankFailed&&C.fresh(banks.fetchedAt,QUOTE_TTL),kind:"bank",
     url:"https://nbg.gov.ge/en/currency-rates",branches:null
   }));
@@ -886,6 +986,8 @@ function renderOffers(){
   $("selectedSource").href=item?.url||"";$("selectedBranches").href=item?.branches||"";
   $("applyOfferButton").hidden=editingExchangeRate();
   $("applyOfferButton").disabled=editingExchangeRate()||!(item&&(item.kind==="manual"||item.fresh)&&valid);
+  $("planOfferButton").hidden=editingExchangeRate();
+  $("planOfferButton").disabled=editingExchangeRate()||!(item&&(item.kind==="manual"||item.fresh));
   $("applyOfferButton").textContent=item?.kind==="manual"?"Открыть расчёт в ₽ по моему курсу":item?"Выбрать "+item.name+" для расчёта в ₽":"Выбрать курс для пересчёта в ₽";
 }
 async function applyOffer(){
