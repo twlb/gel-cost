@@ -73,16 +73,142 @@ test('fresh profile has no invented purchases and both sources load',async()=>{
   assert.equal(a.els.quickRub.textContent,'— ₽');assert.match(a.els.marketPrice.textContent,/33,5878/);assert.match(a.els.bankStatus.textContent,/3 банков/);
 });
 
-test('clicking an offer opens inline addresses; closing does not save a quote',async()=>{
+test('first purchase feedback names the missing second step, not a nonexistent RUB result',async()=>{
+  const a=await app();a.run('showView("purchase")');
+  assert.match(a.els.setupProgress.textContent,/Шаг 1 из 2/);assert.equal(a.els.comparisonDetails.hidden,true);
+  await purchase(a,'usd','8800,50','100');
+  assert.equal(a.els.rublesResult.textContent,'— ₽');
+  assert.equal(a.els.actionStatus.textContent,'Покупка сохранена. Осталось выбрать курс USD → GEL.');
+  assert.match(a.els.setupProgress.textContent,/Шаг 2 из 2/);
+  await cash(a,3);assert.equal(a.els.rublesResult.textContent,'≈ 2\u00a0933,50 ₽');
+  assert.match(a.els.actionStatus.textContent,/Цена в рублях пересчитана/);
+  assert.equal(a.els.setupProgress.hidden,true);assert.equal(a.els.comparisonDetails.hidden,false);
+  await purchase(a,'usdt',8655,100);
+  assert.match(a.els.actionStatus.textContent,/Осталось указать списание Bybit/);
+  assert.doesNotMatch(a.els.actionStatus.textContent,/пересчитана/);
+});
+test('saving a rate before the purchase asks for the correct currency and respects an invalid price',async()=>{
+  const a=await app();a.run('showView("purchase")');await cash(a,3);
+  assert.match(a.els.actionStatus.textContent,/Осталось указать покупку USD за рубли/);
+  a.els.quickGel.value='bad';await purchase(a,'usd',8800,100);
+  assert.match(a.els.actionStatus.textContent,/Введите корректную цену в лари/);
+  assert.equal(a.els.rublesResult.textContent,'— ₽');
+  a.run('showView("exchange")');a.els.exchangeAmount.value='';await cash(a,2.7);
+  assert.equal(a.els.actionStatus.textContent,'Мой курс сохранён. Введите сумму долларов для расчёта.');
+  a.run('showView("data")');await purchase(a,'usd',9000,100);
+  assert.equal(a.els.actionStatus.textContent,'Покупка сохранена.');
+});
+test('bank and office application without a purchase do not claim a complete price',async()=>{
+  const a=await app();a.run('selectOffer("office:mjc")');await a.run('applyOffer()');
+  assert.match(a.els.actionStatus.textContent,/Курс MJC выбран.*Осталось указать покупку USD/);
+  a.els.bankChoice.value='2';await a.run('applyBank()');
+  assert.match(a.els.actionStatus.textContent,/Курс B выбран.*Осталось указать покупку USD/);
+});
+test('a preview click never opens addresses; the address action neither selects nor persists a rate',async()=>{
+  const a=await app();await purchase(a,'usd',8800,100);await cash(a,3);
+  const before=a.writes[C.STORAGE_KEY];
+  a.els.offerList.children.find(e=>e.dataset.offerKey==='office:mjc').events.click();
+  assert.equal(a.run('selectedOffer'),'office:mjc');assert.equal(a.run('expandedOffer'),'');
+  assert.equal(a.els.offerLocationPanel.hidden,true);
+  const amount=a.els.exchangeReceive.textContent;
+  a.run('toggleOfferLocation()');assert.equal(a.run('expandedOffer'),'office:mjc');
+  assert.equal(a.els.exchangeReceive.textContent,amount);assert.equal(a.writes[C.STORAGE_KEY],before);
+  a.run('closeOfferLocation()');assert.equal(a.run('selectedOffer'),'office:mjc');
+  a.run('toggleOfferLocation();selectOffer("bank:3")');assert.equal(a.els.offerLocationPanel.hidden,true);
+  assert.equal(a.els.openDeviceMap.hidden,true);assert.equal(a.els.offerAddressButton.textContent,'Отделения C');
+  a.run('selectOffer("manual")');assert.equal(a.els.offerAddressButton.hidden,true);
+});
+test('Bybit editor describes operation and forecast distinctly and retains drafts when switching modes',async()=>{
+  const a=await app();a.run('openRate("bybit")');
+  assert.equal(a.els.rateTitle.textContent,'Последняя оплата Bybit');
+  assert.equal(a.els.saveRateButton.textContent,'Использовать операцию');
+  a.els.actualGel.value='50';a.els.actualUsdt.value='19,78';a.run('setRateMode("quote")');
+  assert.equal(a.els.saveRateButton.textContent,'Сохранить прогноз');
+  a.run('setRateMode("actual")');assert.equal(a.els.actualUsdt.value,'19,78');
+});
+test('address and manual editors do not stack; the unsaved manual draft survives viewing addresses',async()=>{
+  const a=await app();a.run('selectOffer("office:mjc");toggleOfferLocation();openRate("cash")');
+  assert.equal(a.els.offerLocationPanel.hidden,true);a.els.rateValue.value='2,7500';
+  a.run('toggleOfferLocation()');assert.equal(a.els.ratePanel.classes.has('show'),false);
+  assert.equal(a.els.offerLocationPanel.hidden,false);assert.equal(a.state().cashGelRate,null);
+  a.run('openRate("cash")');assert.equal(a.els.rateValue.value,'2,7500');assert.equal(a.els.offerLocationPanel.hidden,true);
+});
+test('editing a manual quote cannot accidentally apply the previously previewed provider',async()=>{
+  const a=await app();a.run('selectOffer("office:mjc");openRate("cash")');a.els.rateValue.value='2,7500';
+  assert.equal(a.els.applyOfferButton.hidden,true);assert.equal(a.els.applyOfferButton.disabled,true);
+  await a.run('applyOffer()');assert.equal(a.state().cashOfficeId,null);assert.equal(a.run('currentView'),'exchange');
+  a.run('closeInline("ratePanel")');assert.equal(a.els.applyOfferButton.hidden,false);assert.equal(a.els.applyOfferButton.disabled,false);
+});
+test('completion of an earlier rate save cannot switch away from a newly opened editor',async()=>{
+  const a=await app();a.run('showView("purchase");openRate("cash")');a.els.rateValue.value='3';
+  const saving=a.run('saveRate()');a.run('openRate("bybit")');a.els.actualGel.value='55';
+  await saving;
+  assert.equal(a.run('selectedPayment'),'bybit');assert.equal(a.run('rateKind'),'bybit');
+  assert.equal(a.els.ratePanel.classes.has('show'),true);assert.equal(a.els.actualGel.value,'55');
+  assert.equal(a.state().cashGelRate,3);assert.equal(a.els.saveRateButton.textContent,'Использовать операцию');
+});
+
+test('best fresh public quote leads the list; a better personal quote stays visible and selected without a badge',async()=>{
+  const a=await app();await purchase(a,'usd',8800.5,100);await cash(a,3);
+  const saved=a.writes[C.STORAGE_KEY];await a.run('refreshAllRates()');
+  assert.equal(a.run('offersForCity()[0].key'),'bank:3');
+  assert.equal(a.run('offersForCity()[0].best'),true);
+  assert.equal(a.run('offersForCity()[1].key'),'manual');
+  assert.equal(a.run('Boolean(offersForCity()[1].best)'),false);
+  assert.equal(a.run('selectedOffer'),'manual');assert.equal(a.els.exchangeReceive.textContent,'≈ 300,00 ₾');
+  const first=a.els.offerList.children[0];
+  assert.equal(first.children[0].children[0].children[1].textContent,'Лучший курс');
+  assert.equal(first.attrs['aria-describedby'],'bestOfferHelp');
+  assert.equal(a.els.bestOfferHelp.hidden,false);assert.equal(a.writes[C.STORAGE_KEY],saved);
+  const b=await app(a.writes);assert.equal(b.run('selectedOffer'),'manual');assert.equal(b.state().cashGelRate,3);
+});
+test('a higher stale public quote never receives best; stale manual cannot displace fresh best',async()=>{
+  const a=await app();await cash(a,3);a.advance(2*C.DAY);
+  a.responses['./market-rates.json']=new Error('offline');await a.run('refreshBanks()');
+  a.responses['./exchange-rates.json']=officeData();await a.run('refreshOffices()');
+  // The harness clock is advanced, so explicitly give the office snapshot its current time.
+  a.responses['./exchange-rates.json'].offers.forEach(row=>row.checkedAt=a.run('new Date().toISOString()'));
+  a.responses['./exchange-rates.json'].fetchedAt=a.run('new Date().toISOString()');await a.run('refreshOffices()');
+  assert.equal(a.run('offersForCity()[0].key'),'office:mjc');
+  assert.equal(a.run('offersForCity().find(row=>row.key==="bank:3").best'),false);
+  assert.equal(a.run('offersForCity()[1].key'),'manual');
+});
+test('no fresh public offers means no badge, with or without a personal quote',async()=>{
+  const a=await app();a.advance(3*C.DAY);a.run('renderOffers()');
+  assert.equal(a.run('offersForCity().some(row=>row.best)'),false);assert.equal(a.els.bestOfferHelp.hidden,true);
+  await cash(a,3);assert.equal(a.run('offersForCity()[0].key'),'manual');assert.equal(a.els.bestOfferHelp.hidden,true);
+  a.run('banks=null;offices=null;renderOffers()');assert.equal(a.els.exchangeReceive.textContent,'≈ 300,00 ₾');
+  assert.equal(a.els.applyOfferButton.disabled,false);
+});
+test('ties are all labelled and city changes recompute the best without introducing another city office',async()=>{
+  const a=await app();Object.assign(a.responses['./exchange-rates.json'].offers[0],{buy:2.64,sell:2.65});await a.run('refreshOffices()');
+  assert.equal(a.run('offersForCity()[0].key'),'office:mjc');
+  a.els.exchangeCity.value='batumi';a.els.exchangeCity.events.change();
+  assert.equal(a.run('offersForCity()[0].key'),'bank:3');assert.equal(a.run('offersForCity().some(row=>row.id==="mjc")'),false);
+  Object.assign(a.responses['./exchange-rates.json'].offers[1],{buy:2.62,sell:2.63});await a.run('refreshOffices()');
+  assert.equal(a.run('offersForCity().filter(row=>row.best).length'),2);
+  assert.equal(a.run('offersForCity().filter(row=>row.best).every(row=>row.buy===2.62&&row.fresh)'),true);
+});
+test('refresh moves the best without silently applying it or closing an already visible selected location',async()=>{
+  const a=await app();await purchase(a,'usd',8800,100);await cash(a,3);
+  a.run('toggleAllOffers();selectOffer("office:rico");toggleOfferLocation("office:rico")');const saved=a.writes[C.STORAGE_KEY];
+  Object.assign(a.responses['./exchange-rates.json'].offers[0],{buy:2.64,sell:2.65});await a.run('refreshOffices()');
+  assert.equal(a.run('offersForCity()[0].key'),'office:mjc');assert.equal(a.run('selectedOffer'),'office:rico');
+  assert.equal(a.run('expandedOffer'),'office:rico');assert.equal(a.els.offerLocationPanel.hidden,false);
+  assert.equal(a.writes[C.STORAGE_KEY],saved);assert.equal(a.state().cashGelRate,3);
+  a.els.exchangeAmount.value='200,50';a.els.exchangeAmount.events.input();
+  assert.equal(a.els.exchangeReceive.textContent,'≈ 523,31 ₾');
+});
+
+test('a separate address action opens the location panel without saving a quote',async()=>{
   const a=await app(),before=JSON.stringify(a.state());
   assert.equal(a.els.offerLocationPanel.hidden,true);
-  a.run('selectOffer("office:mjc")');
+  a.run('selectOffer("office:mjc");toggleOfferLocation("office:mjc")');
   assert.equal(a.els.offerLocationPanel.hidden,false);
   assert.match(a.els.branchAddress.textContent,/Тбилиси, 89\/91/);
   assert.equal(a.els.branchChoiceGroup.hidden,true);
-  const index=a.els.offerList.children.findIndex(e=>e.dataset.offerKey==='office:mjc');
-  assert.equal(a.els.offerList.children[index+1],a.els.offerLocationPanel);
-  assert.equal(a.els.offerList.children[index].attrs['aria-expanded'],'true');
+  assert.equal(a.els.offerLocationPanel.parentElement,a.els.locationPanelHome);
+  assert.equal(a.els.offerAddressButton.attrs['aria-expanded'],'true');
   assert.equal(a.els.branchSource.href,'https://mjc.ge/contact');
   assert.match(a.els.branchNotice.textContent,/не подтверждение курса/);
   a.run('closeOfferLocation()');assert.equal(a.els.offerLocationPanel.hidden,true);
@@ -90,7 +216,7 @@ test('clicking an offer opens inline addresses; closing does not save a quote',a
 });
 test('branch selection survives amount changes and refreshes without changing purchases or the rate',async()=>{
   const a=await app();await purchase(a,'usd',8800,100);await cash(a,3);
-  const before=a.writes[C.STORAGE_KEY];a.run('toggleAllOffers();selectOffer("office:rico")');
+  const before=a.writes[C.STORAGE_KEY];a.run('toggleAllOffers();selectOffer("office:rico");toggleOfferLocation("office:rico")');
   assert.equal(a.els.branchChoiceGroup.hidden,false);
   a.els.branchChoice.value='rico:tbilisi:1';a.run('selectBranch()');
   assert.match(a.els.branchAddress.textContent,/12 Ilia Chavchavadze/);
@@ -100,24 +226,24 @@ test('branch selection survives amount changes and refreshes without changing pu
   assert.equal(a.els.branchChoice.value,'rico:tbilisi:1');
   assert.equal(new URL(a.els.openDeviceMap.href).searchParams.get('query'),destination);
   assert.equal(a.writes[C.STORAGE_KEY],before);
-  a.run('selectOffer("office:rico")');assert.equal(a.els.offerLocationPanel.hidden,true);
-  a.run('selectOffer("office:rico")');assert.equal(a.els.branchChoice.value,'rico:tbilisi:1');
+  a.run('selectOffer("office:rico");toggleOfferLocation("office:rico")');assert.equal(a.els.offerLocationPanel.hidden,true);
+  a.run('selectOffer("office:rico");toggleOfferLocation("office:rico")');assert.equal(a.els.branchChoice.value,'rico:tbilisi:1');
 });
 test('city changes close the old panel and cannot reuse an address from another city',async()=>{
-  const a=await app();a.run('selectOffer("office:rico")');
+  const a=await app();a.run('selectOffer("office:rico");toggleOfferLocation("office:rico")');
   a.els.branchChoice.value='rico:tbilisi:1';a.run('selectBranch()');
   a.els.exchangeCity.value='batumi';a.els.exchangeCity.events.change();
   assert.equal(a.els.offerLocationPanel.hidden,true);
-  a.run('selectOffer("office:rico")');
+  a.run('selectOffer("office:rico");toggleOfferLocation("office:rico")');
   assert.equal(a.els.branchChoice.children.length,6);
   assert.match(a.els.branchAddress.textContent,/^Батуми,/);
   assert.equal(new URL(a.els.openDeviceMap.href).searchParams.get('query'),'41.645256,41.6385689');
   a.els.branchChoice.value='mjc:rustavi:0';a.run('selectBranch()');
   assert.match(a.els.branchAddress.textContent,/^Батуми,/);
-  a.run('selectOffer("office:mjc")');assert.equal(a.run('expandedOffer'),'office:rico');
+  a.run('selectOffer("office:mjc");toggleOfferLocation("office:mjc")');assert.equal(a.run('expandedOffer'),'office:rico');
 });
 test('banks offer an explicitly labelled search, not an invented branch route',async()=>{
-  const a=await app();a.els.exchangeCity.value='batumi';a.run('toggleAllOffers();selectOffer("bank:1")');
+  const a=await app();a.els.exchangeCity.value='batumi';a.run('toggleAllOffers();selectOffer("bank:1");toggleOfferLocation("bank:1")');
   assert.equal(a.els.branchAddress.hidden,true);assert.equal(a.els.branchChoiceGroup.hidden,true);
   assert.match(a.els.branchNotice.textContent,/не указывает конкретное отделение/);
   const url=new URL(a.els.openDeviceMap.href);
@@ -128,18 +254,18 @@ test('banks offer an explicitly labelled search, not an invented branch route',a
   assert.equal(new URL(a.els.openDeviceMap.href).searchParams.get('query'),'A bank branches, Georgia');
 });
 test('manual rate has no fabricated address, and stale network quotes do not block address viewing',async()=>{
-  const a=await app();await cash(a,3);a.run('selectOffer("manual")');
+  const a=await app();await cash(a,3);a.run('selectOffer("manual");toggleOfferLocation("manual")');
   assert.match(a.els.branchNotice.textContent,/не привязан/);
   assert.equal(a.els.openDeviceMap.hidden,true);assert.equal(a.els.branchSource.hidden,true);
   a.responses['./exchange-rates.json'].fetchedAt=new Date(Date.now()-3*3600000).toISOString();
   for(const row of a.responses['./exchange-rates.json'].offers)row.checkedAt=a.responses['./exchange-rates.json'].fetchedAt;
-  await a.run('refreshOffices()');a.run('toggleAllOffers();selectOffer("office:mjc")');
+  await a.run('refreshOffices()');a.run('toggleAllOffers();selectOffer("office:mjc");toggleOfferLocation("office:mjc")');
   assert.equal(a.els.applyOfferButton.disabled,true);assert.equal(a.els.openDeviceMap.hidden,false);
   assert.match(a.els.branchChecked.textContent,/06\.09\.2026/);
 });
 test('a missing location bundle does not break calculations and keeps the official directory link',async()=>{
   const a=await app({},false,{noLocations:true});await purchase(a,'usd',8800,100);await cash(a,3);
-  a.run('selectOffer("office:mjc")');
+  a.run('selectOffer("office:mjc");toggleOfferLocation("office:mjc")');
   assert.equal(a.els.openDeviceMap.hidden,true);assert.match(a.els.branchNotice.textContent,/недоступны/);
   assert.equal(a.els.branchSource.href,'https://mjc.ge/contact');near(a.run('routeValues().cash'),88/3);
 });
@@ -182,19 +308,19 @@ test('ambiguous text and multi-place source links never become precise direction
 });
 test('one direct map link needs no chooser, location permission, app detection or save',async()=>{
   let requests=0;const a=await app({},false,{geolocation:{getCurrentPosition(){requests++;}}});
-  a.run('selectOffer("office:mjc")');
+  a.run('selectOffer("office:mjc");toggleOfferLocation("office:mjc")');
   assert.equal(a.els.openDeviceMap.hidden,false);assert.equal(a.els.openDeviceMap.target,'_blank');
   assert.match(a.els.openDeviceMap.href,/^https:/);assert.equal(a.els.openDeviceMap.events.click,undefined);
   assert.equal(requests,0);assert.equal(a.writes[C.STORAGE_KEY],undefined);
   const source=fs.readFileSync(path.join(root,'app.js'),'utf8'),html=fs.readFileSync(path.join(root,'index.html'),'utf8');
   assert.doesNotMatch(source,/navigator\.geolocation|watchPosition|getInstalledRelatedApps|window\.open|toggleMapChooser|gelcost-map-preference/);
-  assert.match(html,/<a[^>]*id="openDeviceMap"[^>]*>Посмотреть на карту<\/a>/);
+  assert.match(html,/<a[^>]*id="openDeviceMap"[^>]*>Смотреть на карте<\/a>/);
   assert.doesNotMatch(html,/id="(?:mapChooser|rememberMap|openMapChooser|changeMapChoice|mapSystem)"/);
   assert.match(a.els.branchMapHint.textContent,/«Моё местоположение»/);
 });
 test('Batumi remains the HTML default and empty-city fallback',async()=>{
   const a=await app({},false,{city:null});assert.equal(a.els.exchangeCity.value,'batumi');
-  a.els.exchangeCity.value='';a.run('selectOffer("office:rico")');assert.match(a.els.branchAddress.textContent,/^Батуми,/);
+  a.els.exchangeCity.value='';a.run('selectOffer("office:rico");toggleOfferLocation("office:rico")');assert.match(a.els.branchAddress.textContent,/^Батуми,/);
   assert.equal(require('../locations.js').branches('rico')[0].city,'batumi');assert.equal(a.writes[C.STORAGE_KEY],undefined);
 });
 test('Android hands the same point or search to the OS without choosing a package or origin',async()=>{
@@ -215,14 +341,14 @@ test('Android hands the same point or search to the OS without choosing a packag
   assert.equal(injected.split('#Intent;').length,2);
   assert.equal(injected.split(';package=').length,1);
   const a=await app({},false,{userAgent:'Mozilla/5.0 (Linux; Android 15) Chrome/140 Mobile'});
-  a.run('selectOffer("office:mjc")');
+  a.run('selectOffer("office:mjc");toggleOfferLocation("office:mjc")');
   assert.equal(a.els.openDeviceMap.hidden,false);assert.equal(a.els.openDeviceMap.target,'_self');
   assert.equal(a.els.openDeviceMap.href,L.deviceMapLink(L.branchLinks(L.branches('mjc','tbilisi')[0])));
 });
 test('Apple devices get a direct Apple place link; other desktops get Google',async()=>{
   const L=require('../locations.js'),branch=L.branches('mjc','tbilisi')[0];
   for(const userAgent of ['Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X)','iPad','iPod','Mozilla/5.0 (Macintosh; Intel Mac OS X)','Windows NT 10.0','Linux x86_64','']){
-    const a=await app({},false,{userAgent});a.run('selectOffer("office:mjc")');
+    const a=await app({},false,{userAgent});a.run('selectOffer("office:mjc");toggleOfferLocation("office:mjc")');
     const provider=/(iPhone|iPad|iPod|Macintosh)/.test(userAgent)?'apple':'google';
     assert.equal(a.els.openDeviceMap.href,L.branchLinks(branch)[provider]);
     assert.equal(a.els.openDeviceMap.target,'_blank');
@@ -233,31 +359,31 @@ test('old preferences cannot override direct Android maps or alter financial his
   for(const saved of ['google','apple','yandex','system','__proto__','javascript:alert(1)']){
     const a=await app({'gelcost-map-preference':saved},false,{userAgent:'Android'});
     await purchase(a,'usd',8800,100);await cash(a,3);const before=a.writes[C.STORAGE_KEY];
-    a.run('selectOffer("office:mjc")');
+    a.run('selectOffer("office:mjc");toggleOfferLocation("office:mjc")');
     assert.equal(a.els.openDeviceMap.href,L.deviceMapLink(L.branchLinks(branch)));
     assert.equal(a.els.openDeviceMap.target,'_self');
     assert.equal(a.writes[C.STORAGE_KEY],before);assert.equal(a.writes['gelcost-map-preference'],saved);
-    const b=await app(a.writes,false,{userAgent:'Android'});b.run('selectOffer("office:mjc")');
+    const b=await app(a.writes,false,{userAgent:'Android'});b.run('selectOffer("office:mjc");toggleOfferLocation("office:mjc")');
     assert.equal(b.els.openDeviceMap.href,a.els.openDeviceMap.href);assert.equal(b.writes[C.STORAGE_KEY],before);
   }
 });
 test('direct Android maps follow the branch and clear when no address is shown',async()=>{
   const a=await app({},false,{userAgent:'Android'}),L=require('../locations.js');
-  a.run('toggleAllOffers();selectOffer("office:rico")');
+  a.run('toggleAllOffers();selectOffer("office:rico");toggleOfferLocation("office:rico")');
   a.els.branchChoice.value='rico:tbilisi:1';a.run('selectBranch()');
   assert.equal(a.els.openDeviceMap.href,L.deviceMapLink(L.branchLinks(L.branches('rico','tbilisi')[1])));
   a.els.exchangeCity.value='batumi';a.els.exchangeCity.events.change();
   assert.equal(a.els.openDeviceMap.hidden,true);assert.equal(a.els.openDeviceMap.href,'');
-  a.run('selectOffer("office:rico")');a.els.branchChoice.value='rico:batumi:3';a.run('selectBranch()');
+  a.run('selectOffer("office:rico");toggleOfferLocation("office:rico")');a.els.branchChoice.value='rico:batumi:3';a.run('selectBranch()');
   const expected=L.deviceMapLink(L.branchLinks(L.branches('rico','batumi')[3]));
   assert.equal(a.els.openDeviceMap.href,expected);
   a.run('showView("purchase");showView("data");showView("exchange")');assert.equal(a.els.openDeviceMap.href,expected);
-  await cash(a,3);a.run('selectOffer("manual")');
+  await cash(a,3);a.run('selectOffer("manual");toggleOfferLocation("manual")');
   assert.equal(a.els.openDeviceMap.hidden,true);assert.equal(a.els.openDeviceMap.href,'');
 });
 test('denied storage cannot prevent direct map opening',async()=>{
   for(const userAgent of ['Android','iPhone','Windows']){
-    const a=await app({},true,{userAgent});a.run('selectOffer("office:mjc")');
+    const a=await app({},true,{userAgent});a.run('selectOffer("office:mjc");toggleOfferLocation("office:mjc")');
     assert.equal(a.els.openDeviceMap.hidden,false);
     assert.match(a.els.openDeviceMap.href,userAgent==='Android'?/^intent:/:/^https:/);
     assert.equal(a.els.openDeviceMap.events.click,undefined);
@@ -684,7 +810,7 @@ test('manual exchange previews and saves without a RUB purchase or a view change
   assert.equal(a.els.selectedSource.hidden,true);assert.equal(a.els.selectedBranches.hidden,true);
   assert.equal(a.els.applyOfferButton.disabled,false);
   assert.equal(a.run('offersForCity().filter(row=>row.kind==="manual").length'),1);
-  assert.match(a.els.offerStatus.textContent,/Проверено предложений: 5/,'manual is not counted as a verified public offer');
+  assert.match(a.els.offerStatus.textContent,/Свежих предложений: 5/,'manual is not counted as a verified public offer');
 });
 test('manual exchange remains usable without providers, on reload and after refresh',async()=>{
   const a=await app();await cash(a,3);const saved=a.writes[C.STORAGE_KEY];
