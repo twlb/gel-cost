@@ -136,6 +136,60 @@ test('planner rejects invalid amount, same currencies and manual buy reused as s
   assert.equal(b.state().cashGelRate,3);
 });
 
+test('polished empty, successful and invalid states keep one next action without a fake result',async()=>{
+  const a=await app();a.run('showView("calculator")');
+  assert.equal(a.els.planResultBox.classes.has('is-pending'),true);
+  assert.equal(a.els.planNext.textContent,'Введите сумму обмена.');
+  assert.equal(a.els.planQuote0.attrs['aria-invalid'],'false');
+  a.run('setPlanMode("want")');assert.equal(a.els.planNext.textContent,'Введите сумму, которую хотите получить.');
+  a.els.planAmount.value='260';a.els.planQuote0.value='100';a.run('editPlanQuote(0)');
+  a.els.planQuote1.value='2.6';a.run('editPlanQuote(1)');
+  assert.equal(a.els.planResultLabel.textContent,'Понадобится');
+  assert.equal(a.els.planResult.textContent,'≈ 10\u00a0000,00 ₽');
+  assert.equal(a.els.planNext.hidden,true);assert.equal(a.els.planError.textContent,'');
+  assert.equal(a.els.planResultBox.classes.has('is-pending'),false);
+  a.els.planAmount.value='bad';a.run('renderPlanner()');
+  assert.equal(a.els.planResultBox.hidden,true);assert.equal(a.els.planError.classes.has('show'),true);
+  a.els.planAmount.value='260';a.run('renderPlanner()');assert.equal(a.els.planResultBox.hidden,false);
+});
+test('fee disclosure summary exposes configured and invalid fees without changing arithmetic',async()=>{
+  const a=await app();a.run('showView("calculator")');
+  a.els.planAmount.value='10100';a.els.planQuote0.value='100';a.run('editPlanQuote(0)');a.els.planQuote1.value='2,5';a.run('editPlanQuote(1)');
+  a.els.planPct0.value='1';a.els.planFixed0.value='100';a.run('editPlanFee(0)');
+  assert.equal(a.els.planFeeSummary0.textContent,'Комиссия: 100,00 ₽ + 1%');
+  assert.equal(a.els.planResult.textContent,'≈ 247,50 ₾');
+  a.els.planFee0.open=false;a.run('renderPlanner()');assert.equal(a.els.planFeeSummary0.textContent,'Комиссия: 100,00 ₽ + 1%');
+  a.els.planFixed0.value='1000000001';a.run('editPlanFee(0)');
+  assert.equal(a.els.planFeeSummary0.textContent,'Проверьте комиссию');assert.equal(a.els.planFixed0.attrs['aria-invalid'],'true');
+  a.els.planFixed0.value='';a.els.planPct0.value='';a.run('editPlanFee(0)');
+  assert.equal(a.els.planFeeSummary0.textContent,'Комиссия');assert.equal(a.els.planResult.textContent,'≈ 252,50 ₾');
+});
+test('swap preserves the amount and mode, restores directed drafts, and never writes purchases',async()=>{
+  const a=await app();a.run('showView("calculator");setPlanMode("want")');
+  const saved=a.writes[C.STORAGE_KEY];a.els.planAmount.value='123,45';
+  a.els.planQuote0.value='87,12345';a.run('editPlanQuote(0)');a.els.planPct0.value='0,5';a.run('editPlanFee(0)');
+  a.run('reversePlan()');assert.equal(a.els.planFrom.value,'GEL');assert.equal(a.els.planTo.value,'RUB');
+  assert.equal(a.els.planWant.attrs['aria-pressed'],'true');assert.equal(a.els.planAmount.value,'123,45');assert.equal(a.els.planQuote1.value,'');
+  a.run('reversePlan()');assert.equal(a.els.planQuote0.value,'87,12345');assert.equal(a.els.planPct0.value,'0,5');
+  assert.equal(a.els.planAmount.value,'123,45');assert.equal(a.writes[C.STORAGE_KEY],saved);
+});
+test('stale warnings remain visible outside help and a manual override removes stale styling',async()=>{
+  const a=await app();a.run('selectOffer("office:mjc");useOfferForPlan()');
+  a.els.planHelp.open=false;a.advance(3*3600000);a.run('calc()');
+  assert.match(a.els.planSource0.textContent,/свежесть не подтверждена/);assert.equal(a.els.planSource0.classes.has('stale'),true);
+  assert.equal(a.els.planNext.textContent,'Введите курс на шаге 1.');
+  a.els.planQuote0.value='2,6';a.run('editPlanQuote(0)');assert.equal(a.els.planSource0.textContent,'Ваш курс');
+  assert.equal(a.els.planSource0.classes.has('stale'),false);assert.equal(a.els.planResult.textContent,'≈ 260,00 ₾');
+});
+test('long amount typography also fits price and exchange fields without altering input',async()=>{
+  const a=await app();
+  for(const id of ['quickGel','exchangeAmount']){
+    for(const [value,size] of [['999999999,99','medium'],['0,1234567890123456','long'],['100','normal']]){
+      a.els[id].value=value;a.run('calc()');
+      assert.equal(a.els[id].dataset.amountSize,size);assert.equal(a.els[id].value,value);
+    }
+  }
+});
 test('fresh profile has no invented purchases and both sources load',async()=>{
   const a=await app();assert.equal(a.state().usdPurchases.length,0);assert.equal(a.state().usdtPurchases.length,0);
   assert.equal(a.els.quickRub.textContent,'— ₽');assert.match(a.els.marketPrice.textContent,/33,5878/);assert.match(a.els.bankStatus.textContent,/3 банков/);
@@ -878,7 +932,7 @@ test('manual exchange previews and saves without a RUB purchase or a view change
   assert.equal(a.els.selectedSource.hidden,true);assert.equal(a.els.selectedBranches.hidden,true);
   assert.equal(a.els.applyOfferButton.disabled,false);
   assert.equal(a.run('offersForCity().filter(row=>row.kind==="manual").length'),1);
-  assert.match(a.els.offerStatus.textContent,/Свежих предложений: 5/,'manual is not counted as a verified public offer');
+  assert.match(a.els.offerStatus.textContent,/Актуальные предложения: 5/,'manual is not counted as a verified public offer');
 });
 test('manual exchange remains usable without providers, on reload and after refresh',async()=>{
   const a=await app();await cash(a,3);const saved=a.writes[C.STORAGE_KEY];

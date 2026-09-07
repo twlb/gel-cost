@@ -32,7 +32,7 @@ class HTMLTests(unittest.TestCase):
         self.assertEqual(p.stack,[])
         self.assertTrue(all(n == 1 for n in Counter(p.ids).values()))
         self.assertTrue(all(i in p.labels for i in p.inputs))
-        self.assertEqual(p.scripts,["core.js?v=5.7-planner-1","locations.js?v=2026-09-07-map-choice-1","app.js?v=5.7-planner-1"])
+        self.assertEqual(p.scripts,["core.js?v=5.7-planner-1","locations.js?v=2026-09-07-map-choice-1","app.js?v=5.7-polish-1"])
         source=(ROOT/"app.js").read_text(encoding="utf-8")
         for handler in p.handlers:
             self.assertRegex(source,r"function\s+"+re.escape(handler)+r"\(")
@@ -59,4 +59,20 @@ class HTMLTests(unittest.TestCase):
         official=source.split('<div class="official-fields">', 1)[1].split('</details>', 1)[0]
         for field, label in [('officialRub', 'USD/RUB — ЦБ РФ'), ('officialGel', 'USD/GEL — НБГ')]:
             self.assertIn(f'<div><label for="{field}">{label}</label><input id="{field}" type="text" readonly></div>', official)
-        self.assertIn('href="styles.css?v=5.7-planner-1"', source)
+        self.assertIn('href="styles.css?v=5.7-polish-1"', source)
+
+    def test_polish_keeps_accessible_swap_and_explanations_without_hiding_live_warnings(self):
+        source=(ROOT/"index.html").read_text(encoding="utf-8")
+        swap=source.split('id="planReverse"',1)[1].split('</button>',1)[0]
+        self.assertIn('aria-label="Поменять валюты местами"',swap)
+        self.assertIn('title="Поменять валюты местами"',swap)
+        self.assertIn('onclick="reversePlan()"',swap)
+        self.assertIn('aria-hidden="true"',swap)
+        self.assertLess(source.index('id="planFrom"'), source.index('id="planReverse"'))
+        self.assertLess(source.index('id="planReverse"'), source.index('id="planTo"'))
+        self.assertIn('<details class="disclosure" id="planHelp">',source)
+        self.assertLess(source.index('id="planSource0"'),source.index('id="planHelp"'))
+        self.assertLess(source.index('id="planError"'),source.index('id="planHelp"'))
+        legacy=source.split('id="legacyOfferDetails"',1)[1].split('</details>',1)[0]
+        self.assertIn('id="exchangeBasis"',legacy)
+        self.assertIn('Черновик исчезнет после перезагрузки.',source)

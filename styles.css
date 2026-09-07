@@ -11,15 +11,22 @@ h1{font-size:28px}.subtitle{margin-bottom:20px}.amount{margin-bottom:16px}.amoun
 header{min-height:66px}.amount{min-height:64px}.amount input{height:62px;line-height:1.1}.method-head{padding-top:18px;padding-bottom:12px}#purchaseView .disclosure{margin:12px 0}#purchaseView .disclosure>summary{padding:12px 0}#exchangeView .subtitle{display:none}#exchangeHeading{margin-bottom:22px}.offer-row small{font-size:12px}.exchange-result{border-bottom:0;margin-bottom:10px;padding-bottom:8px}.exchange-result .note{margin-bottom:0}
 /* Ruble view follows the same input → answer hierarchy as the exchange view. */
 .field-label{color:#bdc3cc;font-size:13px;margin:0 0 8px}
-.plan-currencies{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+.grid.plan-currencies{grid-template-columns:minmax(0,1fr) 44px minmax(0,1fr);gap:8px;align-items:end;margin-bottom:16px}
 .plan-currencies select{padding-left:10px;padding-right:24px;font-size:14px}
+.swap-button{display:flex;align-items:center;justify-content:center;width:44px;height:48px;background:var(--surface);color:var(--accent);border:1px solid var(--border);border-radius:10px;padding:0}
+.swap-button svg{flex-shrink:0}
 #planViaGroup{margin:0 0 20px}
-#planAmount[data-amount-size=medium]{font-size:22px;letter-spacing:0}
-#planAmount[data-amount-size=long]{font-size:16px;letter-spacing:0}
+.amount input[data-amount-size=medium]{font-size:22px;letter-spacing:0}
+.amount input[data-amount-size=long]{font-size:16px;letter-spacing:0}
 .plan-step{border:1px solid var(--border);border-radius:12px;padding:16px;margin:16px 0;background:var(--surface)}
 .plan-step h3{margin:0 0 16px}
 .plan-step .disclosure{margin:12px 0 0}
 .plan-step .disclosure>summary{font-size:13px}
+.plan-step .disclosure>summary{overflow-wrap:anywhere}
+.plan-step-result:empty,.plan-step .note:empty{display:none}
+.plan-result.is-pending{margin-bottom:16px;padding-bottom:0}
+.plan-result.is-pending strong,.plan-result.is-pending>p:first-child{display:none}
+.plan-result.is-pending .note{margin:0}
 .plan-step-result{font-size:14px;line-height:1.5;font-variant-numeric:tabular-nums;overflow-wrap:anywhere;color:var(--text)}
 .plan-result strong{display:block;font-size:40px;font-variant-numeric:tabular-nums}
 .plan-result strong[data-money-size=medium]{font-size:32px;letter-spacing:-.5px}

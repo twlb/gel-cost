@@ -44,16 +44,16 @@ const plan={from:"RUB",to:"GEL",via:"USD",mode:"give",quotes:{},fees:{},sourceKe
 const planNames={RUB:"Рубли",USD:"Доллары",USDT:"USDT",GEL:"Лари"};
 const planUnits={RUB:"₽",USD:"USD",USDT:"USDT",GEL:"₾"};
 const planLegs={
-  RUBUSD:{quote:"rubBuy",label:"За 1 USD отдаю рублей",unit:"₽"},
-  USDRUB:{quote:"rubSell",label:"За 1 USD получаю рублей",unit:"₽"},
-  USDGEL:{quote:"gelBuy",label:"За 1 USD получаю лари",unit:"₾",side:"buy"},
+  RUBUSD:{quote:"rubBuy",label:"Покупаю 1 USD за рубли",unit:"₽"},
+  USDRUB:{quote:"rubSell",label:"Продаю 1 USD за рубли",unit:"₽"},
+  USDGEL:{quote:"gelBuy",label:"Продаю 1 USD за лари",unit:"₾",side:"buy"},
   GELUSD:{quote:"gelSell",label:"Покупаю 1 USD за лари",unit:"₾",side:"sell"},
-  RUBUSDT:{quote:"rubUsdtBuy",label:"За 1 USDT отдаю рублей",unit:"₽"},
-  USDTRUB:{quote:"rubUsdtSell",label:"За 1 USDT получаю рублей",unit:"₽"},
-  USDTGEL:{quote:"gelUsdtBuy",label:"За 1 USDT получаю лари",unit:"₾"},
+  RUBUSDT:{quote:"rubUsdtBuy",label:"Покупаю 1 USDT за рубли",unit:"₽"},
+  USDTRUB:{quote:"rubUsdtSell",label:"Продаю 1 USDT за рубли",unit:"₽"},
+  USDTGEL:{quote:"gelUsdtBuy",label:"Продаю 1 USDT за лари",unit:"₾"},
   GELUSDT:{quote:"gelUsdtSell",label:"Покупаю 1 USDT за лари",unit:"₾"},
-  USDUSDT:{quote:"usdUsdtBuy",label:"За 1 USDT отдаю долларов",unit:"USD"},
-  USDTUSD:{quote:"usdUsdtSell",label:"За 1 USDT получаю долларов",unit:"USD"}
+  USDUSDT:{quote:"usdUsdtBuy",label:"Покупаю 1 USDT за доллары",unit:"USD"},
+  USDTUSD:{quote:"usdUsdtSell",label:"Продаю 1 USDT за доллары",unit:"USD"}
 };
 function plannerPath(){return [plan.from,plan.to].every(c=>c==="RUB"||c==="GEL")&&plan.from!==plan.to?[plan.from,plan.via,plan.to]:[plan.from,plan.to];}
 function plannerRows(){const path=plannerPath();return path.slice(0,-1).map((from,i)=>({from,to:path[i+1],key:from+path[i+1],...planLegs[from+path[i+1]]}));}
@@ -98,8 +98,8 @@ function renderPlanner(){
   const amountCurrency=plan.mode==="give"?plan.from:plan.to,resultCurrency=plan.mode==="give"?plan.to:plan.from;
   $("planAmountLabel").textContent=(plan.mode==="give"?"Отдаю · ":"Хочу получить · ")+planNames[amountCurrency];
   $("planAmountUnit").textContent=planUnits[amountCurrency];
-  $("planAmount").dataset.amountSize=$("planAmount").value.length>14?"long":$("planAmount").value.length>10?"medium":"normal";
-  $("planResultLabel").textContent=plan.mode==="give"?"Получите примерно":"Нужно отдать примерно";
+  fitAmount($("planAmount"));
+  $("planResultLabel").textContent=plan.mode==="give"?"Получите":"Понадобится";
   $("planPath").textContent=path.map(c=>planNames[c]).join(" → ");
   let usesPublic=false;
   for(let i=0;i<2;i++){
@@ -109,27 +109,39 @@ function renderPlanner(){
     $("planStepTitle"+i).textContent=(i+1)+". "+planNames[row.from]+" → "+planNames[row.to];
     $("planQuoteLabel"+i).textContent=row.label;$("planQuoteUnit"+i).textContent=row.unit;
     $("planQuote"+i).value=manual?plan.quotes[row.quote]:auto&&source?inputValue(source[row.side]):"";
-    $("planQuote"+i).setAttribute("placeholder",row.side?"Выберите обменник или введите курс":"Ваш доступный курс");
-    $("planSource"+i).textContent=auto?(source?(source.name+" · "+(sourceOk?"проверено "+checkedText(source.checkedAt):"свежесть не подтверждена")+" · "+(row.side==="buy"?"обменник покупает USD":"обменник продаёт USD")):"Выберите обменник или введите свой курс."):(row.quote.startsWith("rub")?"Доступный вам курс. Не подставляем официальный курс или прошлую среднюю цену.":"Ваш курс для этого направления. USD и USDT не приравниваем.");
+    $("planQuote"+i).setAttribute("placeholder","Введите курс");
+    $("planSource"+i).textContent=auto?(source?(source.name+" · "+(sourceOk?"проверено "+checkedText(source.checkedAt):"свежесть не подтверждена")+" · "+(row.side==="buy"?"обменник покупает USD":"обменник продаёт USD")):"Выберите обменник или введите курс."):manual&&C.positive(plan.quotes[row.quote])?"Ваш курс":"";
+    $("planSource"+i).classList.toggle("stale",Boolean(auto&&source&&!sourceOk));
     const fee=plan.fees[row.key]||{pct:"0",fixed:"0"};fees[row.key]={pct:fee.pct===""?0:fee.pct,fixed:fee.fixed===""?0:fee.fixed};
     $("planPct"+i).value=fee.pct;$("planFixed"+i).value=fee.fixed;
-    $("planFixedLabel"+i).textContent="Фиксированная сумма, "+planUnits[row.from];
-    $("planFeeHelp"+i).textContent="Из отдаваемых "+planUnits[row.from]+" сначала вычитаем фиксированную сумму, затем процент из остатка. Остальное обмениваем.";
+    $("planFixedLabel"+i).textContent="Фиксированная, "+planUnits[row.from];
+    $("planFeeHelp"+i).textContent="Сначала вычитаем фиксированную комиссию в "+planUnits[row.from]+", затем процент от остатка. Остальное обмениваем.";
+    const pct=C.number(fees[row.key].pct),fixed=C.number(fees[row.key].fixed);
+    const invalidPct=!Number.isFinite(pct)||pct<0||pct>=100,invalidFixed=!Number.isFinite(fixed)||fixed<0||fixed>1e9;
+    const feeParts=[fixed>0?fmtRub(fees[row.key].fixed)+" "+planUnits[row.from]:"",pct>0?String(pct).replace(".",",")+"%":""].filter(Boolean);
+    $("planFeeSummary"+i).textContent=invalidPct||invalidFixed?"Проверьте комиссию":feeParts.length?"Комиссия: "+feeParts.join(" + "):"Комиссия";
+    $("planFeeSummary"+i).classList.toggle("stale",invalidPct||invalidFixed);
+    $("planPct"+i).setAttribute("aria-invalid",String(invalidPct));$("planFixed"+i).setAttribute("aria-invalid",String(invalidFixed));
     $("planStepResult"+i).textContent="";
-    $("planQuote"+i).setAttribute("aria-invalid",String(C.number(quotes[row.quote])<=0||!C.positive(quotes[row.quote])));
+    const touched=$("planAmount").value.trim()!==""||$("planQuote"+i).value.trim()!=="";
+    const quoteValue=C.number(quotes[row.quote]);
+    $("planQuote"+i).setAttribute("aria-invalid",String(touched&&!(quoteValue>=1e-8&&quoteValue<=1e9)));
   }
   $("planChooseOffice").hidden=!rows.some(row=>row.side);
   $("planAddress").hidden=!usesPublic||!source;
   $("planAddress").textContent=source?"Адреса "+source.name:"Адреса обменника";
   const result=C.exchangePlan({from:plan.from,to:plan.to,via:plan.via,mode:plan.mode,amount:$("planAmount").value,quotes,fees});
-  const messages={direction:"Выберите разные валюты.",amount:"Введите сумму больше нуля и не больше 1 млрд.",quote:"Укажите доступный курс для шага "+((result.step??0)+1)+".",fee:"Проверьте комиссию шага "+((result.step??0)+1)+": процент от 0 до 100 (не включая 100), сумма неотрицательная.",consumed:"Комиссия шага "+((result.step??0)+1)+" забирает всю сумму. Увеличьте сумму или проверьте комиссию."};
-  const message=result.ok?"":result.error==="amount"&&!$("planAmount").value.trim()?"Введите сумму, которую хотите обменять.":messages[result.error];
+  const messages={direction:"Выберите разные валюты.",amount:"Введите сумму больше нуля и не больше 1 млрд.",quote:"Введите курс на шаге "+((result.step??0)+1)+".",fee:"Проверьте комиссию шага "+((result.step??0)+1)+": процент от 0 до 100 (не включая 100), сумма неотрицательная.",consumed:"Комиссия шага "+((result.step??0)+1)+" забирает всю сумму. Увеличьте сумму или проверьте комиссию."};
+  const message=result.ok?"":result.error==="amount"&&!$("planAmount").value.trim()?(plan.mode==="give"?"Введите сумму обмена.":"Введите сумму, которую хотите получить."):messages[result.error];
   $("planResult").textContent=result.ok?"≈ "+fmtRub(plan.mode==="give"?result.receive:result.give)+" "+planUnits[resultCurrency]:"— "+planUnits[resultCurrency];fitMoney($("planResult"));
-  $("planNext").textContent=result.ok?"Учтены оба курса и указанные комиссии. Подробности по шагам ниже.":message;
-  if(result.ok&&result.steps.length===1)$("planNext").textContent="Учтены курс и указанная комиссия. Подробности ниже.";
+  $("planNext").textContent=message;
+  $("planNext").hidden=result.ok;
+  $("planResultBox").classList.toggle("is-pending",!result.ok);
   const hasInput=$("planAmount").value.trim()!=="";
   $("planAmount").setAttribute("aria-invalid",String(hasInput&&result.error==="amount"));
-  $("planError").textContent=message;$("planError").classList.toggle("show",hasInput&&["amount","fee","consumed","direction"].includes(result.error));
+  const showError=hasInput&&["amount","fee","consumed","direction"].includes(result.error);
+  $("planError").textContent=showError?message:"";$("planError").classList.toggle("show",showError);
+  $("planResultBox").hidden=showError;
   if(result.ok)result.steps.forEach((step,i)=>$("planStepResult"+i).textContent=fmtRub(step.input)+" "+planUnits[step.from]+" → "+fmtRub(step.output)+" "+planUnits[step.to]+(D.compare(step.commission,0)>0?" · комиссия "+fmtRub(step.commission)+" "+planUnits[step.from]:""));
 }
 function announce(message){
@@ -435,7 +447,11 @@ function fitMoney(element){
   const length=element.textContent.length;
   element.dataset.moneySize=length>24?"extra-long":length>18?"long":length>12?"medium":"normal";
 }
+function fitAmount(element){
+  element.dataset.amountSize=element.value.length>14?"long":element.value.length>10?"medium":"normal";
+}
 function renderRubles(values){
+  fitAmount($("quickGel"));
   const {usdAvg,usdCost,usdtAvg,cash,bybit,bybitRate,cashStale,bybitStale,totals,invalidQuantity}=values;
   const isCash=selectedPayment==="cash";
   const rate=isCash?cash:bybit;
@@ -914,7 +930,7 @@ function renderOfferLocation(item){
   $("openDeviceMap").href=mapUrl||"";
   $("openDeviceMap").hidden=!mapUrl;
   $("openDeviceMap").target=androidMaps?"_self":"_blank";
-  $("branchMapHint").textContent=branch?(L.validPoint(branch.point)?"Откроем место обменника. Для пути от вас выберите в картах «Маршрут» → «Моё местоположение». Калькулятор не задаёт начало пути.":"Точная точка не подтверждена: откроется поиск адреса. Проверьте здание, затем выберите в картах «Маршрут» → «Моё местоположение»."):links?"Откроется поиск отделений банка, не подтверждённая касса с этим курсом.":"";
+  $("branchMapHint").textContent=branch?(L.validPoint(branch.point)?"В картах выберите «Маршрут» → «Моё местоположение».":"Точка не подтверждена: откроется поиск адреса. Проверьте здание, затем выберите «Маршрут» → «Моё местоположение»."):links?"Откроется поиск отделений банка, не подтверждённая касса с этим курсом.":"";
   $("branchChecked").textContent=branch?"Адрес сверён "+new Date(branch.checkedAt).toLocaleDateString("ru-RU")+" · список неполный."+(C.fresh(branch.checkedAt,90*C.DAY)?"":" Адрес давно не проверялся — уточните его у сети."):"";
 }
 function selectBranch(){
@@ -928,6 +944,7 @@ function selectBranch(){
 function toggleAllOffers(){allOffers=!allOffers;renderOffers();}
 function editingExchangeRate(){return currentView==="exchange"&&rateKind==="cash"&&$("ratePanel").classList.contains("show")&&$("ratePanel").parentElement===$("cashRateHost");}
 function renderOffers(){
+  fitAmount($("exchangeAmount"));
   const rows=offersForCity();
   if(!offerSelectionExplicit||!rows.some(row=>row.key===selectedOffer)){
     const active=state.cashOfficeId?"office:"+state.cashOfficeId:state.cashBankId?"bank:"+state.cashBankId:C.positive(state.cashGelRate)?"manual":"";
@@ -971,7 +988,7 @@ function renderOffers(){
   $("moreOffers").setAttribute("aria-expanded",String(allOffers));
   const available=rows.filter(row=>row.kind!=="manual"&&row.fresh).length;
   $("bestOfferHelp").hidden=!available;
-  $("offerStatus").textContent=available?"Свежих предложений: "+available+". До комиссий.":officeBusy||bankBusy?"Загружаем курсы…":"Свежие предложения банков и обменников недоступны. Их сохранённые курсы — только для справки.";
+  $("offerStatus").textContent=available?"Актуальные предложения: "+available+" · до комиссий":officeBusy||bankBusy?"Загружаем курсы…":"Нет актуальных предложений. Сохранённые курсы — только для справки.";
   if(officeFailed||offices?.failures.length)$("offerStatus").textContent+=" Часть обменников не прошла проверку.";
   const item=rows.find(row=>row.key===selectedOffer);
   $("offerAddressButton").hidden=!item||item.kind==="manual";
