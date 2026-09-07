@@ -33,7 +33,8 @@ function sharedBrowser(saved={}){
 async function app(saved={},blocked=false,options={}){
   const html=fs.readFileSync(path.join(root,'index.html'),'utf8');
   const els={};for(const id of html.matchAll(/\bid="([^"]+)"/g)){els[id[1]]=new Element();els[id[1]].id=id[1];}
-  els.quickGel.value='100';els.exchangeAmount.value='100';els.exchangeCity.value='tbilisi';
+  // Existing calculation fixtures explicitly use Tbilisi; default-city tests use the HTML selection.
+  els.quickGel.value='100';els.exchangeAmount.value='100';els.exchangeCity.value=options.city===null?html.match(/<option value="([^"]+)" selected>/)[1]:options.city||'tbilisi';
   const responses={'./rates.json':official(),'./market-rates.json':bankData(),'./exchange-rates.json':officeData()};
   const shared=options.shared||sharedBrowser(saved);
   const timers=new Map();let tid=0,now=Date.now();const writes=shared.writes,downloads=[],requests=[];
@@ -48,7 +49,7 @@ async function app(saved={},blocked=false,options={}){
   }};
   const ctx=vm.createContext({
     console,Intl,Date:Clock,Number,Math,JSON,Promise,AbortController,Blob,URL,Option:class{constructor(text,value){this.text=text;this.value=value;}},
-    localStorage:store,navigator:{locks:options.noLocks?undefined:shared.locks},
+    localStorage:store,navigator:{locks:options.noLocks?undefined:shared.locks,geolocation:options.geolocation,userAgent:options.userAgent||''},
     addEventListener:(name,fn)=>events[name]=fn,
     document:{getElementById:id=>els[id],hidden:false,addEventListener:(name,fn)=>documentEvents[name]=fn,createElement:tag=>{const e=new Element();if(tag==='a')downloads.push(e);return e;},querySelectorAll:()=>['purchasePanel','ratePanel','settingsPanel','usdHistory','usdtHistory'].map(id=>els[id]).filter(e=>e.classes.has('show'))},
     setTimeout:(fn,ms)=>{const id=++tid;timers.set(id,{fn,ms});return id;},clearTimeout:id=>timers.delete(id),setInterval:(fn,ms)=>timers.set(++tid,{fn,ms,interval:true}),
@@ -180,20 +181,108 @@ test('ambiguous text and multi-place source links never become precise direction
   assert.equal(new URL(L.branchLinks(ambiguous).google).pathname,'/maps/search/');
   assert.equal(new URL(L.branchLinks(ambiguous).apple).searchParams.has('daddr'),false);
 });
-test('map buttons explain that they show a place and the route origin must be checked in maps',async()=>{
-  const a=await app();a.run('selectOffer("office:mjc")');
-  assert.match(a.els.branchMapHint.textContent,/без построения маршрута/);
-  assert.match(a.els.branchMapHint.textContent,/проверьте поле «Откуда»/);
-  const source=fs.readFileSync(path.join(root,'index.html'),'utf8');
-  assert.ok(source.indexOf('id="branchMapHint"')<source.indexOf('id="branchMapActions"'));
-  assert.doesNotMatch(fs.readFileSync(path.join(root,'app.js'),'utf8'),/navigator\.geolocation/);
+test('one map button reveals an inline chooser without querying location or installed apps',async()=>{
+  let requests=0;
+  const a=await app({},false,{geolocation:{getCurrentPosition(){requests++;}}});
+  a.run('selectOffer("office:mjc")');
+  assert.equal(a.els.branchMapLaunch.hidden,false);assert.equal(a.els.mapChooser.hidden,true);
+  assert.equal(a.els.openMapChooser.hidden,false);assert.equal(a.els.openPreferredMap.hidden,true);
+  a.run('toggleMapChooser()');assert.equal(a.els.mapChooser.hidden,false);
+  assert.equal(a.els.openMapChooser.attrs['aria-expanded'],'true');
+  a.run('toggleMapChooser()');assert.equal(a.els.mapChooser.hidden,true);
+  assert.equal(requests,0);
+  const source=fs.readFileSync(path.join(root,'app.js'),'utf8');
+  assert.doesNotMatch(source,/navigator\.geolocation|watchPosition|getInstalledRelatedApps|window\.open/);
+  assert.match(a.els.branchMapHint.textContent,/«Моё местоположение»/);
+});
+test('Batumi remains the HTML default and empty-city fallback',async()=>{
+  const a=await app({},false,{city:null});assert.equal(a.els.exchangeCity.value,'batumi');
+  a.els.exchangeCity.value='';a.run('selectOffer("office:rico")');assert.match(a.els.branchAddress.textContent,/^Батуми,/);
+  assert.equal(require('../locations.js').branches('rico')[0].city,'batumi');assert.equal(a.writes[C.STORAGE_KEY],undefined);
+});
+test('Android hands the same point or search to the OS without choosing a package or origin',async()=>{
+  const L=require('../locations.js');
+  for(const row of [...L.branches('mjc','all'),...L.branches('rico','all')]){
+    const links=L.branchLinks(row),intent=L.deviceMapLink(links);
+    assert.ok(intent.startsWith('intent:0,0?q='));
+    const [data,extras]=intent.split('#Intent;');
+    assert.equal(decodeURIComponent(data.split('?q=')[1]),new URL(links.google).searchParams.get('query'));
+    assert.match(extras,/scheme=geo;action=android.intent.action.VIEW;/);
+    assert.equal(decodeURIComponent(extras.split('S.browser_fallback_url=')[1].split(';')[0]),links.google);
+    assert.doesNotMatch(intent,/package=|component=|origin=|rtext=|daddr=|destination=/);
+  }
+  assert.equal(L.deviceMapLink(null),null);
+  assert.equal(L.deviceMapLink({google:'javascript:alert(1)'}),null);
+  assert.equal(L.deviceMapLink({google:'https://evil.example/maps/search/?query=a'}),null);
+  const injected=L.deviceMapLink(L.mapLinks('A #Intent;package=evil;end & extra=value'));
+  assert.equal(injected.split('#Intent;').length,2);
+  assert.equal(injected.split(';package=').length,1);
+  const a=await app({},false,{userAgent:'Mozilla/5.0 (Linux; Android 15) Chrome/140 Mobile'});
+  a.run('selectOffer("office:mjc");toggleMapChooser()');
+  assert.equal(a.els.mapSystem.hidden,false);assert.match(a.els.mapSystem.href,/^intent:/);
+  assert.match(a.els.mapChoiceHelp.textContent,/не список установленных/);
+});
+test('iPhone and desktop offer named services without pretending to detect installed apps',async()=>{
+  for(const userAgent of ['Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X)','Mozilla/5.0 (Macintosh; Intel Mac OS X)']){
+    const a=await app({},false,{userAgent});a.run('selectOffer("office:mjc");toggleMapChooser()');
+    assert.equal(a.els.mapSystem.hidden,true);assert.equal(a.els.mapSystem.href,'');
+    assert.match(a.els.mapChoiceHelp.textContent,/не видит установленные/);
+    for(const id of ['branchGoogle','branchApple','branchYandex'])assert.match(a.els[id].href,/^https:/);
+  }
+});
+test('remembering a provider is optional and never rewrites financial history',async()=>{
+  const a=await app();await purchase(a,'usd',8800,100);await cash(a,3);
+  const before=a.writes[C.STORAGE_KEY];
+  a.run('selectOffer("office:mjc");toggleMapChooser();rememberMapPreference("google")');
+  assert.equal(a.writes['gelcost-map-preference'],undefined);
+  a.els.rememberMap.checked=true;a.run('rememberMapPreference("google");renderMapChooser()');
+  assert.equal(a.writes['gelcost-map-preference'],'google');assert.equal(a.writes[C.STORAGE_KEY],before);
+  assert.equal(a.els.openMapChooser.hidden,true);assert.equal(a.els.openPreferredMap.hidden,false);
+  assert.equal(a.els.openPreferredMap.href,a.els.branchGoogle.href);assert.equal(a.els.openPreferredMap.target,'_blank');
+  const b=await app(a.writes);b.run('toggleAllOffers();selectOffer("office:rico")');
+  assert.equal(b.els.openPreferredMap.hidden,false);assert.equal(b.els.openPreferredMap.href,b.els.branchGoogle.href);
+  b.run('toggleMapChooser();forgetMapPreference()');
+  assert.equal(b.els.mapChooser.hidden,false);assert.equal(b.els.openMapChooser.hidden,false);
+  const c=await app(b.writes);c.run('toggleAllOffers();selectOffer("office:rico")');assert.equal(c.els.openPreferredMap.hidden,true);
+});
+test('preference survives changing branch/city but the destination and chooser state do not leak',async()=>{
+  const a=await app({'gelcost-map-preference':'yandex'});
+  a.run('toggleAllOffers();selectOffer("office:rico");toggleMapChooser()');a.els.branchChoice.value='rico:tbilisi:1';a.run('selectBranch()');
+  assert.equal(a.els.mapChooser.hidden,true);assert.equal(a.els.openPreferredMap.href,a.els.branchYandex.href);
+  const old=a.els.openPreferredMap.href;
+  a.els.exchangeCity.value='batumi';a.els.exchangeCity.events.change();a.run('selectOffer("office:rico")');
+  assert.notEqual(a.els.openPreferredMap.href,old);assert.match(a.els.branchAddress.textContent,/^Батуми,/);
+  assert.equal(a.els.mapChooser.hidden,true);assert.equal(a.els.openPreferredMap.href,a.els.branchYandex.href);
+});
+test('invalid preferences are ignored, and storage failure does not block opening a map',async()=>{
+  for(const saved of ['__proto__','constructor','javascript:alert(1)','system']){
+    const a=await app({'gelcost-map-preference':saved});a.run('selectOffer("office:mjc")');
+    assert.equal(a.els.openPreferredMap.hidden,true);
+  }
+  const a=await app({},true);a.run('selectOffer("office:mjc");toggleMapChooser()');
+  a.els.rememberMap.checked=true;a.run('rememberMapPreference("google")');
+  assert.equal(a.els.mapChoiceStatus.hidden,false);assert.match(a.els.mapChoiceStatus.textContent,/Не удалось запомнить/);
+  assert.match(a.els.branchGoogle.href,/^https:/);
+});
+test('system preference is Android-only and keeps a direct user-gesture link',async()=>{
+  const a=await app({'gelcost-map-preference':'system'},false,{userAgent:'Android'});
+  a.run('toggleAllOffers();selectOffer("office:rico")');assert.match(a.els.openPreferredMap.href,/^intent:/);
+  assert.equal(a.els.openPreferredMap.target,'_self');assert.equal(a.els.openPreferredMap.textContent,'Открыть · Карты телефона');
 });
 test('malformed point coordinates fall back to address search rather than an incorrect pin',()=>{
   const L=require('../locations.js'),branch=L.branches('mjc','tbilisi')[0];
-  for(const point of [[NaN,44],[41,Infinity],[91,44],[41,181],['41',44]]){
+  for(const point of [{},[],[41],[41,44,10],[NaN,44],[41,Infinity],[91,44],[41,181],['41',44]]){
     assert.deepEqual(L.branchLinks({...branch,point}),L.mapLinks(branch.destination));
   }
   assert.equal(L.branchLinks(null),null);
+});
+test('Batumi pins from the official Rico links are exact, while street and ATM links are not guessed',()=>{
+  const L=require('../locations.js'),rows=L.branches('rico','batumi');
+  assert.deepEqual(rows.find(r=>r.id==='rico:batumi:3').point,[41.6338869,41.6068395]);
+  assert.deepEqual(rows.find(r=>r.id==='rico:batumi:4').point,[41.643279,41.654425]);
+  for(const id of ['rico:batumi:1','rico:batumi:2','rico:batumi:5']){
+    const branch=rows.find(r=>r.id===id);assert.equal(branch.point,null);assert.match(new URL(L.branchLinks(branch).google).searchParams.get('query'),/Batumi, Georgia$/);
+  }
 });
 test('a newly opened purchase can save while the previous editor submission is still pending',async()=>{
   const a=await app();a.run('showView("data")');

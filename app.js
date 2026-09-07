@@ -37,6 +37,11 @@ let offices=null,officeFailed=false,officeBusy=false;
 let currentView="exchange",selectedPayment="cash",selectedOffer="",offerSelectionExplicit=false,allOffers=false,statusTimer;
 let expandedOffer="",branchOptionsKey="";
 const branchSelection={};
+const MAP_PREFERENCE_KEY="gelcost-map-preference";
+const MAP_NAMES={system:"Карты телефона",google:"Google Maps",apple:"Apple Maps",yandex:"Яндекс Карты"};
+const androidMaps=/Android/i.test(navigator.userAgent||"");
+let mapPreference="",mapChooserOpen=false,mapContextKey="",activeMapLinks=null;
+try{const saved=storage.getItem(MAP_PREFERENCE_KEY);if(Object.hasOwn(MAP_NAMES,saved)&&(saved!=="system"||androidMaps))mapPreference=saved;}catch{}
 const QUOTE_TTL=2*3600000;
 function announce(message){
   $("actionStatus").textContent=message;
@@ -44,13 +49,14 @@ function announce(message){
 }
 function showView(view){
   if(!["purchase","exchange","data"].includes(view))return;
+  if(view!=="exchange")mapChooserOpen=false;
   currentView=view;
   for(const name of ["purchase","exchange","data"]){
     $(name+"View").hidden=name!==view;
     $(name+"Nav").setAttribute("aria-current",name===view?"page":"false");
   }
   // Section changes leave unfinished fields intact.
-  if(view==="exchange")renderOffers();
+  renderOffers();
   $(view+"Heading").focus({preventScroll:true});
   window.scrollTo?.({top:0,behavior:"instant"});
 }
@@ -715,7 +721,7 @@ async function exportData(){
 
 // Public sources are a separate cache; no background fetch writes personal history.
 function offersForCity(){
-  const city=$("exchangeCity").value||"tbilisi";
+  const city=$("exchangeCity").value||"batumi";
   const officeRows=(offices?.offers||[]).filter(row=>city==="all"||C.OFFICES[row.id].cities.includes(city)).map(row=>({
     key:"office:"+row.id,id:row.id,name:C.OFFICES[row.id].name,buy:row.buy,
     checkedAt:row.checkedAt,fresh:officeFresh(row.id),kind:"office",
@@ -742,10 +748,49 @@ function closeOfferLocation(){
   const key=expandedOffer;expandedOffer="";renderOffers();
   [...$("offerList").children].find(node=>node.dataset.offerKey===key)?.focus({preventScroll:true});
 }
+function renderMapChooser(){
+  const preferred=mapPreference&&activeMapLinks?.[mapPreference]?mapPreference:"";
+  $("branchMapLaunch").hidden=!activeMapLinks;
+  $("openMapChooser").hidden=!!preferred;
+  $("openPreferredMap").hidden=!preferred;
+  $("openPreferredMap").href=preferred?activeMapLinks[preferred]:"";
+  $("openPreferredMap").textContent=preferred?"Открыть · "+MAP_NAMES[preferred]:"";
+  $("openPreferredMap").target=preferred==="system"?"_self":"_blank";
+  $("changeMapChoice").hidden=!preferred;
+  $("mapChooser").hidden=!mapChooserOpen||!activeMapLinks;
+  $("forgetMapChoice").hidden=!mapPreference;
+  for(const id of ["openMapChooser","changeMapChoice"])$(id).setAttribute("aria-expanded",String(mapChooserOpen));
+  $("mapChoiceHelp").textContent=androidMaps
+    ?"«Карты телефона» передают место назначенному приложению или системному выбору. Если кнопка не сработает, выберите сервис ниже. Это не список установленных приложений."
+    :"Выберите карту, которой пользуетесь. Сайт не видит установленные приложения. Откроется приложение или веб-версия — это зависит от телефона и браузера.";
+}
+function toggleMapChooser(){
+  if(!activeMapLinks)return;
+  mapChooserOpen=!mapChooserOpen;
+  renderMapChooser();
+  if(!mapChooserOpen)$(mapPreference?"changeMapChoice":"openMapChooser").focus({preventScroll:true});
+}
+function rememberMapPreference(provider,event){
+  if(!Object.hasOwn(MAP_NAMES,provider)||!activeMapLinks?.[provider]){
+    event?.preventDefault();return;
+  }
+  if(!$("rememberMap").checked)return;
+  // Do not replace the clicked link during its default navigation.
+  mapPreference=provider;
+  mapChooserOpen=false;
+  try{storage.setItem(MAP_PREFERENCE_KEY,provider);}
+  catch{$("mapChoiceStatus").textContent="Не удалось запомнить выбор. Сейчас карту можно открыть; после перезагрузки выберите её снова.";$("mapChoiceStatus").hidden=false;}
+}
+function forgetMapPreference(){
+  mapPreference="";$("rememberMap").checked=false;
+  try{storage.setItem(MAP_PREFERENCE_KEY,"");$("mapChoiceStatus").hidden=true;}
+  catch{$("mapChoiceStatus").textContent="Выбор сброшен только в этой вкладке: настройки браузера не дали сохранить изменение.";$("mapChoiceStatus").hidden=false;}
+  mapChooserOpen=true;renderMapChooser();
+}
 function renderOfferLocation(item){
   const panel=$("offerLocationPanel");panel.hidden=!item;
-  if(!item)return;
-  const city=$("exchangeCity").value||"tbilisi";
+  if(!item){mapChooserOpen=false;mapContextKey="";activeMapLinks=null;$("branchMapLaunch").hidden=true;return;}
+  const city=$("exchangeCity").value||"batumi";
   const branches=item.kind==="office"&&L?L.branches(item.id,city):[];
   $("branchHeading").textContent=item.name+" · адреса";
   $("branchChoiceGroup").hidden=branches.length<2;
@@ -757,6 +802,8 @@ function renderOfferLocation(item){
     branchOptionsKey=optionsKey;
   }
   const branch=branches.find(row=>row.id===branchSelection[optionsKey])||branches[0];
+  const mapKey=branch?.id||item.key+":"+city;
+  if(mapContextKey!==mapKey){mapChooserOpen=false;mapContextKey=mapKey;$("rememberMap").checked=false;$("mapChoiceStatus").hidden=true;}
   $("branchChoice").value=branch?.id||"";
   $("branchAddress").hidden=!branch;
   $("branchAddress").textContent=branch?.address||"";
@@ -766,18 +813,22 @@ function renderOfferLocation(item){
     :"Ваш ручной курс не привязан к обменному пункту. Выберите обменник из списка, чтобы увидеть адреса.";
   if(item.kind==="office"&&!branch)$("branchNotice").textContent+=" Адреса для выбранного города недоступны в приложении. Откройте официальный список отделений.";
   const links=branch?L.branchLinks(branch):item.kind==="bank"&&L?L.bankSearch(item.name,city):null;
+  activeMapLinks=links?{...links,system:androidMaps?L.deviceMapLink(links):null}:null;
   $("branchMapActions").hidden=!links;
-  for(const [id,key] of [["branchGoogle","google"],["branchApple","apple"],["branchYandex","yandex"]]){
-    $(id).href=links?.[key]||"";
+  for(const [id,key] of [["mapSystem","system"],["branchGoogle","google"],["branchApple","apple"],["branchYandex","yandex"]]){
+    $(id).href=activeMapLinks?.[key]||"";
+    $(id).hidden=!activeMapLinks?.[key];
+    $(id).textContent=MAP_NAMES[key];
     $(id).setAttribute("aria-label",$(id).textContent+" — "+(branch?.address||"поиск отделений "+item.name));
   }
-  $("branchMapHint").textContent=branch?(branch.point?"Кнопки покажут обменник на карте без построения маршрута. Для пути от вас нажмите «Маршрут» в картах и проверьте поле «Откуда».":"Точная точка не подтверждена. Кнопки открывают поиск адреса: проверьте найденное здание и начальную точку перед построением маршрута."):links?"Кнопки открывают поиск отделений. Выберите отделение в картах и уточните условия обмена.":"";
+  $("branchMapHint").textContent=branch?(L.validPoint(branch.point)?"Откроем место обменника. Для пути от вас выберите в картах «Маршрут» → «Моё местоположение». Калькулятор не задаёт начало пути.":"Точная точка не подтверждена: откроется поиск адреса. Проверьте здание, затем выберите в картах «Маршрут» → «Моё местоположение»."):links?"Откроется поиск отделений банка, не подтверждённая касса с этим курсом.":"";
+  renderMapChooser();
   $("branchChecked").textContent=branch?"Адрес сверён "+new Date(branch.checkedAt).toLocaleDateString("ru-RU")+" · список неполный."+(C.fresh(branch.checkedAt,90*C.DAY)?"":" Адрес давно не проверялся — уточните его у сети."):"";
 }
 function selectBranch(){
   const item=offersForCity().find(row=>row.key===expandedOffer);
   if(!item||!L)return;
-  const city=$("exchangeCity").value||"tbilisi";
+  const city=$("exchangeCity").value||"batumi";
   if(!L.branches(item.id,city).some(row=>row.id===$("branchChoice").value))return;
   branchSelection[item.key+":"+city]=$("branchChoice").value;
   renderOfferLocation(item);
@@ -818,7 +869,7 @@ function renderOffers(){
   $("offerList").replaceChildren(...withLocation);$("offerList").hidden=!rows.length;
   renderOfferLocation(rows.find(row=>row.key===expandedOffer));
   if(focused)nodes.find(node=>node.dataset.offerKey===focused)?.focus({preventScroll:true});
-  else if(expandedOffer&&focusedBranch&&["branchChoice","branchGoogle","branchApple","branchYandex","branchSource","closeLocationButton"].includes(focusedBranch))$(focusedBranch).focus({preventScroll:true});
+  else if(expandedOffer&&focusedBranch&&["branchChoice","openMapChooser","openPreferredMap","changeMapChoice","rememberMap","mapSystem","branchGoogle","branchApple","branchYandex","branchSource","closeLocationButton"].includes(focusedBranch))$(focusedBranch).focus({preventScroll:true});
   $("moreOffers").hidden=rows.length<=3;
   $("moreOffers").textContent=allOffers?"Свернуть список":"Все предложения ("+rows.length+")";
   $("moreOffers").setAttribute("aria-expanded",String(allOffers));
@@ -870,6 +921,7 @@ function refreshAllRates(){return Promise.all([refreshOfficial(),refreshBanks(),
 
 $("exchangeAmount").addEventListener("input",()=>{renderOffers();if(rateKind==="cash"&&$("ratePanel").classList.contains("show"))updateRatePreview();});
 $("exchangeCity").addEventListener("change",()=>{selectedOffer="";expandedOffer="";offerSelectionExplicit=false;allOffers=false;renderOffers();});
+for(const [id,key] of [["mapSystem","system"],["branchGoogle","google"],["branchApple","apple"],["branchYandex","yandex"]])$(id).addEventListener("click",event=>rememberMapPreference(key,event));
 $("branchChoice").addEventListener("change",selectBranch);
 $("quickGel").addEventListener("input",calc);
 $("purchaseRub").addEventListener("input",updatePurchasePreview);
@@ -901,6 +953,7 @@ window.addEventListener("storage",event=>{
   if(event.key===C.STORAGE_KEY||event.key===null)syncPersonal();
 });
 document.addEventListener("visibilitychange",()=>{
+  if(!document.hidden)renderMapChooser();
   if(!document.hidden){syncPersonal();refreshRatesIfDue(60000);}
 });
 window.addEventListener("online",()=>refreshRatesIfDue(0));

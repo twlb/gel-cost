@@ -32,7 +32,7 @@ class HTMLTests(unittest.TestCase):
         self.assertEqual(p.stack,[])
         self.assertTrue(all(n == 1 for n in Counter(p.ids).values()))
         self.assertTrue(all(i in p.labels for i in p.inputs))
-        self.assertEqual(p.scripts,["core.js?v=5.6-exact-money","locations.js?v=2026-09-07-map-pin-2","app.js?v=5.6-map-pin-2"])
+        self.assertEqual(p.scripts,["core.js?v=5.6-exact-money","locations.js?v=2026-09-07-map-choice-1","app.js?v=5.6-map-choice-1"])
         source=(ROOT/"app.js").read_text(encoding="utf-8")
         for handler in p.handlers:
             self.assertRegex(source,r"function\s+"+re.escape(handler)+r"\(")
@@ -48,6 +48,7 @@ class HTMLTests(unittest.TestCase):
         self.assertIn('>Цена в рублях</button>', nav)
         self.assertIn('<details class="disclosure" id="comparisonDetails">', source)
         self.assertIn('<details class="disclosure" id="paymentSetup">', source)
+        self.assertIn('<select id="exchangeCity"><option value="batumi" selected>Батуми</option>', source)
 
     def test_settings_fields_keep_their_layout_groups_and_readonly_rates(self):
         source=(ROOT/"index.html").read_text(encoding="utf-8")
@@ -55,4 +56,4 @@ class HTMLTests(unittest.TestCase):
         official=source.split('<div class="official-fields">', 1)[1].split('</details>', 1)[0]
         for field, label in [('officialRub', 'USD/RUB — ЦБ РФ'), ('officialGel', 'USD/GEL — НБГ')]:
             self.assertIn(f'<div><label for="{field}">{label}</label><input id="{field}" type="text" readonly></div>', official)
-        self.assertIn('href="styles.css?v=5.6-locations-1"', source)
+        self.assertIn('href="styles.css?v=5.6-map-choice-1"', source)

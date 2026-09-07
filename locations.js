@@ -51,9 +51,14 @@
     "rico:tbilisi:7a Evgni Mikeladze Street":[41.7623412,44.7753137],
     "rico:tbilisi:1 Moscow Avenue":[41.6848816,44.8545502],
     "rico:rustavi:19 Kostava Street":[41.54332,45.010431],
-    "rico:batumi:25 Ilia Chavchavadze Street":[41.645256,41.6385689]
+    "rico:batumi:25 Ilia Chavchavadze Street":[41.645256,41.6385689],
+    // Official Rico directory links rechecked in Maps on 2026-09-07:
+    // https://maps.app.goo.gl/aLMEC9cvijJhmrkc8 — building 8a, not a street centre.
+    "rico:batumi:8a Kobaladze Street":[41.6338869,41.6068395],
+    // https://maps.app.goo.gl/dtiDK5PHHqwisTYt7 — explicit coordinate pin.
+    "rico:batumi:15 Severiane Achareli Street":[41.643279,41.654425]
   };
-  function branches(office,city="tbilisi"){
+  function branches(office,city="batumi"){
     const directory=Object.hasOwn(directories,office)?directories[office]:null;
     if(!directory)return [];
     return Object.entries(directory.addresses).flatMap(([key,addresses])=>
@@ -76,9 +81,8 @@
   }
   function branchLinks(branch){
     if(!branch)return null;
-    if(!branch.point)return mapLinks(branch.destination);
+    if(!validPoint(branch.point))return mapLinks(branch.destination);
     const [lat,lon]=branch.point;
-    if(!Number.isFinite(lat)||!Number.isFinite(lon)||Math.abs(lat)>90||Math.abs(lon)>180)return mapLinks(branch.destination);
     const latLon=encodeURIComponent(lat+","+lon),lonLat=encodeURIComponent(lon+","+lat);
     return {
       google:"https://www.google.com/maps/search/?api=1&query="+latLon,
@@ -87,11 +91,25 @@
       yandex:"https://yandex.ru/maps/?whatshere%5Bpoint%5D="+lonLat+"&whatshere%5Bzoom%5D=17"
     };
   }
+  function validPoint(point){
+    return Array.isArray(point)&&point.length===2&&point.every(Number.isFinite)&&Math.abs(point[0])<=90&&Math.abs(point[1])<=180;
+  }
+  // Generic Android geo Intent: Android, not this site, resolves installed handlers.
+  // An HTTPS fallback avoids dead-end custom-scheme probes. No package enumeration.
+  function deviceMapLink(links){
+    try{
+      const url=new URL(links?.google);
+      if(url.protocol!=="https:"||url.hostname!=="www.google.com"||url.pathname!=="/maps/search/")return null;
+      const query=url.searchParams.get("query");
+      if(!query)return null;
+      return "intent:0,0?q="+encodeURIComponent(query)+"#Intent;scheme=geo;action=android.intent.action.VIEW;S.browser_fallback_url="+encodeURIComponent(url.href)+";end";
+    }catch{return null;}
+  }
   function bankSearch(name,city){
     const place=Object.hasOwn(cities,city)?cities[city].map:"Georgia";
     return mapLinks(String(name).slice(0,120)+" bank branches, "+place+(place==="Georgia"?"":", Georgia"));
   }
-  const api={checkedAt,branches,mapLinks,branchLinks,bankSearch};
+  const api={checkedAt,branches,mapLinks,branchLinks,bankSearch,validPoint,deviceMapLink};
   if(typeof module!=="undefined"&&module.exports)module.exports=api;
   else root.GelLocations=api;
 })(typeof window!=="undefined"?window:this);
