@@ -6,13 +6,14 @@
   const STORAGE_KEY="gelcost-v5.6-personal";
   const CACHE_KEYS={official:"gelcost-v5.5-official",banks:"gelcost-v5.5-banks",offices:"gelcost-v5.6-offices"};
   const currencyMeta={
-    USD:{displayNominal:1,sourceNominals:{banks:1,mjc:1,rico:1}},
-    EUR:{displayNominal:1,sourceNominals:{banks:1,mjc:1,rico:1}},
-    RUB:{displayNominal:100,sourceNominals:{banks:100,mjc:1,rico:100}}
+    USD:{displayNominal:1,sourceNominals:{banks:1,mjc:1,rico:1,inteli:1}},
+    EUR:{displayNominal:1,sourceNominals:{banks:1,mjc:1,rico:1,inteli:1}},
+    RUB:{displayNominal:100,sourceNominals:{banks:100,mjc:1,rico:100,inteli:1}}
   };
   const OFFICES={
     mjc:{name:"MJC",cities:["tbilisi","rustavi"],url:"https://mjc.ge/rates",branches:"https://mjc.ge/contact"},
-    rico:{name:"Rico",cities:["tbilisi","batumi","kobuleti","poti","kutaisi"],url:"https://www.rico.ge/en/",branches:"https://www.rico.ge/en/branches/"}
+    rico:{name:"Rico",cities:["tbilisi","batumi","kobuleti","poti","kutaisi"],url:"https://www.rico.ge/en/",branches:"https://www.rico.ge/en/branches/"},
+    inteli:{name:"InteliExpress",cities:["batumi"],url:"https://inteliexpress.com/",branches:"https://inteliexpress.com/local-addresses/"}
   };
   function number(value){
     if(typeof value==="number")return Number.isFinite(value)?value:NaN;
@@ -196,18 +197,20 @@
   }
   function officeSnapshot(data,now=Date.now(),expectedCurrency="USD"){
     const meta=currencyMeta[expectedCurrency];
-    if(!meta||data?.schemaVersion!==1||data.currency!==expectedCurrency||data.unit!=="GEL per "+expectedCurrency||data.channel!=="Cash"||data.side!=="buy")throw Error("Неизвестный формат обменников");
+    if(!meta||![1,2].includes(data?.schemaVersion)||data.currency!==expectedCurrency||data.unit!=="GEL per "+expectedCurrency||data.channel!=="Cash"||data.side!=="buy")throw Error("Неизвестный формат обменников");
+    // V1 caches remain usable during rollout; V2 requires all three source statuses.
+    const providers=data.schemaVersion===1?["mjc","rico"]:["mjc","rico","inteli"];
     if((expectedCurrency!=="USD"||data.nominal!==undefined)&&data.nominal!==1)throw Error("Неизвестный нормализованный номинал");
-    if(!fresh(data.fetchedAt,Infinity,now)||!Array.isArray(data.offers)||data.offers.length>2||!Array.isArray(data.failures)||data.failures.some(id=>!Object.hasOwn(OFFICES,id))||new Set(data.failures).size!==data.failures.length)throw Error("Некорректный набор обменников");
+    if(!fresh(data.fetchedAt,Infinity,now)||!Array.isArray(data.offers)||data.offers.length>providers.length||!Array.isArray(data.failures)||data.failures.some(id=>!providers.includes(id))||new Set(data.failures).size!==data.failures.length)throw Error("Некорректный набор обменников");
     const ids=new Set();
     for(const row of data.offers){
-      if(!row||!Object.hasOwn(OFFICES,row.id)||ids.has(row.id)||row.nominal!==1||row.sourceUpdatedAt!==null)throw Error("Неизвестная котировка");
+      if(!row||!providers.includes(row.id)||ids.has(row.id)||row.nominal!==1||row.sourceUpdatedAt!==null)throw Error("Неизвестная котировка");
       if((expectedCurrency!=="USD"||row.sourceNominal!==undefined)&&row.sourceNominal!==meta.sourceNominals[row.id])throw Error("Неизвестный исходный номинал");
       ids.add(row.id);
       if(!(number(row.buy)>=0.5/meta.displayNominal&&number(row.buy)<=number(row.sell)&&number(row.sell)<=10/meta.displayNominal&&number(row.sell)/number(row.buy)<=1.3))throw Error("Некорректный курс обменника");
       if(!fresh(row.checkedAt,Infinity,now)||timestamp(row.checkedAt)>timestamp(data.fetchedAt))throw Error("Некорректная дата обменника");
     }
-    if(Object.keys(OFFICES).some(id=>!ids.has(id)&&!data.failures.includes(id)))throw Error("Пропущен статус источника");
+    if(providers.some(id=>!ids.has(id)&&!data.failures.includes(id)))throw Error("Пропущен статус источника");
     return {...data,offers:data.offers.map(row=>({...row,buy:number(row.buy),sell:number(row.sell)}))};
   }
   // Independent planning: no purchase history, official-rate fallback or USD/USDT parity.

@@ -19,9 +19,11 @@ from update_bank_rates import fetch_reference, reference_value
 
 OUTPUT = ROOT / "exchange-rates.json"
 SOURCES = {"mjc": "https://mjc.ge/api/v1/exchange", "rico": "https://www.rico.ge/en/"}
+INTELI_SOURCE = "https://inteliexpress.com/"
 CURRENCIES = ("USD", "EUR", "RUB")
 DISPLAY_NOMINALS = {"USD": 1, "EUR": 1, "RUB": 100}
 SOURCE_NOMINALS = {"mjc": {"USD": 1, "EUR": 1, "RUB": 1}, "rico": {"USD": 1, "EUR": 1, "RUB": 100}}
+SOURCE_NOMINALS["inteli"] = {currency: 1 for currency in CURRENCIES}
 OUTPUTS = {"USD": OUTPUT, "EUR": ROOT / "exchange-rates-eur.json", "RUB": ROOT / "exchange-rates-rub.json"}
 
 
@@ -103,7 +105,65 @@ def parse_rico(body, currency="USD"):
     return pair(row[4], row[6], currency, nominal)
 
 
-def collect(fetch, now, previous=None, reference=None, currency="USD"):
+class InteliTable(HTMLParser):
+    """Only the observed standard-rates table, never scripts or cross-pairs."""
+    def __init__(self):
+        super().__init__()
+        self.tables = []
+        self.table = None
+        self.row = None
+        self.cell = None
+        self.skip = 0
+
+    def handle_starttag(self, tag, attrs):
+        if tag in {"script", "style"}: self.skip += 1
+        if self.skip: return
+        if tag == "table":
+            if self.table is not None: raise ValueError("Nested Inteli table")
+            self.table = []
+        elif self.table is not None and tag == "tr":
+            if self.row is not None: raise ValueError("Unclosed Inteli row")
+            self.row = []
+        elif self.row is not None and tag in {"td", "th"}:
+            if self.cell is not None: raise ValueError("Nested Inteli cell")
+            self.cell = []
+
+    def handle_endtag(self, tag):
+        if tag in {"script", "style"}:
+            self.skip = max(0, self.skip - 1)
+            return
+        if self.skip: return
+        if tag in {"td", "th"} and self.cell is not None:
+            self.row.append(" ".join("".join(self.cell).split()))
+            self.cell = None
+        elif tag == "tr" and self.row is not None:
+            if self.cell is not None: raise ValueError("Unclosed Inteli cell")
+            self.table.append(self.row)
+            self.row = None
+        elif tag == "table" and self.table is not None:
+            if self.row is not None: raise ValueError("Unclosed Inteli row")
+            self.tables.append(self.table)
+            self.table = None
+
+    def handle_data(self, data):
+        if self.cell is not None and not self.skip: self.cell.append(data)
+
+
+def parse_inteli(body, currency="USD"):
+    if currency not in CURRENCIES: raise ValueError("Unsupported currency")
+    parser = InteliTable()
+    parser.feed(body.decode("utf-8")); parser.close()
+    if parser.table is not None: raise ValueError("Truncated Inteli table")
+    tables = [table for table in parser.tables if table and table[0] == ["ვალუტის სტანდარტული კურსები"]]
+    if len(tables) != 1: raise ValueError("Missing or ambiguous Inteli standard table")
+    rows = [row for row in tables[0][1:] if len(row) >= 2 and row[:2] == ["GEL", currency]]
+    if len(rows) != 1 or len(rows[0]) != 4: raise ValueError("Missing or ambiguous Inteli GEL pair")
+    # Observed standard table: GEL, currency, purchase, sale; all per 1 unit.
+    # Never infer order by sorting numbers or substitute the EUR/USD cross-pair.
+    return pair(rows[0][2], rows[0][3], currency, 1)
+
+
+def collect(fetch, now, previous=None, reference=None, currency="USD", include_inteli=False):
     if currency not in CURRENCIES:
         raise ValueError("Unsupported currency")
     if previous and (previous.get("currency") != currency or previous.get("unit") != f"GEL per {currency}"):
@@ -111,9 +171,11 @@ def collect(fetch, now, previous=None, reference=None, currency="USD"):
     stamp = now.isoformat().replace("+00:00", "Z")
     past = {row["id"]: row for row in (previous or {}).get("offers", [])}
     offers, failures, reference_checked = [], [], False
-    for provider, parser in (("mjc", parse_mjc), ("rico", parse_rico)):
+    providers = [("mjc", parse_mjc, SOURCES["mjc"]), ("rico", parse_rico, SOURCES["rico"])]
+    if include_inteli: providers.append(("inteli", parse_inteli, INTELI_SOURCE))
+    for provider, parser, url in providers:
         try:
-            buy, sell = parser(fetch(SOURCES[provider]), currency)
+            buy, sell = parser(fetch(url), currency)
             old = past.get(provider)
             if old and any(abs(new / decimal(old[key]) - 1) > 0.15 for new, key in ((buy, "buy"), (sell, "sell"))):
                 raise ValueError("Abrupt change needs review")
@@ -127,13 +189,13 @@ def collect(fetch, now, previous=None, reference=None, currency="USD"):
             failures.append(provider)
             if provider in past: offers.append(past[provider])
             print(f"{provider}/{currency}: unavailable ({type(exc).__name__}: {exc})", file=sys.stderr)
-    return {"schemaVersion": 1, "currency": currency, "unit": f"GEL per {currency}", "nominal": 1, "channel": "Cash", "side": "buy", "fetchedAt": stamp, "offers": offers, "failures": failures, "quality": {"officialReferenceChecked": reference_checked}}
+    return {"schemaVersion": 2 if include_inteli else 1, "currency": currency, "unit": f"GEL per {currency}", "nominal": 1, "channel": "Cash", "side": "buy", "fetchedAt": stamp, "offers": offers, "failures": failures, "quality": {"officialReferenceChecked": reference_checked}}
 
 
-def collect_all(fetch, now, previous=None, references=None):
+def collect_all(fetch, now, previous=None, references=None, include_inteli=False):
     """Each public body is fetched once; parse failures remain currency-specific."""
     responses = {}
-    for url in SOURCES.values():
+    for url in [*SOURCES.values(), *([INTELI_SOURCE] if include_inteli else [])]:
         try:
             responses[url] = fetch(url)
         except Exception as exc:
@@ -149,7 +211,7 @@ def collect_all(fetch, now, previous=None, references=None):
             past = (previous or {}).get(currency)
             if isinstance(past, Exception):
                 raise past
-            results[currency] = collect(cached_fetch, now, past, (references or {}).get(currency), currency)
+            results[currency] = collect(cached_fetch, now, past, (references or {}).get(currency), currency, include_inteli)
         except Exception as exc:
             results[currency] = exc
     return results
@@ -170,7 +232,7 @@ def main():
         references["EUR"] = fetch_reference("EUR", now)
     except Exception as exc:
         print(f"EUR official reference unavailable: {exc}; reference check will be labelled false", file=sys.stderr)
-    results = collect_all(request, now, previous, references)
+    results = collect_all(request, now, previous, references, include_inteli=True)
     failed = False
     for currency, result in results.items():
         if isinstance(result, Exception):
@@ -178,7 +240,7 @@ def main():
             failed = True
             continue
         write_json_atomic(OUTPUTS[currency], result)
-        print(f"Cash {currency} sources: {2-len(result['failures'])}/2 available")
+        print(f"Cash {currency} sources: {3-len(result['failures'])}/3 available")
         failed = failed or bool(result["failures"])
     return 1 if failed else 0
 

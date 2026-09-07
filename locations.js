@@ -11,6 +11,10 @@
     poti:{name:"Поти",map:"Poti"},kutaisi:{name:"Кутаиси",map:"Kutaisi"}
   };
   const directories={
+    // Apple web place cards reverse-geocode this POI to a street and lose the
+    // destination in Directions. Use a verified Google coordinate pin for this branch only.
+    inteli:{source:"https://inteliexpress.com/local-addresses/",appleFallback:"google",checkedByCity:{batumi:"2026-09-07T00:00:00Z"},
+      addresses:{batumi:["25 Baratashvili Street"]}},
     mjc:{source:"https://mjc.ge/contact",addresses:{
       tbilisi:["89/91 Davit Aghmashenebeli Avenue"],
       rustavi:["3 Leonidze Street"]
@@ -45,6 +49,9 @@
   // MJC Tbilisi: Google Maps resolved the officially listed building 89/91;
   // Yandex text search matched a different Aghmashenebeli street, so never route by that text.
   const points={
+    // Google Maps POI 0x406787eaed51f111:0xa1bb5f621cb58bcb, checked 2026-09-07:
+    // INTELIEXPRESS, 25 Nikoloz Baratashvili Street, Batumi. !3d/!4d POI, not viewport.
+    "inteli:batumi:25 Baratashvili Street":[41.6492744,41.6374353],
     "mjc:tbilisi:89/91 Davit Aghmashenebeli Avenue":[41.7102279,44.7970808],
     "rico:tbilisi:70 Ilia Chavchavadze Avenue":[41.7112122,44.7558822],
     "rico:tbilisi:9 Tamar Mepe Avenue":[41.718854,44.792886],
@@ -87,7 +94,8 @@
         id:office+":"+key+":"+index,city:key,address:cities[key].name+", "+address,
         destination:address+", "+cities[key].map+", Georgia",source:directory.source,
         checkedAt:directory.checkedByCity?.[key]||checkedAt,
-        point:points[office+":"+key+":"+address]||null
+        point:points[office+":"+key+":"+address]||null,
+        appleFallback:directory.appleFallback||null
       })));
   }
   // Open a place, never directions with an implicit/guessed starting point.
@@ -106,9 +114,10 @@
     if(!validPoint(branch.point))return mapLinks(branch.destination);
     const [lat,lon]=branch.point;
     const latLon=encodeURIComponent(lat+","+lon),lonLat=encodeURIComponent(lon+","+lat);
+    const google="https://www.google.com/maps/search/?api=1&query="+latLon;
     return {
-      google:"https://www.google.com/maps/search/?api=1&query="+latLon,
-      apple:"https://maps.apple.com/place?coordinate="+latLon+"&name="+encodeURIComponent(branch.address),
+      google,
+      apple:branch.appleFallback==="google"?google:"https://maps.apple.com/place?coordinate="+latLon+"&name="+encodeURIComponent(branch.address),
       // Yandex place cards use longitude,latitude (unlike route/search coordinates).
       yandex:"https://yandex.ru/maps/?whatshere%5Bpoint%5D="+lonLat+"&whatshere%5Bzoom%5D=17"
     };

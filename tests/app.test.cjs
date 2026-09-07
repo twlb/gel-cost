@@ -85,6 +85,45 @@ const purchase=(a,kind,rub,qty)=>{a.run(`openPurchase('${kind}')`);a.els.purchas
 const cash=(a,rate)=>{a.run('openRate("cash")');a.els.rateValue.value=String(rate);return a.run('saveRate()');};
 const near=(a,b)=>assert.ok(Math.abs(a-b)<1e-9,`${a} != ${b}`);
 
+function inteliResponses(){
+  const responses=allSourceData();
+  for(const [currency,file] of [['USD','./exchange-rates.json'],['EUR','./exchange-rates-eur.json'],['RUB','./exchange-rates-rub.json']]){
+    const data=responses[file];data.schemaVersion=2;data.nominal=1;
+    data.offers.forEach(row=>row.sourceNominal=C.currencyMeta[currency].sourceNominals[row.id]);
+    if(currency==='RUB')data.offers.forEach(row=>{row.buy=.0263;row.sell=.0303;});
+    data.offers.push({id:'inteli',buy:currency==='RUB'?.027:2.609,sell:currency==='RUB'?.03:2.614,nominal:1,sourceNominal:1,checkedAt:data.fetchedAt,sourceUpdatedAt:null});
+  }
+  return responses;
+}
+test('Inteli Apple link explains Google fallback and does not invent a route origin',async()=>{
+  const a=await app({},false,{city:'batumi',responses:inteliResponses(),userAgent:'Mozilla/5.0 (iPhone; CPU iPhone OS 18_4 like Mac OS X)'});
+  a.run('selectOffer("office:inteli");toggleOfferLocation()');
+  assert.equal(new URL(a.els.openDeviceMap.href).hostname,'www.google.com');
+  assert.equal(new URL(a.els.openDeviceMap.href).searchParams.get('query'),'41.6492744,41.6374353');
+  assert.match(a.els.branchMapHint.textContent,/Google Maps/);
+  a.run('selectOffer("office:rico");toggleOfferLocation()');
+  assert.equal(new URL(a.els.openDeviceMap.href).hostname,'maps.apple.com');
+  assert.doesNotMatch(a.els.branchMapHint.textContent,/Apple Maps неточно/);
+});
+test('Inteli RUB best in Batumi transfers exact quote to planner and preserves personal input',async()=>{
+  const a=await app({},false,{city:'batumi',responses:inteliResponses()});
+  a.run('changeExchangeCurrency("RUB")');a.els.exchangeAmount.value='10000';a.run('renderOffers()');
+  assert.equal(a.run('offersForCity()[0].id'),'inteli');assert.equal(a.els.exchangeReceive.textContent,'≈ 270,00 ₾');
+  const saved=a.writes[C.STORAGE_KEY];a.run('selectOffer("office:RUB:inteli");useOfferForPlan()');
+  assert.equal(a.els.planResult.textContent,'≈ 270,00 ₾');assert.equal(a.writes[C.STORAGE_KEY],saved);
+  a.els.exchangeCity.value='kobuleti';a.run('renderOffers()');assert.equal(a.run('offersForCity().some(o=>o.id==="inteli")'),false);
+});
+test('Inteli USD selection survives reload, outage isolates source, own quote remains untouched',async()=>{
+  const responses=inteliResponses(),a=await app({},false,{city:'batumi',responses});
+  await purchase(a,'usd',8800,100);a.run('selectOffer("office:inteli")');await a.run('applyOffer()');
+  assert.equal(a.state().cashOfficeId,'inteli');near(a.run('routeValues().cash'),88/2.609);
+  const b=await app(a.writes,false,{city:'batumi',responses});assert.equal(b.state().cashOfficeId,'inteli');
+  a.responses['./exchange-rates.json'].failures=['inteli'];await a.run('refreshOffices()');
+  assert.equal(a.run('officeFresh("inteli")'),false);assert.equal(a.run('officeFresh("rico")'),true);
+  await cash(a,2.7);await a.run('refreshOffices()');assert.equal(a.state().cashOfficeId,null);assert.equal(a.state().cashGelRate,2.7);
+  assert.equal(a.state().usdPurchases.length,1);
+});
+
 test('planner continues the cash amount and quote without creating a purchase',async()=>{
   const a=await app(),before=a.writes[C.STORAGE_KEY];a.run('selectOffer("office:mjc");useOfferForPlan()');
   assert.equal(a.run('currentView'),'calculator');assert.equal(a.els.calculatorView.hidden,false);

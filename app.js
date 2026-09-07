@@ -1078,6 +1078,7 @@ function renderOfferLocation(item){
   $("openDeviceMap").hidden=!mapUrl;
   $("openDeviceMap").target=androidMaps?"_self":"_blank";
   $("branchMapHint").textContent=branch?(L.validPoint(branch.point)?"В картах выберите «Маршрут» → «Моё местоположение».":"Точка не подтверждена: откроется поиск адреса. Проверьте здание, затем выберите «Маршрут» → «Моё местоположение»."):links?"Откроется поиск отделений банка.":"";
+  if(appleMaps&&branch?.appleFallback==="google")$("branchMapHint").textContent="Эта точка откроется в Google Maps: Apple Maps неточно определяет адрес. В картах выберите маршрут от вашего местоположения.";
   $("branchChecked").textContent=branch?"Адрес сверён "+new Date(branch.checkedAt).toLocaleDateString("ru-RU")+" · список неполный."+(C.fresh(branch.checkedAt,90*C.DAY)?"":" Адрес давно не проверялся — уточните его у сети."):"";
 }
 function selectBranch(){
