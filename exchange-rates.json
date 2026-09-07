@@ -4,14 +4,14 @@
   "unit": "GEL per USD",
   "channel": "Cash",
   "side": "buy",
-  "fetchedAt": "2026-09-07T12:30:45.553089Z",
+  "fetchedAt": "2026-09-07T12:33:58.426802Z",
   "offers": [
     {
       "id": "mjc",
-      "buy": 2.611,
-      "sell": 2.615,
+      "buy": 2.61,
+      "sell": 2.614,
       "nominal": 1,
-      "checkedAt": "2026-09-07T12:30:45.553089Z",
+      "checkedAt": "2026-09-07T12:33:58.426802Z",
       "sourceUpdatedAt": null
     },
     {
@@ -19,7 +19,7 @@
       "buy": 2.609,
       "sell": 2.614,
       "nominal": 1,
-      "checkedAt": "2026-09-07T12:30:45.553089Z",
+      "checkedAt": "2026-09-07T12:33:58.426802Z",
       "sourceUpdatedAt": null
     }
   ],
