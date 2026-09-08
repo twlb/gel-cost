@@ -17,6 +17,16 @@
         if(!data.sources[price.sourceId]||price.currency!=='GEL'||price.annualTotal!==null||!['month',null].includes(price.period)||!['published_not_personal_quote','ambiguous','ambiguous_mapping'].includes(price.status)||price.value!==null&&(!Number.isFinite(price.value)||price.value<=0))throw Error('price');
       }
     }
+    for(const p of data.products){
+      if(p.benefits!==undefined){
+        if(!Array.isArray(p.benefits)||p.benefits.length>20)throw Error('benefits');
+        const seen=new Set();
+        for(const b of p.benefits){
+          if(typeof b.id!=='string'||!/^[-_a-z0-9]+$/.test(b.id)||seen.has(b.id)||!['published','conflict'].includes(b.status)||!data.sources[b.sourceId]||typeof b.label!=='string'||typeof b.text!=='string'||typeof b.condition!=='string')throw Error('benefit');
+          seen.add(b.id);
+        }
+      }
+    }
     return data;
   }
   function priceText(p){
@@ -28,9 +38,9 @@
   function caution(p){
     if(p.id==='unison-premium')return 'Плановая госпитализация: в карточке 100%, в таблице 90%. Условия нужно уточнить.';
     if(p.id.startsWith('unison-family-'))return 'В таблице источника повторяются названия столбцов. Семейный тариф нельзя определить однозначно.';
-    if(p.id==='gpi-medi-standard')return 'На странице разные начальные цены и акция. Применимый тариф нужно уточнить.';
+    if(p.id.startsWith('gpi-medi-'))return 'Цены на грузинской и английской страницах различаются. Применимый тариф нужно уточнить.';
     if(p.id.startsWith('ardi-'))return 'Цены разных схем не подтверждены для иностранцев; период оплаты в карточке не указан.';
-    return 'Лимиты, доплаты, ожидание и исключения уточните в условиях выбранного полиса.';
+    return 'Окончательные условия — в договоре.';
   }
   const api={validate,priceText,caution};
   if(typeof module==='object'&&module.exports)module.exports=api;else root.InsuranceCore=api;

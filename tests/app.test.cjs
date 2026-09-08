@@ -137,6 +137,44 @@ test('planner finishes a rate at four places without truncating extra precision'
     a.els.planQuote0.value=input;a.run('editPlanQuote(0);finishPlanQuote(0)');assert.equal(a.els.planQuote0.value,expected);
   }
 });
+test('cleared planner amount stays empty after its actual input handler and subsequent renders',async()=>{
+  const a=await app();a.run('selectOffer("office:mjc");useOfferForPlan()');
+  assert.equal(a.els.planAmount.value,'100');
+  assert.equal(a.els.planResult.textContent,'≈ 261,30 ₾');
+  const html=fs.readFileSync(path.join(root,'index.html'),'utf8');
+  const input=html.match(/<input\b[^>]*\bid="planAmount"[^>]*>/)[0];
+  const handler=input.match(/\boninput="([^"]+)"/)[1];
+  const saved=a.writes[C.STORAGE_KEY];
+  const assertCleared=()=>{
+    assert.equal(a.els.planAmount.value,'');
+    assert.equal(a.els.planResult.textContent,'— ₾');
+    assert.equal(a.els.planNext.textContent,'Введите сумму обмена.');
+    assert.equal(a.els.planNext.hidden,false);
+    assert.equal(a.els.planRounding.hidden,true);
+    assert.equal(a.els.planStepResult0.textContent,'');
+    assert.equal(a.writes[C.STORAGE_KEY],saved);
+  };
+  a.els.planAmount.value='';a.run(handler);assertCleared();
+  a.els.planQuote0.value='2,7';a.run('editPlanQuote(0);finishPlanQuote(0)');assertCleared();
+  a.els.planPct0.value='1';a.els.planFixed0.value='2';a.run('editPlanFee(0)');assertCleared();
+  a.run('calc();renderPlanner()');assertCleared();
+  await a.run('refreshAllRates()');assertCleared();
+  a.run('showView("data");showView("calculator")');assertCleared();
+});
+test('cleared target amount is not restored by selecting a rate or reversing currencies',async()=>{
+  const a=await app();a.run('selectOffer("office:mjc");useOfferForPlan();setPlanMode("want")');
+  a.els.planAmount.value='261,3';a.run('renderPlanner()');
+  assert.equal(a.els.planResult.textContent,'≈ 100,00 USD');
+  a.els.planAmount.value='';a.run('renderPlanner()');
+  a.run('choosePlanOffice();selectOffer("office:rico");useOfferForPlan()');
+  assert.equal(a.els.planAmount.value,'');
+  assert.equal(a.els.planWant.attrs['aria-pressed'],'true');
+  assert.equal(a.els.planResult.textContent,'— USD');
+  assert.equal(a.els.planNext.textContent,'Введите сумму, которую хотите получить.');
+  a.run('reversePlan();setPlanMode("give")');
+  assert.equal(a.els.planAmount.value,'');
+  assert.equal(a.els.planNext.textContent,'Введите сумму обмена.');
+});
 test('personal price source selection keeps its application action visible',async()=>{
   const a=await app();a.run('showView("purchase");openBanks()');assert.equal(a.els.legacyOfferDetails.open,true);
   assert.equal(a.run('currentView'),'exchange');
@@ -326,7 +364,7 @@ test('completion of an earlier rate save cannot switch away from a newly opened 
   assert.equal(a.state().cashGelRate,3);assert.equal(a.els.saveRateButton.textContent,'Использовать операцию');
 });
 
-test('best fresh public quote leads the list; a better personal quote stays visible and selected without a badge',async()=>{
+test('selected personal quote leads visually without best badge; public quotes retain their ranked order',async()=>{
   const a=await app();await purchase(a,'usd',8800.5,100);await cash(a,3);
   const saved=a.writes[C.STORAGE_KEY];await a.run('refreshAllRates()');
   assert.equal(a.run('offersForCity()[0].key'),'bank:3');
@@ -334,7 +372,8 @@ test('best fresh public quote leads the list; a better personal quote stays visi
   assert.equal(a.run('offersForCity()[1].key'),'manual');
   assert.equal(a.run('Boolean(offersForCity()[1].best)'),false);
   assert.equal(a.run('selectedOffer'),'manual');assert.equal(a.els.exchangeReceive.textContent,'≈ 300,00 ₾');
-  const first=a.els.offerList.children[0];
+  assert.equal(a.els.offerList.children[0].dataset.offerKey,'manual');
+  const first=a.els.offerList.children.find(node=>node.dataset.offerKey==='bank:3');
   assert.equal(first.children[0].children[0].children[1].textContent,'Лучший курс');
   assert.equal(first.attrs['aria-describedby'],'bestOfferHelp');
   assert.equal(a.els.bestOfferHelp.hidden,false);assert.equal(a.writes[C.STORAGE_KEY],saved);

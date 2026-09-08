@@ -20,3 +20,55 @@ ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
 WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
 ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+
+## Lucide navigation icons
+
+`brand/icons/navigation/arrow-right-left.svg`, `calculator.svg` and
+`shield-plus.svg` are unchanged originals downloaded on 2026-09-08 from
+https://github.com/lucide-icons/lucide/tree/main/icons.
+The Lucide ISC notice above applies. These assets are local; navigation does
+not need a runtime request to a third-party icon service.
+
+## Lucide weather icons
+
+Files in `brand/icons/weather/` are original SVGs downloaded from
+https://github.com/lucide-icons/lucide/tree/main/icons on 2026-09-08:
+sun, moon, cloud, cloud-sun, cloud-moon, cloud-rain, cloud-snow,
+cloud-lightning, cloud-fog. Geometry is unchanged. The ISC notice above applies.
+The moon icon is additionally derived from Feather and carries this notice:
+
+The MIT License (MIT)
+
+Copyright (c) 2013-present Cole Bemis
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+## Open-Meteo weather data
+
+Weather is model-derived current data from https://open-meteo.com/, under
+CC BY 4.0 (https://creativecommons.org/licenses/by/4.0/). The UI rounds the
+temperature to whole Celsius degrees and translates WMO descriptions to Russian.
+City centres were resolved using the Open-Meteo geocoding API (GeoNames).
+
+The free endpoint is for NON-COMMERCIAL testing/use only; it is not licensed for
+advertising-supported, subscription or commercial promotional use. Before
+monetisation, arrange an appropriate API plan. No availability guarantee applies.
+Terms: https://open-meteo.com/en/terms · Documentation: https://open-meteo.com/en/docs
+Checked 2026-09-08. No user geolocation or personal financial data is sent.
+The direct request necessarily exposes the connection IP to the weather provider.

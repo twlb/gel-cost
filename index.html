@@ -3,17 +3,25 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#111316">
+<meta name="theme-color" content="#faf9f6">
 <meta name="description" content="Обмен рублей, долларов и евро на лари: курсы банков и обменников, адреса на карте и расчёт с комиссиями.">
-<title>Жизнь в Грузии</title>
+<title>Gamarji — Гамарджи</title>
 <link rel="icon" href="data:,">
-<link rel="stylesheet" href="styles.css?v=5.8-release-1">
-<link rel="stylesheet" href="insurance.css?v=5.9-test-2">
+<script src="theme.js?v=5.10.0-test-1"></script>
+<link rel="stylesheet" href="styles.css?v=5.10.0-test-1">
+<link rel="stylesheet" href="insurance.css?v=5.10.0-test-1">
+<link rel="stylesheet" href="brand/brand.css?v=5.10.0-test-1">
+<link rel="stylesheet" href="theme.css?v=5.10.0-test-1">
 </head>
 <body>
 <a class="skip" href="#main">К содержимому</a>
 <div class="app">
-<header><a class="brand" href="#exchange" onclick="showView('exchange')">Жизнь в Грузии <span class="badge">V5.9.1 · тест</span></a><button class="text-button" id="dataNav" onclick="showView('data')">Мои данные</button></header>
+<header>
+<a class="brand" href="#exchange" aria-label="Gamarji — Гамарджи, обмен валют" onclick="showView('exchange')"><span class="brand-art"><img src="brand/references/gamarji-primary-approved-concept.png" alt="Gamarji" width="1681" height="936" fetchpriority="high"></span></a>
+<div class="weather" id="weatherStatus" role="status"><div class="weather-reading"><img id="weatherIcon" alt="" width="24" height="24" hidden><span id="weatherTemperature">—°</span></div><span id="weatherDescription" class="visually-hidden"></span><a href="https://open-meteo.com/" target="_blank" rel="noopener noreferrer">Open-Meteo</a></div>
+<div class="header-city"><label class="visually-hidden" for="exchangeCity">Город</label><select id="exchangeCity"><option value="batumi" selected>Батуми</option><option value="kobuleti">Кобулети</option><option value="poti">Поти</option><option value="kutaisi">Кутаиси</option><option value="tbilisi">Тбилиси</option></select></div>
+<p class="brand-tagline">Грузия, давай на ты.</p><button id="themeToggle" class="text-button theme-toggle" type="button">Тёмная тема</button>
+</header>
 <main id="main">
 <noscript><p class="notice">Для работы сервиса включите JavaScript в браузере.</p></noscript>
 <div class="notice" id="storageNotice" role="status" hidden></div>
@@ -21,6 +29,7 @@
 <div id="actionStatus" class="action-status" role="status" aria-live="polite"></div>
 <section id="calculatorView" hidden aria-labelledby="calculatorHeading">
 <h1 id="calculatorHeading" tabindex="-1">Рассчитать обмен</h1>
+<div class="personal-entry"><button class="text-button" id="dataNav" onclick="showView('data')" aria-describedby="dataEntryHelp">Мои данные</button><p class="note" id="dataEntryHelp">Покупки валюты, история и настройки</p></div>
 <div class="mode-switch" role="group" aria-label="Задача расчёта"><button id="planGive" aria-pressed="true" onclick="setPlanMode('give')">Сколько получу</button><button id="planWant" aria-pressed="false" onclick="setPlanMode('want')">Сколько нужно</button></div>
 <div class="grid plan-currencies">
 <div><label for="planFrom">Отдаю</label><select id="planFrom" onchange="changePlanRoute('from')"><option value="RUB">Рубли</option><option value="USD">USD</option><option value="EUR">Евро</option><option value="USDT">USDT</option><option value="GEL">Лари</option></select></div>
@@ -33,13 +42,13 @@
 <div id="planViaGroup"><label for="planVia">Как меняю</label><select id="planVia" onchange="changePlanRoute()"><option value="USD">Через наличные USD</option><option value="USDT">Через USDT</option><option value="direct">Напрямую</option></select></div>
 <label id="planAmountLabel" for="planAmount">Сколько рублей отдаю</label><div class="input amount"><input id="planAmount" type="text" inputmode="decimal" maxlength="18" autocomplete="off" placeholder="Сумма" aria-describedby="planError" oninput="renderPlanner()"><span class="unit" id="planAmountUnit">₽</span></div>
 <h2 id="planPath">Рубли → доллары → лари</h2>
-<article class="plan-step" id="planStep0"><h3 id="planStepTitle0">1. Рубли → доллары</h3><label id="planQuoteLabel0" for="planQuote0">Покупаю 1 USD за рубли</label><div class="input"><input id="planQuote0" type="text" inputmode="decimal" maxlength="18" placeholder="Введите курс" aria-describedby="planSource0 planQuoteError0" oninput="editPlanQuote(0)" onblur="finishPlanQuote(0)"><span class="unit" id="planQuoteUnit0">₽</span></div><p class="note" id="planSource0"></p><p class="error" id="planQuoteError0"></p><p class="plan-step-result" id="planStepResult0"></p><details class="disclosure" id="planFee0"><summary id="planFeeSummary0">Комиссия</summary><p class="note" id="planFeeHelp0"></p><div class="grid"><div><label for="planPct0">Процент, %</label><input id="planPct0" type="text" inputmode="decimal" maxlength="12" value="0" oninput="editPlanFee(0)"></div><div><label id="planFixedLabel0" for="planFixed0">Фиксированная, ₽</label><input id="planFixed0" type="text" inputmode="decimal" maxlength="18" value="0" oninput="editPlanFee(0)"></div></div><p class="note">Укажите только комиссию, не включённую в курс.</p></details></article>
-<article class="plan-step" id="planStep1"><h3 id="planStepTitle1">2. Доллары → лари</h3><label id="planQuoteLabel1" for="planQuote1">Продаю 1 USD за лари</label><div class="input"><input id="planQuote1" type="text" inputmode="decimal" maxlength="18" placeholder="Введите курс" aria-describedby="planSource1 planQuoteError1" oninput="editPlanQuote(1)" onblur="finishPlanQuote(1)"><span class="unit" id="planQuoteUnit1">₾</span></div><p class="note" id="planSource1"></p><p class="error" id="planQuoteError1"></p><p class="plan-step-result" id="planStepResult1"></p><details class="disclosure" id="planFee1"><summary id="planFeeSummary1">Комиссия</summary><p class="note" id="planFeeHelp1"></p><div class="grid"><div><label for="planPct1">Процент, %</label><input id="planPct1" type="text" inputmode="decimal" maxlength="12" value="0" oninput="editPlanFee(1)"></div><div><label id="planFixedLabel1" for="planFixed1">Фиксированная, USD</label><input id="planFixed1" type="text" inputmode="decimal" maxlength="18" value="0" oninput="editPlanFee(1)"></div></div><p class="note">Укажите только комиссию, не включённую в курс.</p></details></article>
 <div class="plan-feedback">
 <div class="exchange-result plan-result is-pending" id="planResultBox" aria-live="polite" aria-atomic="true"><p id="planResultLabel">Получите</p><strong id="planResult">— ₾</strong><p class="note" id="planNext">Введите сумму обмена.</p><p class="note" id="planRounding" hidden></p></div>
 <div class="error" id="planError" role="alert"></div>
 <p class="note stale" id="planCaution" hidden></p>
 </div>
+<article class="plan-step" id="planStep0"><h3 id="planStepTitle0">1. Рубли → доллары</h3><label id="planQuoteLabel0" for="planQuote0">Покупаю 1 USD за рубли</label><div class="input"><input id="planQuote0" type="text" inputmode="decimal" maxlength="18" placeholder="Введите курс" aria-describedby="planSource0 planQuoteError0" oninput="editPlanQuote(0)" onblur="finishPlanQuote(0)"><span class="unit" id="planQuoteUnit0">₽</span></div><p class="note" id="planSource0"></p><p class="error" id="planQuoteError0"></p><p class="plan-step-result" id="planStepResult0"></p><details class="disclosure" id="planFee0"><summary id="planFeeSummary0">Комиссия</summary><p class="note" id="planFeeHelp0"></p><div class="grid"><div><label for="planPct0">Процент, %</label><input id="planPct0" type="text" inputmode="decimal" maxlength="12" value="0" oninput="editPlanFee(0)"></div><div><label id="planFixedLabel0" for="planFixed0">Фиксированная, ₽</label><input id="planFixed0" type="text" inputmode="decimal" maxlength="18" value="0" oninput="editPlanFee(0)"></div></div><p class="note">Укажите только комиссию, не включённую в курс.</p></details></article>
+<article class="plan-step" id="planStep1"><h3 id="planStepTitle1">2. Доллары → лари</h3><label id="planQuoteLabel1" for="planQuote1">Продаю 1 USD за лари</label><div class="input"><input id="planQuote1" type="text" inputmode="decimal" maxlength="18" placeholder="Введите курс" aria-describedby="planSource1 planQuoteError1" oninput="editPlanQuote(1)" onblur="finishPlanQuote(1)"><span class="unit" id="planQuoteUnit1">₾</span></div><p class="note" id="planSource1"></p><p class="error" id="planQuoteError1"></p><p class="plan-step-result" id="planStepResult1"></p><details class="disclosure" id="planFee1"><summary id="planFeeSummary1">Комиссия</summary><p class="note" id="planFeeHelp1"></p><div class="grid"><div><label for="planPct1">Процент, %</label><input id="planPct1" type="text" inputmode="decimal" maxlength="12" value="0" oninput="editPlanFee(1)"></div><div><label id="planFixedLabel1" for="planFixed1">Фиксированная, USD</label><input id="planFixed1" type="text" inputmode="decimal" maxlength="18" value="0" oninput="editPlanFee(1)"></div></div><p class="note">Укажите только комиссию, не включённую в курс.</p></details></article>
 <div class="actions"><button class="secondary" id="planChooseOffice" onclick="choosePlanOffice()">Выбрать курс</button><button class="secondary" id="planAddress" onclick="showPlanLocation()" hidden>Адреса обменника</button></div>
 <p class="footnote">Черновик исчезнет после перезагрузки. Ваши покупки не изменятся.</p>
 <details class="disclosure" id="planHelp"><summary>О расчёте</summary>
@@ -49,6 +58,7 @@
 </details>
 </section>
 <section id="purchaseView" hidden aria-labelledby="purchaseHeading">
+<button class="text-button" onclick="showView('data')">← Мои данные</button>
 <h1 id="purchaseHeading" tabindex="-1">Сколько это в рублях?</h1>
 <p class="subtitle">Введите цену с ценника, меню или счёта.</p>
 <label for="quickGel">Цена в лари</label>
@@ -112,31 +122,29 @@
 <p class="footnote">Это пересчёт цены, не платёж. История покупок — в «Моих данных».</p>
 </section>
 <section id="exchangeView" aria-labelledby="exchangeHeading">
-<h1 id="exchangeHeading" tabindex="-1">Сколько получу в лари?</h1>
-<div class="exchange-filters">
-<div><label for="exchangeCurrency">Отдаю</label><select id="exchangeCurrency"><option value="USD" selected>USD</option><option value="RUB">RUB</option><option value="EUR">EUR</option></select></div>
-<div><label for="exchangeCity">Город</label><select id="exchangeCity"><option value="batumi" selected>Батуми</option><option value="kobuleti">Кобулети</option><option value="poti">Поти</option><option value="kutaisi">Кутаиси</option><option value="tbilisi">Тбилиси</option></select></div>
-</div>
-<label id="exchangeAmountLabel" for="exchangeAmount">Сумма в долларах</label>
-<div class="input amount"><input id="exchangeAmount" type="text" inputmode="decimal" value="100" maxlength="18" autocomplete="off" aria-describedby="exchangeError"><span class="unit" id="exchangeAmountUnit">USD</span></div>
-<div class="error" id="exchangeError" role="alert"></div>
-<div class="exchange-result" aria-live="polite"><p id="exchangeResultLabel">По выбранному курсу</p><strong id="exchangeReceive">— ₾</strong></div>
-<div class="section-head"><h2>Курсы и адреса</h2><span class="note">За вашу сумму</span></div>
-<p class="note" id="offerStatus"></p>
+<button class="text-button" id="returnToPlan" onclick="showView('calculator')" hidden>← К расчёту</button>
+<h1 id="exchangeHeading" tabindex="-1">Обмен валют</h1>
+<div class="exchange-entry"><div id="exchangeAmountGroup"><label id="exchangeAmountLabel" for="exchangeAmount">Сумма в долларах</label>
+<div class="input amount"><input id="exchangeAmount" type="text" inputmode="decimal" value="100" maxlength="18" autocomplete="off" aria-describedby="exchangeError"><span class="unit visually-hidden" id="exchangeAmountUnit">USD</span></div>
+<div class="error" id="exchangeError" role="alert"></div></div>
+<div class="exchange-currency"><label id="exchangeCurrencyLabel" for="exchangeCurrency">Отдаю</label><select id="exchangeCurrency"><option value="USD" selected>USD</option><option value="RUB">RUB</option><option value="EUR">EUR</option></select></div></div>
+<div class="section-head"><h2 id="offerListHeading">Выбранное предложение</h2><span id="exchangeListNote" class="note">За вашу сумму</span></div>
 <p class="note" id="currencyCoverage" hidden></p>
-<div class="offer-tools"><button class="text-button" id="refreshOffersButton" onclick="refreshAllRates()">Обновить курсы</button><button class="text-button" id="manualRateButton" onclick="openExchangeManual()" aria-expanded="false">Свой курс</button></div>
+<div id="offerToolsHome"><div id="offerToolsPanel"><div class="offer-tools"><button class="text-button" id="refreshOffersButton" onclick="refreshAllRates()">Обновить курсы</button><button class="text-button" id="manualRateButton" onclick="openExchangeManual()" aria-expanded="false">Свой курс</button></div>
 <div id="cashRateHost"><form class="inline" id="exchangeManualPanel" onsubmit="event.preventDefault();saveExchangeManual()">
 <h3 id="exchangeManualTitle">Свой курс</h3>
 <label id="exchangeManualLabel" for="exchangeManualValue">За 1 EUR дают</label><div class="input"><input id="exchangeManualValue" type="text" inputmode="decimal" maxlength="18" autocomplete="off" aria-describedby="exchangeManualError exchangeManualPreview"><span class="unit">₾</span></div>
 <p class="note" id="exchangeManualPreview" aria-live="polite"></p><p class="error" id="exchangeManualError" role="alert"></p>
 <div class="actions"><button class="primary" type="submit">Сохранить курс</button><button class="secondary" type="button" onclick="closeInline('exchangeManualPanel')">Закрыть</button></div>
-</form></div>
+</form></div></div></div>
 <div class="offer-list" id="offerList" aria-label="Предложения обмена"></div>
 <button class="text-button full" id="moreOffers" onclick="toggleAllOffers()">Показать все предложения</button>
+<p class="note" id="offerStatus" role="status"></p>
 <div id="offerActionsHome"><div class="offer-actions-panel" id="offerActions" hidden>
+<div id="exchangeSummary" class="exchange-result" aria-live="polite"><p id="exchangeResultLabel">По выбранному курсу</p><strong id="exchangeReceive">— ₾</strong></div>
 <div class="actions exchange-actions">
-<button class="secondary" id="offerAddressButton" onclick="toggleOfferLocation()" aria-expanded="false" aria-controls="offerLocationPanel" hidden>Адреса</button>
-<button class="primary" id="planOfferButton" onclick="useOfferForPlan()" aria-describedby="offerActionNote" disabled>В калькулятор</button>
+<button class="primary" id="offerAddressButton" onclick="toggleOfferLocation()" aria-expanded="false" aria-controls="offerLocationPanel" hidden>Смотреть адреса</button>
+<button class="secondary" id="planOfferButton" onclick="useOfferForPlan()" aria-describedby="offerActionNote" disabled>В калькулятор</button>
 </div>
 <p class="note" id="offerActionNote" hidden></p>
 <div id="locationPanelHome">
@@ -152,7 +160,7 @@
 </section>
 </div>
 </div></div>
-<details class="disclosure" id="legacyOfferDetails"><summary>Цена в рублях</summary><p id="exchangeBasis" class="note"></p><button class="secondary full" id="applyOfferButton" onclick="applyOffer()" disabled>Применить курс</button><p class="note">Пересчёт цен в лари по стоимости ваших USD и выбранному курсу.</p></details>
+<details class="disclosure" id="legacyOfferDetails"><summary>Цена в рублях</summary><p id="exchangeBasis" class="note"></p><button class="secondary full" id="applyOfferButton" onclick="applyOffer()" disabled>Применить курс</button><p class="note">По стоимости ваших USD и выбранному курсу.</p><button class="text-button" onclick="showView('data')">Покупки валюты и история</button></details>
 <p class="footnote">Перед поездкой уточните курс, комиссию и наличие валюты.</p>
 <div class="offer-detail"><p class="note" id="selectedOfferDetail"></p><div class="actions"><a id="selectedSource" target="_blank" rel="noopener noreferrer" hidden>Источник курса</a><a id="selectedBranches" target="_blank" rel="noopener noreferrer" hidden>Отделения</a></div></div>
 <div id="bankPanel" hidden>
@@ -173,7 +181,8 @@
 </details>
 </section>
 <section id="dataView" hidden aria-labelledby="dataHeading">
-<h1 id="dataHeading" tabindex="-1">Ваши данные</h1><p class="subtitle">По какой цене вы купили валюту</p>
+<button class="text-button" id="returnDataCalculator" onclick="showView('calculator')">К калькулятору</button>
+<h1 id="dataHeading" tabindex="-1">Мои данные</h1>
 <button class="secondary full" onclick="showView('purchase')">Пересчитать цену в рубли</button><p class="note">Цена с ценника или из меню — по вашим покупкам валюты. Будущий обмен — во вкладке «Калькулятор».</p>
 <p class="note">Средняя цена считается отдельно для USD и USDT: потраченные рубли ÷ купленная валюта за период. Расходы и остаток не учитываются.</p>
 <div class="data-group"><div class="pathrow"><h2>Наличные USD</h2><b id="dataUsdAvg">—</b></div><button class="text-button" onclick="openPurchase('usd')">Добавить покупку USD</button><details><summary>История покупок USD</summary><div id="usdHistory"></div></details></div>
@@ -200,6 +209,7 @@
 <details class="disclosure"><summary>Начать новый период</summary><p class="note">Удаляет покупки выбранной валюты из этого браузера. Сначала скачайте копию. Нужны два нажатия в течение четырёх секунд.</p><button class="danger full" onclick="resetPeriod('usd',this)">Очистить покупки USD</button><button class="danger full" onclick="resetPeriod('usdt',this)">Очистить покупки USDT</button></details>
 </section>
 <section id="insuranceView" hidden aria-labelledby="insuranceHeading">
+<div id="insuranceBrowseIntro">
 <h1 id="insuranceHeading" tabindex="-1">Медицинская страховка</h1>
 <p class="subtitle">Для жизни в Грузии. Сравните открытые условия.</p>
 <p class="notice">Это справочник, не персональный подбор. Приём иностранцев и клиники Батуми нужно уточнить.</p>
@@ -207,12 +217,14 @@
 <select id="insuranceCompany"><option value="">Все компании</option><option>Unison</option><option>ARDI</option><option>GPI Holding</option></select>
 <p id="insuranceStatus" class="note" role="status">Загрузка справочника…</p>
 <button id="insuranceRetry" class="secondary" hidden>Повторить загрузку</button>
+</div>
 <div id="insuranceSelection" class="insurance-selection"><span id="insuranceSelectedCount">Выберите два плана</span><button id="insuranceCompare" class="primary" disabled>Сравнить</button><button id="insuranceClear" class="text-button" hidden>Снять выбор</button></div>
-<section id="insuranceComparison" hidden aria-labelledby="insuranceCompareHeading"><h2 id="insuranceCompareHeading" tabindex="-1">Сравнение планов</h2><button id="insuranceBack" class="secondary">К списку</button><div id="insuranceComparisonRows"></div></section>
+<section id="insuranceComparison" hidden aria-labelledby="insuranceCompareHeading"><h2 id="insuranceCompareHeading" tabindex="-1">Сравнение планов</h2><button id="insuranceBack" class="secondary">К списку страховок</button><div id="insuranceComparisonRows"></div></section>
 <div id="insuranceList"></div>
 </section>
 </main>
-<nav class="bottom-nav" aria-label="Разделы"><button id="exchangeNav" aria-current="page" onclick="showView('exchange')">Обмен</button><button id="purchaseNav" onclick="showView('calculator')">Калькулятор</button><button id="insuranceNav" aria-current="false" onclick="showView('insurance')">Страховки</button></nav>
+<p class="build-note">V5.10.0 · тестовая версия</p>
+<nav class="bottom-nav" aria-label="Разделы"><button id="exchangeNav" aria-current="page" onclick="showView('exchange')"><img src="brand/icons/navigation/arrow-right-left.svg" width="24" height="24" alt="">Обмен</button><button id="purchaseNav" onclick="showView('calculator')"><img src="brand/icons/navigation/calculator.svg" width="24" height="24" alt="">Калькулятор</button><button id="insuranceNav" aria-current="false" onclick="showView('insurance')"><img src="brand/icons/navigation/shield-plus.svg" width="24" height="24" alt="">Страховки</button></nav>
 </div>
 <form class="inline" id="purchasePanel" onsubmit="event.preventDefault();savePurchase()">
 <h3 id="purchaseTitle">Купил валюту</h3>
@@ -230,8 +242,9 @@
 </form>
 <script src="core.js?v=5.8-release-1"></script>
 <script src="locations.js?v=5.8-release-1"></script>
-<script src="app.js?v=5.9-test-2"></script>
-<script src="insurance-core.js?v=5.9-test-2"></script>
-<script src="insurance.js?v=5.9-test-2"></script>
+<script src="app.js?v=5.10.0-test-1"></script>
+<script src="weather.js?v=5.10.0-test-1"></script>
+<script src="insurance-core.js?v=5.10.0-test-1"></script>
+<script src="insurance.js?v=5.10.0-test-1"></script>
 </body>
 </html>

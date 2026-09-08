@@ -27,16 +27,44 @@ class Page(HTMLParser):
 
 
 class HTMLTests(unittest.TestCase):
+    def test_brand_uses_approved_asset_and_preserves_navigation(self):
+        source=(ROOT/"index.html").read_text(encoding="utf-8")
+        self.assertIn('href="brand/brand.css?v=5.10.0-test-1"', source)
+        header=source.split('<header>',1)[1].split('</header>',1)[0]
+        self.assertIn('<p class="brand-tagline">Грузия, давай на ты.</p>', header)
+        self.assertLess(header.index('class="brand"'), header.index('brand-tagline'))
+        self.assertNotIn('<br>', header)
+        self.assertNotIn('<span aria-hidden="true">—</span>', header)
+        self.assertIn('src="brand/references/gamarji-primary-approved-concept.png" alt="Gamarji"', source)
+        self.assertTrue((ROOT/"brand/references/gamarji-primary-approved-concept.png").is_file())
+        header=source.split('<header>',1)[1].split('</header>',1)[0]
+        self.assertIn('href="#exchange"', header)
+        self.assertIn('onclick="showView(\'exchange\')"', header)
+        self.assertNotIn('გამარჯი', header)
+        self.assertNotRegex(header, r'V\d+\.\d+')
+        self.assertNotIn('class="badge"', header)
+
+    def test_build_note_is_unique_and_outside_main_before_navigation(self):
+        source=(ROOT/"index.html").read_text(encoding="utf-8")
+        note='<p class="build-note">V5.10.0 · тестовая версия</p>'
+        self.assertEqual(source.count(note), 1)
+        self.assertEqual(source.count('class="build-note"'), 1)
+        self.assertLess(source.index('</main>'), source.index(note))
+        self.assertLess(source.index(note), source.index('<nav class="bottom-nav"'))
+
     def test_html_integrity_and_labels(self):
         p=Page();p.feed((ROOT/"index.html").read_text(encoding="utf-8"));p.close()
         self.assertEqual(p.stack,[])
         self.assertTrue(all(n == 1 for n in Counter(p.ids).values()))
         self.assertTrue(all(i in p.labels for i in p.inputs))
-        self.assertEqual(p.scripts,["core.js?v=5.8-release-1","locations.js?v=5.8-release-1","app.js?v=5.9-test-2","insurance-core.js?v=5.9-test-2","insurance.js?v=5.9-test-2"])
+        self.assertEqual(p.scripts,["theme.js?v=5.10.0-test-1","core.js?v=5.8-release-1","locations.js?v=5.8-release-1","app.js?v=5.10.0-test-1","weather.js?v=5.10.0-test-1","insurance-core.js?v=5.10.0-test-1","insurance.js?v=5.10.0-test-1"])
         source=(ROOT/"app.js").read_text(encoding="utf-8")
         for handler in p.handlers:
             self.assertRegex(source,r"function\s+"+re.escape(handler)+r"\(")
-        self.assertIn("<title>Жизнь в Грузии</title>",(ROOT/"index.html").read_text(encoding="utf-8"))
+        source=(ROOT/"index.html").read_text(encoding="utf-8")
+        self.assertIn("<title>Gamarji — Гамарджи</title>",source)
+        self.assertIn('aria-label="Gamarji — Гамарджи, обмен валют"',source)
+        self.assertIn('id="dataNav" onclick="showView(\'data\')" aria-describedby="dataEntryHelp">Мои данные</button>',source)
 
     def test_exchange_starts_first_and_optional_details_are_collapsed(self):
         source=(ROOT/"index.html").read_text(encoding="utf-8")
@@ -59,12 +87,13 @@ class HTMLTests(unittest.TestCase):
         official=source.split('<div class="official-fields">', 1)[1].split('</details>', 1)[0]
         for field, label in [('officialRub', 'USD/RUB — ЦБ РФ'), ('officialGel', 'USD/GEL — НБГ')]:
             self.assertIn(f'<div><label for="{field}">{label}</label><input id="{field}" type="text" readonly></div>', official)
-        self.assertIn('href="styles.css?v=5.8-release-1"', source)
-        self.assertIn('<span class="badge">V5.9.1 · тест</span>', source)
+        self.assertIn('href="styles.css?v=5.10.0-test-1"', source)
+        self.assertIn('<p class="build-note">V5.10.0 · тестовая версия</p>', source)
 
     def test_audit_actions_feedback_and_warnings_stay_near_the_task(self):
         source=(ROOT/"index.html").read_text(encoding="utf-8")
-        self.assertLess(source.index('id="planStep1"'), source.index('id="planResultBox"'))
+        self.assertLess(source.index('id="planPath"'), source.index('id="planResultBox"'))
+        self.assertLess(source.index('id="planResultBox"'), source.index('id="planStep0"'))
         self.assertLess(source.index('id="planResultBox"'), source.index('id="planChooseOffice"'))
         self.assertLess(source.index('id="refreshOffersButton"'), source.index('id="offerList"'))
         for i in range(2):

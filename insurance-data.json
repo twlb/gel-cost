@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "catalogVersion": "0.1.0",
+  "catalogVersion": "0.2.0",
   "preparedOn": "2026-09-08",
   "status": "reference_draft_not_deployed",
   "description": "Published information only; not an offer, full policy or personal recommendation.",
@@ -33,6 +33,20 @@
       "locator": "Document title; scope Georgian citizens",
       "documentVersion": null
     },
+    "unisonWording": {
+      "url": "https://unison.ge/wp-content/uploads/2026/08/ჯანმრთელობის-ინდივიდუალური-დაზღვევის-ვორდინგი-Med-საბოლოო-ინგლისური-1.pdf",
+      "checkedOn": "2026-09-08",
+      "method": "official_document_read",
+      "locator": "Individual conditions §5.5–5.7, PDF page 4; linked by official individual product page",
+      "documentVersion": null
+    },
+    "gpiGeo": {
+      "url": "https://www.gpih.ge/ინდივიდუალური/პოლისი-მედი/",
+      "checkedOn": "2026-09-08",
+      "method": "official_page_read",
+      "locator": "Standard/Classic/Premium cards; services: pediatrician, outpatient care, hospitalization",
+      "documentVersion": null
+    },
     "gpi": {
       "url": "https://www.gpih.ge/en/individual-insurance/medi-policy/",
       "checkedOn": "2026-09-08",
@@ -49,7 +63,8 @@
       "channel": "official_public_website",
       "scope": "medical_reference_only",
       "sourceIds": [
-        "unison"
+        "unison",
+        "unisonWording"
       ],
       "price": {
         "value": 49,
@@ -73,7 +88,69 @@
         "clinics": null
       },
       "issues": [],
-      "personalizedRankingAllowed": false
+      "personalizedRankingAllowed": false,
+      "benefits": [
+        {
+          "id": "outpatient",
+          "label": "Приёмы и анализы",
+          "text": "80% · лимит 1500 ₾",
+          "condition": "Направление семейного врача, указанные клиники. Для хронических заболеваний в таблице — ожидание 3 месяца.",
+          "status": "published",
+          "sourceId": "unison",
+          "limitPeriod": null,
+          "percentageMeaning": "as_published_not_payout_quote"
+        },
+        {
+          "id": "medications",
+          "label": "Лекарства",
+          "text": "35% · лимит 1500 ₾",
+          "condition": "Направление семейного врача. Для хронических заболеваний — ожидание 3 месяца по таблице.",
+          "status": "published",
+          "sourceId": "unison",
+          "limitPeriod": null,
+          "percentageMeaning": "as_published_not_payout_quote"
+        },
+        {
+          "id": "emergency_hospital",
+          "label": "Экстренный стационар",
+          "text": "100% · лимит 5000 ₾",
+          "condition": "Не объединять со скорой помощью и несчастным случаем. Начало покрытия — по договору.",
+          "status": "published",
+          "sourceId": "unison",
+          "limitPeriod": null,
+          "percentageMeaning": "as_published_not_payout_quote"
+        },
+        {
+          "id": "planned_hospital",
+          "label": "Плановая операция",
+          "text": "80% · лимит 5000 ₾",
+          "condition": "В таблице ожидание 12 месяцев; начало отсчёта и исключения — по договору.",
+          "status": "published",
+          "sourceId": "unison",
+          "limitPeriod": null,
+          "percentageMeaning": "as_published_not_payout_quote"
+        },
+        {
+          "id": "dental",
+          "label": "Плановая стоматология",
+          "text": "50% · лимит 1000 ₾",
+          "condition": "В клиниках-провайдерах. Перечень услуг и период лимита нужно уточнить.",
+          "status": "published",
+          "sourceId": "unison",
+          "limitPeriod": null,
+          "percentageMeaning": "as_published_not_payout_quote"
+        },
+        {
+          "id": "waiting_periods",
+          "label": "Когда начнёт действовать",
+          "text": "Экстренный стационар — 15 дней; плановый — 12 месяцев; кардиология — 24 месяца.",
+          "condition": "Для впервые застрахованных, по §5.5–5.7 договора. При перерыве в страховании условия нужно сверить; это не срок ожидания для всех услуг.",
+          "status": "published",
+          "sourceId": "unisonWording",
+          "limitPeriod": null,
+          "percentageMeaning": "not_applicable"
+        }
+      ]
     },
     {
       "id": "unison-advance",
@@ -82,7 +159,8 @@
       "channel": "official_public_website",
       "scope": "medical_reference_only",
       "sourceIds": [
-        "unison"
+        "unison",
+        "unisonWording"
       ],
       "price": {
         "value": 65,
@@ -106,7 +184,69 @@
         "clinics": null
       },
       "issues": [],
-      "personalizedRankingAllowed": false
+      "personalizedRankingAllowed": false,
+      "benefits": [
+        {
+          "id": "outpatient",
+          "label": "Приёмы и анализы",
+          "text": "80% · лимит 2000 ₾",
+          "condition": "Направление семейного врача, указанные клиники. Для хронических заболеваний в таблице — ожидание 3 месяца.",
+          "status": "published",
+          "sourceId": "unison",
+          "limitPeriod": null,
+          "percentageMeaning": "as_published_not_payout_quote"
+        },
+        {
+          "id": "medications",
+          "label": "Лекарства",
+          "text": "40% · лимит 1500 ₾",
+          "condition": "Направление семейного врача. Для хронических заболеваний — ожидание 3 месяца по таблице.",
+          "status": "published",
+          "sourceId": "unison",
+          "limitPeriod": null,
+          "percentageMeaning": "as_published_not_payout_quote"
+        },
+        {
+          "id": "emergency_hospital",
+          "label": "Экстренный стационар",
+          "text": "100% · лимит 10000 ₾",
+          "condition": "Не объединять со скорой помощью и несчастным случаем. Начало покрытия — по договору.",
+          "status": "published",
+          "sourceId": "unison",
+          "limitPeriod": null,
+          "percentageMeaning": "as_published_not_payout_quote"
+        },
+        {
+          "id": "planned_hospital",
+          "label": "Плановая операция",
+          "text": "90% · лимит 8000 ₾",
+          "condition": "В таблице ожидание 12 месяцев; начало отсчёта и исключения — по договору.",
+          "status": "published",
+          "sourceId": "unison",
+          "limitPeriod": null,
+          "percentageMeaning": "as_published_not_payout_quote"
+        },
+        {
+          "id": "dental",
+          "label": "Плановая стоматология",
+          "text": "60% · лимит 1500 ₾",
+          "condition": "В клиниках-провайдерах. Перечень услуг и период лимита нужно уточнить.",
+          "status": "published",
+          "sourceId": "unison",
+          "limitPeriod": null,
+          "percentageMeaning": "as_published_not_payout_quote"
+        },
+        {
+          "id": "waiting_periods",
+          "label": "Когда начнёт действовать",
+          "text": "Экстренный стационар — 15 дней; плановый — 12 месяцев; кардиология — 12 месяцев.",
+          "condition": "Для впервые застрахованных, по §5.5–5.7 договора. Для кардиологии таблица сайта указывает 24 месяца, договор — 12: требуется уточнение. Это не срок ожидания для всех услуг.",
+          "status": "conflict",
+          "sourceId": "unisonWording",
+          "limitPeriod": null,
+          "percentageMeaning": "not_applicable"
+        }
+      ]
     },
     {
       "id": "unison-premium",
@@ -115,7 +255,8 @@
       "channel": "official_public_website",
       "scope": "medical_reference_only",
       "sourceIds": [
-        "unison"
+        "unison",
+        "unisonWording"
       ],
       "price": {
         "value": 85,
@@ -141,7 +282,69 @@
       "issues": [
         "Planned hospitalization percentage differs: card 100, table 90. Do not infer reimbursement."
       ],
-      "personalizedRankingAllowed": false
+      "personalizedRankingAllowed": false,
+      "benefits": [
+        {
+          "id": "outpatient",
+          "label": "Приёмы и анализы",
+          "text": "80% · лимит 2000 ₾",
+          "condition": "Направление семейного врача, указанные клиники. Для хронических заболеваний в таблице — ожидание 3 месяца.",
+          "status": "published",
+          "sourceId": "unison",
+          "limitPeriod": null,
+          "percentageMeaning": "as_published_not_payout_quote"
+        },
+        {
+          "id": "medications",
+          "label": "Лекарства",
+          "text": "60% · лимит 2000 ₾",
+          "condition": "Направление семейного врача. Для хронических заболеваний — ожидание 3 месяца по таблице.",
+          "status": "published",
+          "sourceId": "unison",
+          "limitPeriod": null,
+          "percentageMeaning": "as_published_not_payout_quote"
+        },
+        {
+          "id": "emergency_hospital",
+          "label": "Экстренный стационар",
+          "text": "100% · лимит 15000 ₾",
+          "condition": "Не объединять со скорой помощью и несчастным случаем. Начало покрытия — по договору.",
+          "status": "published",
+          "sourceId": "unison",
+          "limitPeriod": null,
+          "percentageMeaning": "as_published_not_payout_quote"
+        },
+        {
+          "id": "planned_hospital",
+          "label": "Плановая операция",
+          "text": "90% в таблице / 100% в карточке · лимит 12000 ₾",
+          "condition": "В таблице ожидание 12 месяцев; начало отсчёта и исключения — по договору.",
+          "status": "conflict",
+          "sourceId": "unison",
+          "limitPeriod": null,
+          "percentageMeaning": "as_published_not_payout_quote"
+        },
+        {
+          "id": "dental",
+          "label": "Плановая стоматология",
+          "text": "70% · лимит 1800 ₾",
+          "condition": "В клиниках-провайдерах. Перечень услуг и период лимита нужно уточнить.",
+          "status": "published",
+          "sourceId": "unison",
+          "limitPeriod": null,
+          "percentageMeaning": "as_published_not_payout_quote"
+        },
+        {
+          "id": "waiting_periods",
+          "label": "Когда начнёт действовать",
+          "text": "Экстренный стационар — 15 дней; плановый — 12 месяцев; кардиология — 12 месяцев.",
+          "condition": "Для впервые застрахованных, по §5.5–5.7 договора. Для кардиологии таблица сайта указывает 24 месяца, договор — 12: требуется уточнение. Это не срок ожидания для всех услуг.",
+          "status": "conflict",
+          "sourceId": "unisonWording",
+          "limitPeriod": null,
+          "percentageMeaning": "not_applicable"
+        }
+      ]
     },
     {
       "id": "unison-unique",
@@ -150,7 +353,8 @@
       "channel": "official_public_website",
       "scope": "medical_reference_only",
       "sourceIds": [
-        "unison"
+        "unison",
+        "unisonWording"
       ],
       "price": {
         "value": 120,
@@ -174,7 +378,69 @@
         "clinics": null
       },
       "issues": [],
-      "personalizedRankingAllowed": false
+      "personalizedRankingAllowed": false,
+      "benefits": [
+        {
+          "id": "outpatient",
+          "label": "Приёмы и анализы",
+          "text": "90% · лимит 3000 ₾",
+          "condition": "Направление семейного врача, указанные клиники. Для хронических заболеваний в таблице — ожидание 3 месяца.",
+          "status": "published",
+          "sourceId": "unison",
+          "limitPeriod": null,
+          "percentageMeaning": "as_published_not_payout_quote"
+        },
+        {
+          "id": "medications",
+          "label": "Лекарства",
+          "text": "80% · лимит 2500 ₾",
+          "condition": "Направление семейного врача. Для хронических заболеваний — ожидание 3 месяца по таблице.",
+          "status": "published",
+          "sourceId": "unison",
+          "limitPeriod": null,
+          "percentageMeaning": "as_published_not_payout_quote"
+        },
+        {
+          "id": "emergency_hospital",
+          "label": "Экстренный стационар",
+          "text": "100% · лимит 20000 ₾",
+          "condition": "Не объединять со скорой помощью и несчастным случаем. Начало покрытия — по договору.",
+          "status": "published",
+          "sourceId": "unison",
+          "limitPeriod": null,
+          "percentageMeaning": "as_published_not_payout_quote"
+        },
+        {
+          "id": "planned_hospital",
+          "label": "Плановая операция",
+          "text": "100% · лимит 20000 ₾",
+          "condition": "В таблице ожидание 12 месяцев; начало отсчёта и исключения — по договору.",
+          "status": "published",
+          "sourceId": "unison",
+          "limitPeriod": null,
+          "percentageMeaning": "as_published_not_payout_quote"
+        },
+        {
+          "id": "dental",
+          "label": "Плановая стоматология",
+          "text": "80% · лимит 2000 ₾",
+          "condition": "В клиниках-провайдерах. Перечень услуг и период лимита нужно уточнить.",
+          "status": "published",
+          "sourceId": "unison",
+          "limitPeriod": null,
+          "percentageMeaning": "as_published_not_payout_quote"
+        },
+        {
+          "id": "waiting_periods",
+          "label": "Когда начнёт действовать",
+          "text": "Экстренный стационар — 15 дней; плановый — 12 месяцев; кардиология — 12 месяцев.",
+          "condition": "Для впервые застрахованных, по §5.5–5.7 договора. Для кардиологии таблица сайта указывает 24 месяца, договор — 12: требуется уточнение. Это не срок ожидания для всех услуг.",
+          "status": "conflict",
+          "sourceId": "unisonWording",
+          "limitPeriod": null,
+          "percentageMeaning": "not_applicable"
+        }
+      ]
     },
     {
       "id": "ardi-vitamin-a",
@@ -435,7 +701,8 @@
       "channel": "official_public_website",
       "scope": "medical_reference_only",
       "sourceIds": [
-        "gpi"
+        "gpi",
+        "gpiGeo"
       ],
       "price": {
         "value": null,
@@ -448,6 +715,16 @@
         "observedValues": [
           39,
           40
+        ],
+        "observedSources": [
+          {
+            "sourceId": "gpi",
+            "value": 39
+          },
+          {
+            "sourceId": "gpiGeo",
+            "value": 40
+          }
         ]
       },
       "foreignResidentEligibility": {
@@ -463,7 +740,8 @@
         "clinics": null
       },
       "issues": [
-        "Standard card shows 39/month; line header from 40/month and promotion. Applicability unresolved."
+        "EN и грузинская версия показывают разные цены: 39 и 40 ₾/месяц. Применимый тариф и скидку нужно уточнить.",
+        "Приём иностранцев и персональный тариф не подтверждены."
       ],
       "personalizedRankingAllowed": false,
       "minimumChildAge": {
@@ -472,7 +750,49 @@
         "status": "published_line_level",
         "sourceId": "gpi",
         "notIndividualApproval": true
-      }
+      },
+      "benefits": [
+        {
+          "id": "waiting_periods",
+          "label": "Когда начнёт действовать",
+          "text": "Плановый стационар — ожидание 12 месяцев.",
+          "condition": "Нужно непрерывное страхование. Это не общий срок ожидания для всех услуг.",
+          "status": "published",
+          "sourceId": "gpiGeo",
+          "limitPeriod": null,
+          "percentageMeaning": "not_applicable"
+        },
+        {
+          "id": "approval",
+          "label": "Перед операцией",
+          "text": "Предварительное согласование и гарантийное письмо.",
+          "condition": "Для плановой госпитализации; нужны форма 100 и смета операции. Условия лечения вне сети в описании и FAQ расходятся — уточнить.",
+          "status": "conflict",
+          "sourceId": "gpiGeo",
+          "limitPeriod": null,
+          "percentageMeaning": "not_applicable"
+        },
+        {
+          "id": "outpatient",
+          "label": "Приёмы и анализы",
+          "text": "Плановая амбулатория — в сети партнёров.",
+          "condition": "По согласованию с личным врачом. Клиники Батуми не подтверждены.",
+          "status": "published",
+          "sourceId": "gpiGeo",
+          "limitPeriod": null,
+          "percentageMeaning": "not_applicable"
+        },
+        {
+          "id": "children",
+          "label": "Дети",
+          "text": "На странице линейки указан возраст от 1 года.",
+          "condition": "Это не подтверждает приём ребёнка-иностранца или семейную цену.",
+          "status": "published",
+          "sourceId": "gpiGeo",
+          "limitPeriod": null,
+          "percentageMeaning": "not_applicable"
+        }
+      ]
     },
     {
       "id": "gpi-medi-classic",
@@ -481,16 +801,31 @@
       "channel": "official_public_website",
       "scope": "medical_reference_only",
       "sourceIds": [
-        "gpi"
+        "gpi",
+        "gpiGeo"
       ],
       "price": {
-        "value": 58,
+        "value": null,
         "currency": "GEL",
         "period": "month",
         "kind": "published_amount",
-        "status": "published_not_personal_quote",
+        "status": "ambiguous",
         "sourceId": "gpi",
-        "annualTotal": null
+        "annualTotal": null,
+        "observedValues": [
+          58,
+          65
+        ],
+        "observedSources": [
+          {
+            "sourceId": "gpi",
+            "value": 58
+          },
+          {
+            "sourceId": "gpiGeo",
+            "value": 65
+          }
+        ]
       },
       "foreignResidentEligibility": {
         "status": "unknown",
@@ -505,7 +840,8 @@
         "clinics": null
       },
       "issues": [
-        "Promotion and foreign-resident price applicability not confirmed."
+        "EN и грузинская версия показывают разные цены: 58 и 65 ₾/месяц. Применимый тариф и скидку нужно уточнить.",
+        "Приём иностранцев и персональный тариф не подтверждены."
       ],
       "personalizedRankingAllowed": false,
       "minimumChildAge": {
@@ -514,7 +850,49 @@
         "status": "published_line_level",
         "sourceId": "gpi",
         "notIndividualApproval": true
-      }
+      },
+      "benefits": [
+        {
+          "id": "waiting_periods",
+          "label": "Когда начнёт действовать",
+          "text": "Плановый стационар — ожидание 12 месяцев.",
+          "condition": "Нужно непрерывное страхование. Это не общий срок ожидания для всех услуг.",
+          "status": "published",
+          "sourceId": "gpiGeo",
+          "limitPeriod": null,
+          "percentageMeaning": "not_applicable"
+        },
+        {
+          "id": "approval",
+          "label": "Перед операцией",
+          "text": "Предварительное согласование и гарантийное письмо.",
+          "condition": "Для плановой госпитализации; нужны форма 100 и смета операции. Условия лечения вне сети в описании и FAQ расходятся — уточнить.",
+          "status": "conflict",
+          "sourceId": "gpiGeo",
+          "limitPeriod": null,
+          "percentageMeaning": "not_applicable"
+        },
+        {
+          "id": "outpatient",
+          "label": "Приёмы и анализы",
+          "text": "В сети и вне сети — по направлению.",
+          "condition": "Вне сети сначала оплачивают полностью, затем запрашивают возмещение. Для привилегированных партнёров описан отдельный порядок. Клиники Батуми не подтверждены.",
+          "status": "published",
+          "sourceId": "gpiGeo",
+          "limitPeriod": null,
+          "percentageMeaning": "not_applicable"
+        },
+        {
+          "id": "children",
+          "label": "Дети",
+          "text": "На странице линейки указан возраст от 1 года.",
+          "condition": "Это не подтверждает приём ребёнка-иностранца или семейную цену.",
+          "status": "published",
+          "sourceId": "gpiGeo",
+          "limitPeriod": null,
+          "percentageMeaning": "not_applicable"
+        }
+      ]
     },
     {
       "id": "gpi-medi-premium",
@@ -523,16 +901,31 @@
       "channel": "official_public_website",
       "scope": "medical_reference_only",
       "sourceIds": [
-        "gpi"
+        "gpi",
+        "gpiGeo"
       ],
       "price": {
-        "value": 70,
+        "value": null,
         "currency": "GEL",
         "period": "month",
         "kind": "published_amount",
-        "status": "published_not_personal_quote",
+        "status": "ambiguous",
         "sourceId": "gpi",
-        "annualTotal": null
+        "annualTotal": null,
+        "observedValues": [
+          70,
+          75
+        ],
+        "observedSources": [
+          {
+            "sourceId": "gpi",
+            "value": 70
+          },
+          {
+            "sourceId": "gpiGeo",
+            "value": 75
+          }
+        ]
       },
       "foreignResidentEligibility": {
         "status": "unknown",
@@ -547,7 +940,8 @@
         "clinics": null
       },
       "issues": [
-        "Promotion and foreign-resident price applicability not confirmed."
+        "EN и грузинская версия показывают разные цены: 70 и 75 ₾/месяц. Применимый тариф и скидку нужно уточнить.",
+        "Приём иностранцев и персональный тариф не подтверждены."
       ],
       "personalizedRankingAllowed": false,
       "minimumChildAge": {
@@ -556,7 +950,49 @@
         "status": "published_line_level",
         "sourceId": "gpi",
         "notIndividualApproval": true
-      }
+      },
+      "benefits": [
+        {
+          "id": "waiting_periods",
+          "label": "Когда начнёт действовать",
+          "text": "Плановый стационар — ожидание 12 месяцев.",
+          "condition": "Нужно непрерывное страхование. Это не общий срок ожидания для всех услуг.",
+          "status": "published",
+          "sourceId": "gpiGeo",
+          "limitPeriod": null,
+          "percentageMeaning": "not_applicable"
+        },
+        {
+          "id": "approval",
+          "label": "Перед операцией",
+          "text": "Предварительное согласование и гарантийное письмо.",
+          "condition": "Для плановой госпитализации; нужны форма 100 и смета операции. Условия лечения вне сети в описании и FAQ расходятся — уточнить.",
+          "status": "conflict",
+          "sourceId": "gpiGeo",
+          "limitPeriod": null,
+          "percentageMeaning": "not_applicable"
+        },
+        {
+          "id": "outpatient",
+          "label": "Приёмы и анализы",
+          "text": "В сети и вне сети — по направлению.",
+          "condition": "Вне сети сначала оплачивают полностью, затем запрашивают возмещение. Для привилегированных партнёров описан отдельный порядок. Клиники Батуми не подтверждены.",
+          "status": "published",
+          "sourceId": "gpiGeo",
+          "limitPeriod": null,
+          "percentageMeaning": "not_applicable"
+        },
+        {
+          "id": "children",
+          "label": "Дети",
+          "text": "На странице линейки указан возраст от 1 года.",
+          "condition": "Это не подтверждает приём ребёнка-иностранца или семейную цену.",
+          "status": "published",
+          "sourceId": "gpiGeo",
+          "limitPeriod": null,
+          "percentageMeaning": "not_applicable"
+        }
+      ]
     },
     {
       "id": "unison-family-1",

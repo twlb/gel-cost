@@ -1,0 +1,113 @@
+/* One layout, two palettes. Keep financial formatting and bound controls intact. */
+:root {
+  color-scheme: light;
+  --bg: #faf9f6;
+  --surface: #ffffff;
+  --border: #d2d6dd;
+  --text: #111c2c;
+  --muted: #526078;
+  --accent: #0077bd;
+  --warning: #a33224;
+  --green: #23663e;
+  --selected: #edf5fb;
+  --disabled: #efeee9;
+  --notice: #fff0e7;
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #11151b;
+  --surface: #1a2029;
+  --border: #46505e;
+  --text: #f2f4f7;
+  --muted: #b0bbc9;
+  --accent: #64c7ff;
+  --warning: #ffc18b;
+  --green: #8dddab;
+  --selected: #1c3040;
+  --disabled: #272d36;
+  --notice: #38271e;
+}
+body { line-height: 1.5; }
+.app { max-width: 530px; padding-left: 24px; padding-right: 24px; }
+header {
+  display: grid; grid-template-columns: minmax(0,1fr) auto auto;
+  align-items: center; gap: 0 10px; padding: 12px 0 12px;
+  margin: 0 0 12px; min-height: 0; border: 0;
+}
+header .brand { margin: 0; padding: 0; min-height: 44px; }
+.brand-art { width: 140px; mix-blend-mode: multiply; }
+.brand-art img { filter: grayscale(1) contrast(10); }
+[data-theme="dark"] .brand-art { mix-blend-mode: screen; }
+[data-theme="dark"] .brand-art img { filter: grayscale(1) contrast(10) invert(1); }
+.brand-tagline { grid-column: 1 / 3; color: var(--muted); font-size: 13px; margin: 0; }
+.theme-toggle.text-button { grid-column: 3; font-size: 11px; min-height: 44px; text-align: right; padding: 6px 0; text-decoration: none; }
+.header-city { min-width: 0; }
+.header-city select { width: 106px; padding: 8px 0 8px 4px; min-height: 44px; border: 0; background: transparent; font-size: 16px; font-weight: 650; }
+.weather { min-width: 46px; text-align: center; color: var(--muted); }
+.weather-reading { display: flex; align-items: center; justify-content: center; gap: 3px; }
+#weatherTemperature { font-size: 20px; line-height: 1.2; font-variant-numeric: tabular-nums; white-space: nowrap; }
+#weatherIcon { width: 22px; height: 22px; object-fit: contain; }
+[data-theme="dark"] #weatherIcon { filter: invert(1); }
+.weather a { display: block; font-size: 9px; line-height: 1.3; padding: 2px 0; color: var(--muted); }
+.visually-hidden { position: absolute!important; width: 1px!important; height: 1px!important; padding: 0!important; margin: -1px!important; overflow: hidden!important; clip-path: inset(50%); white-space: nowrap; border: 0!important; }
+h1,#exchangeHeading,#purchaseHeading,#insuranceView h1 { font-size: 30px; font-weight: 700; line-height: 1.2; letter-spacing: -.8px; margin: 0 0 24px; }
+label,.field-label,summary,.disclosure>summary { color: var(--muted); }
+input,select,.input { background: var(--surface); color: var(--text); }
+.exchange-entry { display: grid; grid-template-columns: minmax(0,1fr) 96px; gap: 0; align-items: start; padding-bottom: 22px; border-bottom: 1px solid var(--border); margin-bottom: 20px; }
+.exchange-entry .amount { margin: 0!important; min-height: 64px; }
+.exchange-entry .amount { border-radius: 12px 0 0 12px; border-right: 0; }
+.exchange-currency select { height: 64px; font-size: 19px; padding: 12px; border-radius: 0 12px 12px 0; }
+.exchange-currency { padding-top: 28px; }
+#exchangeView:not(.is-selecting) #exchangeCurrencyLabel { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+#exchangeView.is-selecting .exchange-currency { padding-top: 0; }
+.exchange-entry:has(#exchangeAmountGroup[hidden]) { grid-template-columns: 1fr; }
+.exchange-entry:has(#exchangeAmountGroup[hidden]) select { border-radius: 12px; }
+.amount input { font-size: 32px; }
+.primary { background: var(--accent); color: #fff; }
+[data-theme="dark"] .primary { color: #092337; }
+.secondary:not(:disabled) { background: var(--surface); border-color: var(--border); color: var(--text); }
+.text-button:not(:disabled) { color: var(--accent); }
+button:disabled { background: var(--disabled); color: var(--muted); border: 1px dashed var(--border); }
+button:not(:disabled):hover { filter: none; }
+button:not(:disabled):active { opacity: .8; }
+.swap-button { color: var(--accent); border-color: var(--border); }
+.mode-switch .active,.payment-switch button[aria-pressed=true] { color: var(--text); background: var(--selected); box-shadow: inset 0 0 0 1px var(--border); }
+.danger { color: var(--warning); }
+.notice { background: var(--notice); }
+.inline { border-color: var(--border); }
+.offer-tools .text-button { background: transparent; border-color: var(--border); }
+.offer-tools { margin: 10px 0 0; }
+.offer-tools .text-button { padding: 8px 0; border: 0; }
+#exchangeView .section-head h2 { font-size: 15px; font-weight: 400; color: var(--muted); }
+.offer-list { border: 0; border-radius: 0; overflow: visible; }
+.offer-row { padding: 18px 0; border-left: 0; }
+.offer-row[aria-pressed=true] { background: transparent; border-left: 0; }
+.offer-row[aria-pressed=true] { padding-top: 6px; padding-bottom: 14px; }
+.offer-row[aria-pressed=true] .offer-top strong { font-size: 23px; letter-spacing: -.4px; }
+#exchangeView:not(.is-selecting) .offer-row[aria-pressed=true] .offer-top b { display: none; }
+.offer-row[aria-pressed=true] small { font-size: 15px; line-height: 1.6; }
+.offer-row[aria-pressed=true] small { color: var(--muted); }
+.offer-row:focus-visible { outline-offset: 2px; }
+.offer-actions-panel { border: 0; background: transparent; padding: 0 0 24px; }
+.offer-actions-panel .exchange-actions { flex-direction: column; gap: 10px; }
+.offer-actions-panel .exchange-actions>button { flex: auto; font-size: 16px; padding: 12px 16px; }
+.offer-actions-panel .exchange-result { margin: 0 0 18px; padding: 0; }
+.exchange-result strong { font-size: 44px; font-variant-numeric: tabular-nums; letter-spacing: -1.2px; }
+.offer-best { color: var(--accent); background: var(--selected); border-color: var(--border); }
+.offer-location { background: var(--surface); }
+.bottom-nav { width: min(100%,530px); background: var(--bg); padding: 8px 12px max(16px,env(safe-area-inset-bottom)); }
+.bottom-nav button { color: var(--muted); font-size: 13px; display: flex; flex-direction: column; align-items: center; gap: 5px; border-top: 0; padding: 8px 4px; }
+.bottom-nav img { width: 24px; height: 24px; opacity: .75; }
+[data-theme="dark"] .bottom-nav img { filter: invert(1); }
+.bottom-nav button[aria-current=page] img { opacity: 1; }
+.bottom-nav button[aria-current=page] { color: var(--accent); }
+@media(min-width:700px) { .app { padding-left: 28px; padding-right: 28px; border: 0; } }
+@media(max-width:370px) {
+  .app { padding-left: 16px; padding-right: 16px; }
+  header { column-gap: 6px; }
+  .brand-art { width: 112px; }
+  .header-city select { width: 94px; font-size: 14px; }
+  .brand-tagline { font-size: 12px; }
+  h1,#exchangeHeading,#purchaseHeading,#insuranceView h1 { font-size: 28px; }
+  .exchange-result strong { font-size: 36px; }
+}

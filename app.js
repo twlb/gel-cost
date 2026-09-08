@@ -58,6 +58,7 @@ const androidMaps=/Android/i.test(navigator.userAgent||"");
 const appleMaps=/(iPhone|iPad|iPod|Macintosh)/i.test(navigator.userAgent||"");
 const QUOTE_TTL=2*3600000;
 const plan={from:"RUB",to:"GEL",via:"USD",mode:"give",quotes:{},quoteMeta:{},fees:{},sourceKey:"",sourceCurrency:"USD",sourceCity:"batumi",initialized:false};
+let planQuoteSelection=null;
 let settingsDraft=null,settingsBaseline="",settingsPending=0;
 const planNames={RUB:"Рубли",USD:"Доллары",EUR:"Евро",USDT:"USDT",GEL:"Лари"};
 const planUnits={RUB:"₽",USD:"USD",EUR:"EUR",USDT:"USDT",GEL:"₾"};
@@ -100,6 +101,21 @@ function editPlanFee(index){const row=plannerRows()[index];if(row?.quote){plan.f
 function useOfferForPlan(){
   const item=offersForCity().find(row=>row.key===selectedOffer);
   if(!item||editingExchangeRate()||item.kind!=="manual"&&!item.fresh)return;
+  if(planQuoteSelection){
+    const row=plannerRows().find(row=>row.key===planQuoteSelection.key);
+    if(!row||exchangeCurrency!==row.currency){announce("Выберите курс для "+planQuoteSelection.currency+". Ваш расчёт сохранён.");return;}
+    if((item.kind==="manual"&&row.side!=="buy")||!C.positive(item[row.side])){
+      announce("Этот курс не подходит для направления вашего расчёта.");return;
+    }
+    plan.sourceCurrency=exchangeCurrency;plan.sourceCity=chosenCity();
+    if(item.kind==="manual"){
+      plan.sourceKey="";plan.quotes[row.quote]=inputValue(nominalQuote(item.buy,row.nominal));
+      plan.quoteMeta[row.quote]={checkedAt:item.checkedAt};
+    }else{
+      plan.sourceKey=item.key;delete plan.quotes[row.quote];delete plan.quoteMeta[row.quote];
+    }
+    showView("calculator");return;
+  }
   const amount=C.number($("exchangeAmount").value);
   if(!(amount>0&&amount<=1e9))return;
   if(!plan.initialized||exchangeCurrency!=="USD"||plan.sourceCurrency!=="USD"){
@@ -123,12 +139,15 @@ function showPlanLocation(){
   const item=offersForCity(plan.sourceCurrency,plan.sourceCity).find(row=>row.key===plan.sourceKey);
   if(!item||item.kind==="manual")return;
   changeExchangeCurrency(plan.sourceCurrency);$("exchangeCity").value=plan.sourceCity;
+  window.GamarjiWeather?.refresh?.();
   selectedOffer=item.key;offerSelectionExplicit=true;expandedOffer=item.key;
   showView("exchange");$("branchHeading").scrollIntoView?.({block:"start"});$("closeLocationButton").focus({preventScroll:true});
 }
 function choosePlanOffice(){
-  const currency=plannerRows().find(row=>row.side)?.currency||"USD";
-  changeExchangeCurrency(currency);showView("exchange");
+  const row=plannerRows().find(row=>row.side);
+  if(!row){announce("Для этого направления введите свой курс в расчёте.");return;}
+  planQuoteSelection={key:row.key,currency:row.currency,side:row.side};
+  changeExchangeCurrency(row.currency);showView("exchange");
 }
 function renderPlanner(){
   $("planFrom").value=plan.from;$("planTo").value=plan.to;$("planVia").value=plan.via;
@@ -220,6 +239,7 @@ function calculationFeedback(message,method,view=currentView){
 }
 function showView(view){
   if(!["purchase","exchange","data","calculator","insurance"].includes(view))return;
+  if(view!=="exchange")planQuoteSelection=null;
   currentView=view;
   for(const name of ["purchase","exchange","data"]){
     $(name+"View").hidden=name!==view;
@@ -235,7 +255,7 @@ function showView(view){
   }
   // Section changes leave unfinished fields intact.
   renderOffers();
-  $(view+"Heading").focus({preventScroll:true});
+  (view==="insurance"&&!$("insuranceComparison").hidden?$("insuranceCompareHeading"):$(view+"Heading")).focus({preventScroll:true});
   window.scrollTo?.({top:0,behavior:"instant"});
 }
 function togglePurchaseChooser(){
@@ -1095,14 +1115,28 @@ function toggleAllOffers(){allOffers=!allOffers;renderOffers();}
 function editingExchangeRate(){return currentView==="exchange"&&($("exchangeManualPanel").classList.contains("show")||rateKind==="cash"&&$("ratePanel").classList.contains("show")&&$("ratePanel").parentElement===$("cashRateHost"));}
 function renderOffers(){
   const meta=exchangeMeta[exchangeCurrency],market=marketFor(exchangeCurrency);
+  const selecting=Boolean(planQuoteSelection),side=planQuoteSelection?.side||"buy";
+  $("exchangeView").classList.toggle("is-selecting",selecting);
+  $("returnToPlan").hidden=!selecting;
+  $("exchangeAmountGroup").hidden=selecting;
+  $("exchangeSummary").hidden=selecting;
+  $("exchangeListNote").textContent=selecting?"Курс для расчёта":"За вашу сумму";
+  $("exchangeListNote").hidden=!selecting;
+  $("exchangeHeading").textContent=selecting?"Выберите курс для расчёта":"Обмен валют";
+  $("exchangeCurrencyLabel").textContent=selecting?(side==="sell"?"Покупаю":"Продаю"):"Отдаю";
   $("exchangeCurrency").value=exchangeCurrency;
-  $("exchangeAmountLabel").textContent="Сумма в "+meta.name;$("exchangeAmountUnit").textContent=meta.unit;
+  $("exchangeAmountLabel").textContent="Отдаю";$("exchangeAmountUnit").textContent=meta.unit;
   $("currencyCoverage").hidden=exchangeCurrency!=="RUB";
   $("currencyCoverage").textContent="RUB: курсы обменников. Банковские курсы пока не подключены.";
-  $("legacyOfferDetails").hidden=exchangeCurrency!=="USD";
+  $("legacyOfferDetails").hidden=selecting||exchangeCurrency!=="USD";
+  $("manualRateButton").hidden=selecting&&side==="sell";
   $("manualRateButton").setAttribute("aria-expanded",String(editingExchangeRate()));
   fitAmount($("exchangeAmount"));
-  const rows=offersForCity();
+  const rows=offersForCity().map(item=>({...item}));
+  if(selecting){
+    for(const item of rows)item.best=false;
+    rows.sort((a,b)=>Number(Boolean(b.fresh&&C.positive(b[side])))-Number(Boolean(a.fresh&&C.positive(a[side])))||(side==="sell"?((a.sell||Infinity)-(b.sell||Infinity)):b.buy-a.buy));
+  }
   if(!offerSelectionExplicit||!rows.some(row=>row.key===selectedOffer)){
     const active=exchangeCurrency==="USD"?(state.cashOfficeId?"office:"+state.cashOfficeId:state.cashBankId?"bank:"+state.cashBankId:C.positive(state.cashGelRate)?"manual":""):(manualRecords[exchangeCurrency]?offerKey("manual",exchangeCurrency):"");
     selectedOffer=rows.some(row=>row.key===active)?active:rows[0]?.key||"";
@@ -1116,6 +1150,9 @@ function renderOffers(){
   if(!shown.some(row=>row.key===selectedOffer)){
     const selected=rows.find(row=>row.key===selectedOffer);if(selected)shown.push(selected);
   }
+  // Keep the chosen offer and its answer together at the beginning of the list.
+  // Remaining offers retain their rate order; selection never changes a quote.
+  if(!selecting)shown.sort((a,b)=>Number(b.key===selectedOffer)-Number(a.key===selectedOffer));
   if(!rows.some(row=>row.key===expandedOffer))expandedOffer="";
   // Keep a user's focused row during a background re-render.
   const focused=document.activeElement?.dataset?.offerKey;
@@ -1135,16 +1172,18 @@ function renderOffers(){
       const badge=document.createElement("span");badge.className="offer-best";badge.textContent="Лучший курс";
       heading.appendChild(badge);button.setAttribute("aria-describedby","bestOfferHelp");
     }
-    const total=document.createElement("b");total.textContent=valid?money(D.mul($("exchangeAmount").value,item.buy))+" ₾":"— ₾";
+    const total=document.createElement("b");total.textContent=selecting?(C.positive(item[side])?fmtRate(item[side]*meta.nominal)+" ₾":"Нет курса"):(valid?money(D.mul($("exchangeAmount").value,item.buy))+" ₾":"— ₾");
     top.appendChild(heading);top.appendChild(total);button.appendChild(top);
     const detail=document.createElement("small");
-    detail.textContent=(item.kind==="manual"?"Введён вами":item.kind==="office"?"Обменник · курс сети":"Банк · город уточните")+" · "+quoteText(exchangeCurrency,item.buy)+(item.fresh?"":" · нужна проверка");
+    detail.textContent=(item.kind==="manual"?"Введён вами":item.kind==="office"?"Обменник · курс сети":"Банк · город уточните")+" · "+(selecting?(side==="sell"?"Продажа":"Покупка")+" · за "+meta.nominal+" "+meta.unit:quoteText(exchangeCurrency,item.buy))+(item.fresh?"":" · нужна проверка");
+    if(!selecting&&item.key===selectedOffer)detail.textContent=quoteText(exchangeCurrency,item.buy)+" · "+(item.kind==="manual"?"введён вами":item.kind==="office"?"курс сети":"город уточните");
     button.appendChild(detail);button.classList.toggle("is-stale",!item.fresh);
     button.addEventListener("click",()=>selectOffer(item.key));return button;
   });
   // One action panel follows the selected row; no nested buttons or duplicate IDs.
   const selectedShown=nodes.some(node=>node.dataset.offerKey===selectedOffer);
   actionPanel.hidden=!selectedShown;
+  (selectedShown?actionPanel:$("offerToolsHome")).appendChild($("offerToolsPanel"));
   $("offerList").replaceChildren(...nodes.flatMap(node=>node.dataset.offerKey===selectedOffer?[node,actionPanel]:[node]));$("offerList").hidden=!rows.length;
   renderOfferLocation(rows.find(row=>row.key===expandedOffer));
   if(focused)nodes.find(node=>node.dataset.offerKey===focused)?.focus({preventScroll:true});
@@ -1162,6 +1201,7 @@ function renderOffers(){
   $("refreshOffersButton").disabled=busy;
   $("refreshOffersButton").textContent=busy?"Проверяем…":"Обновить курсы";
   const item=rows.find(row=>row.key===selectedOffer);
+  $("offerListHeading").textContent=selecting||!item?"Курсы и адреса":"Выбранное предложение";
   $("offerAddressButton").hidden=!item||item.kind==="manual";
   $("offerAddressButton").textContent=item?(item.kind==="bank"?"Отделения ":"Адреса ")+item.name:"Адреса";
   $("offerAddressButton").setAttribute("aria-expanded",String(Boolean(expandedOffer)));
@@ -1173,11 +1213,13 @@ function renderOffers(){
   $("selectedOfferDetail").textContent=item?(item.kind==="manual"?freshnessText(item.checkedAt,exchangeCurrency+"→GEL").text+". Введён вами, не котировка банка или обменника."+(item.fresh?"":" Проверьте перед обменом."):"Проверено "+checkedText(item.checkedAt)+". "+(item.kind==="office"?"Курс сети. Наличие и условия уточните в отделении.":"Витрина НБГ: отделение, запрос на 1 000 GEL. Для вашей суммы условия могут отличаться.")+(item.fresh?"":" Курс нельзя применить: данные устарели или не подтверждены.")):"Можно ввести свой проверенный курс выше.";
   $("selectedSource").hidden=!item?.url;$("selectedBranches").hidden=!item?.branches;
   $("selectedSource").href=item?.url||"";$("selectedBranches").href=item?.branches||"";
-  $("applyOfferButton").hidden=exchangeCurrency!=="USD"||editingExchangeRate();
+  $("applyOfferButton").hidden=selecting||exchangeCurrency!=="USD"||editingExchangeRate();
   $("applyOfferButton").disabled=editingExchangeRate()||!(item&&(item.kind==="manual"||item.fresh)&&valid);
-  $("planOfferButton").hidden=editingExchangeRate();
-  $("planOfferButton").disabled=editingExchangeRate()||!(item&&(item.kind==="manual"||item.fresh)&&valid);
-  $("offerActionNote").textContent=!valid?"Введите сумму выше.":item&&item.kind!=="manual"&&!item.fresh?"Чтобы применить курс, обновите данные или введите свой.":"";
+  $("planOfferButton").hidden=editingExchangeRate()||Boolean(item&&item.kind!=="manual"&&!item.fresh);
+  const incompatible=selecting&&(exchangeCurrency!==planQuoteSelection.currency||!item||!C.positive(item[side])||(item.kind==="manual"&&side==="sell"));
+  $("planOfferButton").textContent=selecting?"Использовать курс":"В калькулятор";
+  $("planOfferButton").disabled=editingExchangeRate()||incompatible||!(item&&(item.kind==="manual"||item.fresh)&&(selecting||valid));
+  $("offerActionNote").textContent=incompatible?"Нужен курс "+(side==="sell"?"продажи ":"покупки ")+planQuoteSelection.currency+". Расчёт сохранён.":!selecting&&!valid?"Введите сумму выше.":item&&item.kind!=="manual"&&!item.fresh?"Чтобы применить курс, обновите данные или введите свой.":selecting?"Сумма, направление и комиссии останутся прежними.":"";
   $("offerActionNote").hidden=!$("offerActionNote").textContent;
   $("applyOfferButton").textContent="Применить курс";
 }

@@ -1,11 +1,8 @@
-header .brand{min-width:0;margin-right:0;font-size:19px;white-space:normal;line-height:1.25}
-header .brand .badge{display:block;margin:5px 0;font-size:11px}
-header #dataNav{flex-shrink:0;font-size:13px}
 .bottom-nav button{flex:1;min-width:0;font-size:13px}
-#insuranceView h1{font-size:25px}
+#insuranceView h1{font-size:24px;line-height:1.25;margin:0 0 16px}
 #insuranceView .insurance-selection{padding:14px 0;border-bottom:1px solid var(--border);display:flex;gap:8px;flex-wrap:wrap;align-items:center}
 #insuranceSelectedCount{flex-basis:100%;overflow-wrap:anywhere;font-size:13px;color:var(--muted)}
-#insuranceView .insurance-card{padding:20px 0;border-bottom:1px solid var(--border)}
+#insuranceView .insurance-card{padding:24px 0;border-bottom:1px solid var(--border)}
 #insuranceView h2{font-size:18px;overflow-wrap:anywhere;margin:0 0 8px}
 #insuranceView .insurance-price{font-size:21px;font-weight:650;margin:8px 0}
 #insuranceView summary{padding:12px 0;min-height:44px}
@@ -17,3 +14,25 @@ header #dataNav{flex-shrink:0;font-size:13px}
 #insuranceView .insurance-compare-row strong{font-size:13px;color:var(--muted)}
 #insuranceView .insurance-compare-row p{margin:4px 0 16px}
 #insuranceCompareHeading{margin-top:20px!important}
+#insuranceView .insurance-selection{position:sticky;top:0;background:var(--bg);z-index:2;padding:10px 0}
+.insurance-selected-plans{flex-basis:100%;display:flex;gap:4px 12px;flex-wrap:wrap}
+#insuranceView .insurance-selected-plans button{padding:4px 0;font-size:13px;min-height:44px;overflow-wrap:anywhere;text-align:left}
+#insuranceView .insurance-preview{font-size:14px;margin:8px 0;overflow-wrap:anywhere}
+#insuranceView .insurance-benefit{border-top:1px solid var(--border);padding:8px 0}
+#insuranceView .insurance-benefit h3{font-size:14px;margin:8px 0}
+#insuranceView .insurance-benefit p{font-size:13px;margin:6px 0}
+#insuranceView .insurance-source{font-size:13px;display:inline-flex;align-items:center;min-height:44px}
+#insuranceView .insurance-plan-selectors{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:12px;position:sticky;top:0;background:var(--bg);z-index:2;padding:12px 0;border-bottom:1px solid var(--border)}
+#insuranceView .insurance-plan-selectors>div{min-width:0}
+#insuranceView .insurance-plan-selectors select{padding:10px 6px;font-size:16px}
+#insuranceView .insurance-plan-name{font-size:13px;overflow-wrap:anywhere;margin:8px 0 0}
+#insuranceView .insurance-compare-row{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:4px 12px}
+#insuranceView .insurance-compare-row h3{grid-column:1/-1;margin:0 0 8px}
+#insuranceView .insurance-compare-row>div{min-width:0}
+#insuranceView .insurance-compare-row>div+div{border-left:1px solid var(--border);padding-left:12px}
+#insuranceView .insurance-compare-row p{font-size:14px;margin:6px 0}
+#insuranceView .insurance-compare-row .note,#insuranceView .insurance-compare-row .insurance-caution{font-size:13px;line-height:1.5}
+#insuranceView .insurance-compare-row strong{display:block;font-size:13px;line-height:1.5}
+#insuranceView .insurance-source-details{border-top:1px solid var(--border);padding-top:4px}
+#insuranceComparison{scroll-margin-top:8px}
+@media(max-height:500px){#insuranceView .insurance-selection,#insuranceView .insurance-plan-selectors{position:static}}
