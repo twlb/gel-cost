@@ -7,7 +7,7 @@
   "channel": "Branch",
   "userType": "PhysicalPerson",
   "queryAmountGel": 1000,
-  "fetchedAt": "2026-09-08T01:27:01.073179Z",
+  "fetchedAt": "2026-09-08T06:32:11.396100Z",
   "source": {
     "name": "Банковская витрина НБГ",
     "url": "https://nbg.gov.ge/en/currency-rates",
@@ -17,8 +17,15 @@
     {
       "id": "6",
       "bank": "Silk Bank",
-      "buy": 3.026,
-      "sell": 3.05,
+      "buy": 3.03,
+      "sell": 3.045,
+      "sourceUpdatedAt": null
+    },
+    {
+      "id": "2",
+      "bank": "Credo Bank",
+      "buy": 3.028,
+      "sell": 3.054,
       "sourceUpdatedAt": null
     },
     {
@@ -26,13 +33,6 @@
       "bank": "Tera Bank",
       "buy": 3.015,
       "sell": 3.07,
-      "sourceUpdatedAt": null
-    },
-    {
-      "id": "2",
-      "bank": "Credo Bank",
-      "buy": 3.001,
-      "sell": 3.079,
       "sourceUpdatedAt": null
     },
     {
@@ -45,8 +45,15 @@
     {
       "id": "9",
       "bank": "Bank of Georgia",
-      "buy": 2.996,
-      "sell": 3.08,
+      "buy": 2.994,
+      "sell": 3.078,
+      "sourceUpdatedAt": null
+    },
+    {
+      "id": "10",
+      "bank": "Basisbank",
+      "buy": 2.9915,
+      "sell": 3.0786,
       "sourceUpdatedAt": null
     },
     {
@@ -66,28 +73,21 @@
     {
       "id": "12",
       "bank": "Liberty Bank",
-      "buy": 2.982,
-      "sell": 3.098,
-      "sourceUpdatedAt": null
-    },
-    {
-      "id": "10",
-      "bank": "Basisbank",
-      "buy": 2.9791,
-      "sell": 3.0925,
+      "buy": 2.981,
+      "sell": 3.097,
       "sourceUpdatedAt": null
     },
     {
       "id": "7",
       "bank": "Procredit bank",
-      "buy": 2.962,
-      "sell": 3.111,
+      "buy": 2.963,
+      "sell": 3.112,
       "sourceUpdatedAt": null
     },
     {
       "id": "11",
       "bank": "TBC Bank",
-      "buy": 2.962,
+      "buy": 2.961,
       "sell": 3.11,
       "sourceUpdatedAt": null
     },
@@ -101,8 +101,8 @@
     {
       "id": "3",
       "bank": "Pasha Bank Georgia",
-      "buy": 2.8907,
-      "sell": 3.1893,
+      "buy": 2.9022,
+      "sell": 3.1731,
       "sourceUpdatedAt": null
     }
   ],
