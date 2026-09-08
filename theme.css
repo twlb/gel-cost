@@ -64,7 +64,7 @@ input,select,.input { background: var(--surface); color: var(--text); }
 .exchange-entry:has(#exchangeAmountGroup[hidden]) select { border-radius: 12px; }
 .amount input { font-size: 32px; }
 .primary { background: var(--accent); color: #fff; }
-[data-theme="dark"] .primary { color: #092337; }
+[data-theme="dark"] .primary:not(:disabled) { color: #092337; }
 .secondary:not(:disabled) { background: var(--surface); border-color: var(--border); color: var(--text); }
 .text-button:not(:disabled) { color: var(--accent); }
 button:disabled { background: var(--disabled); color: var(--muted); border: 1px dashed var(--border); }
@@ -92,6 +92,9 @@ button:not(:disabled):active { opacity: .8; }
 .offer-actions-panel .exchange-actions { flex-direction: column; gap: 10px; }
 .offer-actions-panel .exchange-actions>button { flex: auto; font-size: 16px; padding: 12px 16px; }
 .offer-actions-panel .exchange-result { margin: 0 0 18px; padding: 0; }
+.plan-replacement { margin: 16px 0; padding: 16px; border: 1px solid var(--border); border-radius: 12px; background: var(--selected); }
+.plan-replacement h3 { margin: 0 0 8px; font-size: 18px; line-height: 1.35; }
+.plan-replacement p { margin: 0 0 16px; font-size: 15px; overflow-wrap: anywhere; }
 .exchange-result strong { font-size: 44px; font-variant-numeric: tabular-nums; letter-spacing: -1.2px; }
 .offer-best { color: var(--accent); background: var(--selected); border-color: var(--border); }
 .offer-location { background: var(--surface); }

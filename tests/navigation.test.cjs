@@ -77,6 +77,8 @@ test('buy-only manual quote cannot satisfy pending reverse sell goal',async()=>{
 test('leaving quote selection cancels its context; ordinary exchange still starts a new calculation',async()=>{
   const a=await app();goal(a);a.run('choosePlanOffice();showView("data");showView("exchange");changeExchangeCurrency("EUR")');
   a.els.exchangeAmount.value='200';a.run('selectOffer("office:EUR:rico");useOfferForPlan()');
+  assert.equal(a.run('currentView'),'exchange');assert.equal(a.els.planReplacePanel.hidden,false);
+  a.run('confirmOfferPlan()');
   assert.equal(a.run('currentView'),'calculator');assert.equal(a.els.planAmount.value,'200');
   assert.equal(a.run('plan.from'),'EUR');assert.equal(a.run('plan.to'),'GEL');assert.equal(a.run('plan.mode'),'give');
   assert.equal(a.els.planResult.textContent,'≈ 602,00 ₾');
@@ -121,7 +123,28 @@ test('explicit return from selection keeps goal and restores ordinary exchange c
   a.run('choosePlanOffice();selectOffer("office:EUR:rico");showView("calculator")');
   assert.deepEqual(intent(a),before);a.run('showView("exchange")');
   assert.equal(a.els.returnToPlan.hidden,true);assert.equal(a.els.exchangeAmountGroup.hidden,false);
-  assert.equal(a.els.exchangeSummary.hidden,false);assert.equal(a.els.planOfferButton.textContent,'В калькулятор');
+  assert.equal(a.els.exchangeSummary.hidden,false);assert.equal(a.els.planOfferButton.textContent,'Рассчитать эту сумму');
+});
+
+test('nested financial screens keep their calculator parent active without a fourth main tab',async()=>{
+  const a=await app();
+  for(const view of ['calculator','data','purchase','exchange','insurance']){
+    a.run(`showView(${JSON.stringify(view)})`);
+    const active=['exchangeNav','purchaseNav','insuranceNav'].filter(id=>a.els[id].attrs['aria-current']==='page');
+    assert.deepEqual(active,[view==='exchange'?'exchangeNav':view==='insurance'?'insuranceNav':'purchaseNav']);
+  }
+});
+
+test('insurance captures before hiding and a successful context return keeps its focus and scroll',async()=>{
+  const a=await app();
+  a.run('const contextCalls=[];window.GamarjiInsurance={captureContext(){contextCalls.push(["capture",$("insuranceView").hidden])},restoreContext(){contextCalls.push(["restore",$("insuranceView").hidden]);return true}};window.scrollTo=()=>contextCalls.push(["top"]);$("insuranceHeading").focus=()=>contextCalls.push(["heading"]);showView("insurance");contextCalls.length=0;showView("calculator");showView("insurance")');
+  assert.equal(a.run('JSON.stringify(contextCalls)'),JSON.stringify([['capture',false],['top'],['restore',false]]));
+});
+
+test('reselecting active insurance cannot replay an older reading context',async()=>{
+  const a=await app();
+  a.run('showView("insurance");const repeatCalls=[];window.GamarjiInsurance={restoreContext(){repeatCalls.push("restore");return true}};window.scrollTo=()=>repeatCalls.push("scroll");showView("insurance")');
+  assert.equal(a.run('JSON.stringify(repeatCalls)'),'[]');
 });
 
 test('sell selection cannot invite saving a buy-only personal rate',async()=>{

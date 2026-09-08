@@ -1,33 +1,42 @@
 .bottom-nav button{flex:1;min-width:0;font-size:13px}
 #insuranceView h1{font-size:24px;line-height:1.25;margin:0 0 16px}
-#insuranceView .insurance-selection{padding:14px 0;border-bottom:1px solid var(--border);display:flex;gap:8px;flex-wrap:wrap;align-items:center}
-#insuranceSelectedCount{flex-basis:100%;overflow-wrap:anywhere;font-size:13px;color:var(--muted)}
+#insuranceView .insurance-selection{padding:14px 0;border-bottom:1px solid var(--border);display:grid;grid-template-columns:minmax(0,1fr) auto;gap:4px 12px;align-items:center}
+#insuranceSelectedCount{grid-column:1;overflow-wrap:anywhere;font-size:13px;color:var(--muted)}
+#insuranceCompare{grid-column:2;grid-row:1}
+#insuranceClear{grid-column:1/-1;justify-self:start}
 #insuranceView .insurance-card{padding:24px 0;border-bottom:1px solid var(--border)}
 #insuranceView h2{font-size:18px;overflow-wrap:anywhere;margin:0 0 8px}
 #insuranceView .insurance-price{font-size:21px;font-weight:650;margin:8px 0}
 #insuranceView summary{padding:12px 0;min-height:44px}
 #insuranceView details{margin-bottom:12px}
+#insuranceView .insurance-card-details{margin:12px 0 0}
+#insuranceView .insurance-card-details>summary{color:var(--accent);font-weight:600;overflow-wrap:anywhere}
+#insuranceView .insurance-card-details[open]>summary{margin-bottom:12px}
+#insuranceView .insurance-card-details>button{margin:12px 0 20px}
+#insuranceView .insurance-card{scroll-margin-top:192px}
+#insuranceView .insurance-chosen{color:var(--accent);font-size:13px;font-weight:600;margin:8px 0}
 #insuranceView .insurance-caution{color:var(--warning);font-size:14px;line-height:1.5}
 #insuranceView button{padding:10px 14px}
 #insuranceView .insurance-compare-row{padding:16px 0;border-bottom:1px solid var(--border);overflow-wrap:anywhere}
-#insuranceView .insurance-compare-row h3{font-size:16px;margin:0 0 12px}
+#insuranceView .insurance-compare-row h2{font-size:16px;margin:0 0 12px}
 #insuranceView .insurance-compare-row strong{font-size:13px;color:var(--muted)}
 #insuranceView .insurance-compare-row p{margin:4px 0 16px}
 #insuranceCompareHeading{margin-top:20px!important}
 #insuranceView .insurance-selection{position:sticky;top:0;background:var(--bg);z-index:2;padding:10px 0}
-.insurance-selected-plans{flex-basis:100%;display:flex;gap:4px 12px;flex-wrap:wrap}
+.insurance-selected-plans{grid-column:1/-1;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:4px 12px}
+.insurance-selected-plans:empty{display:none}
 #insuranceView .insurance-selected-plans button{padding:4px 0;font-size:13px;min-height:44px;overflow-wrap:anywhere;text-align:left}
 #insuranceView .insurance-preview{font-size:14px;margin:8px 0;overflow-wrap:anywhere}
 #insuranceView .insurance-benefit{border-top:1px solid var(--border);padding:8px 0}
 #insuranceView .insurance-benefit h3{font-size:14px;margin:8px 0}
 #insuranceView .insurance-benefit p{font-size:13px;margin:6px 0}
 #insuranceView .insurance-source{font-size:13px;display:inline-flex;align-items:center;min-height:44px}
-#insuranceView .insurance-plan-selectors{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:12px;position:sticky;top:0;background:var(--bg);z-index:2;padding:12px 0;border-bottom:1px solid var(--border)}
+#insuranceView .insurance-plan-selectors{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:12px;padding:12px 0;border-bottom:1px solid var(--border)}
 #insuranceView .insurance-plan-selectors>div{min-width:0}
 #insuranceView .insurance-plan-selectors select{padding:10px 6px;font-size:16px}
 #insuranceView .insurance-plan-name{font-size:13px;overflow-wrap:anywhere;margin:8px 0 0}
 #insuranceView .insurance-compare-row{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:4px 12px}
-#insuranceView .insurance-compare-row h3{grid-column:1/-1;margin:0 0 8px}
+#insuranceView .insurance-compare-row h2{grid-column:1/-1;margin:0 0 8px}
 #insuranceView .insurance-compare-row>div{min-width:0}
 #insuranceView .insurance-compare-row>div+div{border-left:1px solid var(--border);padding-left:12px}
 #insuranceView .insurance-compare-row p{font-size:14px;margin:6px 0}
@@ -35,4 +44,20 @@
 #insuranceView .insurance-compare-row strong{display:block;font-size:13px;line-height:1.5}
 #insuranceView .insurance-source-details{border-top:1px solid var(--border);padding-top:4px}
 #insuranceComparison{scroll-margin-top:8px}
-@media(max-height:500px){#insuranceView .insurance-selection,#insuranceView .insurance-plan-selectors{position:static}}
+#insuranceView .insurance-comparison-tools{position:sticky;top:0;z-index:3;display:grid;grid-template-columns:auto minmax(0,1fr);gap:12px;padding:10px 0;background:var(--bg);border-bottom:1px solid var(--border)}
+#insuranceJump{min-width:0;min-height:44px;font-size:16px;padding:10px 8px}
+#insuranceView [id^="insuranceCondition-"]{scroll-margin-top:88px}
+#insuranceView .insurance-comparison-sources{padding-top:20px}
+@media(max-width:600px){
+  #insuranceView .insurance-compare-row{grid-template-columns:minmax(0,1fr);gap:12px;padding:24px 0}
+  #insuranceView .insurance-compare-row>div+div{border-left:0;border-top:1px solid var(--border);padding:12px 0 0}
+  #insuranceView .insurance-compare-row p{font-size:16px;line-height:1.5}
+  #insuranceView .insurance-compare-row .note,#insuranceView .insurance-compare-row .insurance-caution{font-size:14px;line-height:1.5}
+  #insuranceView .insurance-plan-selectors{grid-template-columns:minmax(0,1fr)}
+  #insuranceView .insurance-plan-selectors>div{display:grid;grid-template-columns:52px minmax(0,1fr);gap:4px 8px;align-items:center}
+  #insuranceView .insurance-plan-selectors label{margin:0;font-size:13px}
+  #insuranceView .insurance-plan-name{grid-column:2;margin:0}
+  #insuranceView .insurance-card-details .insurance-preview,#insuranceView .insurance-card-details .insurance-benefit>p{font-size:16px;line-height:1.5}
+  #insuranceView .insurance-card-details .insurance-benefit>.note,#insuranceView .insurance-card-details>.note{font-size:14px;line-height:1.5}
+}
+@media(max-height:500px){#insuranceView .insurance-selection,#insuranceView .insurance-comparison-tools{position:static}}

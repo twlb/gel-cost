@@ -46,7 +46,7 @@ class HTMLTests(unittest.TestCase):
 
     def test_build_note_is_unique_and_outside_main_before_navigation(self):
         source=(ROOT/"index.html").read_text(encoding="utf-8")
-        note='<p class="build-note">V5.10.0 · тестовая версия</p>'
+        note='<p class="build-note">V5.10.1 · тестовый выпуск</p>'
         self.assertEqual(source.count(note), 1)
         self.assertEqual(source.count('class="build-note"'), 1)
         self.assertLess(source.index('</main>'), source.index(note))
@@ -57,7 +57,7 @@ class HTMLTests(unittest.TestCase):
         self.assertEqual(p.stack,[])
         self.assertTrue(all(n == 1 for n in Counter(p.ids).values()))
         self.assertTrue(all(i in p.labels for i in p.inputs))
-        self.assertEqual(p.scripts,["theme.js?v=5.10.0-test-1","core.js?v=5.8-release-1","locations.js?v=5.8-release-1","app.js?v=5.10.0-test-1","weather.js?v=5.10.0-test-1","insurance-core.js?v=5.10.0-test-1","insurance.js?v=5.10.0-test-1"])
+        self.assertEqual(p.scripts,["theme.js?v=5.10.0-test-1","core.js?v=5.8-release-1","locations.js?v=5.8-release-1","app.js?v=5.10.1-test-1","weather.js?v=5.10.0-test-1","insurance-core.js?v=5.10.0-test-1","insurance.js?v=5.10.1-test-1"])
         source=(ROOT/"app.js").read_text(encoding="utf-8")
         for handler in p.handlers:
             self.assertRegex(source,r"function\s+"+re.escape(handler)+r"\(")
@@ -88,7 +88,9 @@ class HTMLTests(unittest.TestCase):
         for field, label in [('officialRub', 'USD/RUB — ЦБ РФ'), ('officialGel', 'USD/GEL — НБГ')]:
             self.assertIn(f'<div><label for="{field}">{label}</label><input id="{field}" type="text" readonly></div>', official)
         self.assertIn('href="styles.css?v=5.10.0-test-1"', source)
-        self.assertIn('<p class="build-note">V5.10.0 · тестовая версия</p>', source)
+        self.assertIn('<p class="build-note">V5.10.1 · тестовый выпуск</p>', source)
+        self.assertIn('href="insurance.css?v=5.10.1-test-1"', source)
+        self.assertIn('href="theme.css?v=5.10.1-test-1"', source)
 
     def test_audit_actions_feedback_and_warnings_stay_near_the_task(self):
         source=(ROOT/"index.html").read_text(encoding="utf-8")

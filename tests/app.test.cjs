@@ -1223,7 +1223,7 @@ test('fresh imported personal quote becomes visibly stale when its own timestamp
   a.responses['./exchange-rates.json']=officeData();
   a.responses['./exchange-rates.json'].fetchedAt=a.run('new Date().toISOString()');
   a.responses['./exchange-rates.json'].offers.forEach(row=>row.checkedAt=a.run('new Date().toISOString()'));
-  await a.run('refreshOffices()');a.run('selectOffer("office:mjc");useOfferForPlan()');
+  await a.run('refreshOffices()');a.run('showView("calculator");choosePlanOffice();selectOffer("office:mjc");useOfferForPlan()');
   assert.equal(a.els.planCaution.hidden,true);assert.equal(a.run('Object.hasOwn(plan.quoteMeta,"gelBuy")'),false);
   assert.match(a.els.planSource0.textContent,/MJC/);
 });

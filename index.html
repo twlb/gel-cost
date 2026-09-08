@@ -9,9 +9,9 @@
 <link rel="icon" href="data:,">
 <script src="theme.js?v=5.10.0-test-1"></script>
 <link rel="stylesheet" href="styles.css?v=5.10.0-test-1">
-<link rel="stylesheet" href="insurance.css?v=5.10.0-test-1">
+<link rel="stylesheet" href="insurance.css?v=5.10.1-test-1">
 <link rel="stylesheet" href="brand/brand.css?v=5.10.0-test-1">
-<link rel="stylesheet" href="theme.css?v=5.10.0-test-1">
+<link rel="stylesheet" href="theme.css?v=5.10.1-test-1">
 </head>
 <body>
 <a class="skip" href="#main">К содержимому</a>
@@ -144,9 +144,14 @@
 <div id="exchangeSummary" class="exchange-result" aria-live="polite"><p id="exchangeResultLabel">По выбранному курсу</p><strong id="exchangeReceive">— ₾</strong></div>
 <div class="actions exchange-actions">
 <button class="primary" id="offerAddressButton" onclick="toggleOfferLocation()" aria-expanded="false" aria-controls="offerLocationPanel" hidden>Смотреть адреса</button>
-<button class="secondary" id="planOfferButton" onclick="useOfferForPlan()" aria-describedby="offerActionNote" disabled>В калькулятор</button>
+<button class="secondary" id="planOfferButton" onclick="useOfferForPlan()" aria-describedby="offerActionNote" aria-expanded="false" aria-controls="planReplacePanel" disabled>Рассчитать эту сумму</button>
 </div>
 <p class="note" id="offerActionNote" hidden></p>
+<section id="planReplacePanel" class="plan-replacement" aria-labelledby="planReplaceHeading" hidden>
+<h3 id="planReplaceHeading">Заменить текущий расчёт?</h3>
+<p id="planReplaceText" tabindex="-1"></p>
+<div class="actions exchange-actions"><button class="primary" id="planReplaceConfirm" onclick="confirmOfferPlan()">Заменить расчёт</button><button class="secondary" id="planReplaceCancel" onclick="cancelOfferPlan()">Оставить текущий</button></div>
+</section>
 <div id="locationPanelHome">
 <section class="offer-location" id="offerLocationPanel" aria-labelledby="branchHeading" hidden>
 <div class="branch-header"><h3 id="branchHeading">Адреса и карты</h3><button type="button" class="text-button" id="closeLocationButton" onclick="closeOfferLocation()">Свернуть</button></div>
@@ -211,7 +216,7 @@
 <section id="insuranceView" hidden aria-labelledby="insuranceHeading">
 <div id="insuranceBrowseIntro">
 <h1 id="insuranceHeading" tabindex="-1">Медицинская страховка</h1>
-<p class="subtitle">Для жизни в Грузии. Сравните открытые условия.</p>
+<p class="subtitle">Для жизни в Грузии. Откройте условия и выберите два плана.</p>
 <p class="notice">Это справочник, не персональный подбор. Приём иностранцев и клиники Батуми нужно уточнить.</p>
 <label for="insuranceCompany">Страховая компания</label>
 <select id="insuranceCompany"><option value="">Все компании</option><option>Unison</option><option>ARDI</option><option>GPI Holding</option></select>
@@ -219,11 +224,19 @@
 <button id="insuranceRetry" class="secondary" hidden>Повторить загрузку</button>
 </div>
 <div id="insuranceSelection" class="insurance-selection"><span id="insuranceSelectedCount">Выберите два плана</span><button id="insuranceCompare" class="primary" disabled>Сравнить</button><button id="insuranceClear" class="text-button" hidden>Снять выбор</button></div>
-<section id="insuranceComparison" hidden aria-labelledby="insuranceCompareHeading"><h2 id="insuranceCompareHeading" tabindex="-1">Сравнение планов</h2><button id="insuranceBack" class="secondary">К списку страховок</button><div id="insuranceComparisonRows"></div></section>
+<section id="insuranceComparison" hidden aria-labelledby="insuranceCompareHeading">
+<h1 id="insuranceCompareHeading" tabindex="-1">Сравнение планов</h1>
+<div class="insurance-comparison-tools">
+<button id="insuranceBack" class="secondary" aria-label="К списку страховок">К списку</button>
+<label class="visually-hidden" for="insuranceJump">Перейти к условию</label>
+<select id="insuranceJump" disabled><option value="">К условию…</option></select>
+</div>
+<div id="insuranceComparisonRows"></div>
+</section>
 <div id="insuranceList"></div>
 </section>
 </main>
-<p class="build-note">V5.10.0 · тестовая версия</p>
+<p class="build-note">V5.10.1 · тестовый выпуск</p>
 <nav class="bottom-nav" aria-label="Разделы"><button id="exchangeNav" aria-current="page" onclick="showView('exchange')"><img src="brand/icons/navigation/arrow-right-left.svg" width="24" height="24" alt="">Обмен</button><button id="purchaseNav" onclick="showView('calculator')"><img src="brand/icons/navigation/calculator.svg" width="24" height="24" alt="">Калькулятор</button><button id="insuranceNav" aria-current="false" onclick="showView('insurance')"><img src="brand/icons/navigation/shield-plus.svg" width="24" height="24" alt="">Страховки</button></nav>
 </div>
 <form class="inline" id="purchasePanel" onsubmit="event.preventDefault();savePurchase()">
@@ -242,9 +255,9 @@
 </form>
 <script src="core.js?v=5.8-release-1"></script>
 <script src="locations.js?v=5.8-release-1"></script>
-<script src="app.js?v=5.10.0-test-1"></script>
+<script src="app.js?v=5.10.1-test-1"></script>
 <script src="weather.js?v=5.10.0-test-1"></script>
 <script src="insurance-core.js?v=5.10.0-test-1"></script>
-<script src="insurance.js?v=5.10.0-test-1"></script>
+<script src="insurance.js?v=5.10.1-test-1"></script>
 </body>
 </html>

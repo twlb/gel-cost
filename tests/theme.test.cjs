@@ -10,6 +10,13 @@ const html=fs.readFileSync(path.join(root,'index.html'),'utf8');
 const C=require('../core.js');
 const preference='gamarji.theme';
 
+test('dark primary styling applies only to enabled buttons so disabled labels remain readable',()=>{
+  const css=fs.readFileSync(path.join(root,'theme.css'),'utf8');
+  assert.match(css,/\[data-theme="dark"\]\s+\.primary:not\(:disabled\)/);
+  assert.doesNotMatch(css,/\[data-theme="dark"\]\s+\.primary\s*\{/);
+  assert.match(css,/button:disabled\s*\{[^}]*color:\s*var\(--muted\)/);
+});
+
 function theme(saved={},options={}){
   const store={...saved},reads=[],writes=[],events={};
   const documentElement={dataset:{}};

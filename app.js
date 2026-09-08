@@ -59,6 +59,7 @@ const appleMaps=/(iPhone|iPad|iPod|Macintosh)/i.test(navigator.userAgent||"");
 const QUOTE_TTL=2*3600000;
 const plan={from:"RUB",to:"GEL",via:"USD",mode:"give",quotes:{},quoteMeta:{},fees:{},sourceKey:"",sourceCurrency:"USD",sourceCity:"batumi",initialized:false};
 let planQuoteSelection=null;
+let planSourceChosen=false,planReplacement=null;
 let settingsDraft=null,settingsBaseline="",settingsPending=0;
 const planNames={RUB:"Рубли",USD:"Доллары",EUR:"Евро",USDT:"USDT",GEL:"Лари"};
 const planUnits={RUB:"₽",USD:"USD",EUR:"EUR",USDT:"USDT",GEL:"₾"};
@@ -98,6 +99,46 @@ function finishPlanQuote(index){
   plan.quotes[row.quote]=whole+","+fraction.padEnd(4,"0");renderPlanner();
 }
 function editPlanFee(index){const row=plannerRows()[index];if(row?.quote){plan.fees[row.key]={pct:$("planPct"+index).value,fixed:$("planFixed"+index).value};renderPlanner();}}
+function hasPlanDraft(){
+  return Boolean($("planAmount").value.trim()||Object.keys(plan.quotes).length||Object.keys(plan.fees).length||planSourceChosen||
+    plan.from!=="RUB"||plan.to!=="GEL"||plan.via!=="USD"||plan.mode!=="give");
+}
+function offerPlanIntent(){
+  const item=offersForCity().find(row=>row.key===selectedOffer),amount=$("exchangeAmount").value;
+  if(planQuoteSelection||editingExchangeRate()||!item||!C.positive(item.buy)||item.kind!=="manual"&&!item.fresh||!(C.number(amount)>0&&C.number(amount)<=1e9))return null;
+  return {currency:exchangeCurrency,amount,city:chosenCity(),key:item.key,kind:item.kind,buy:item.buy,checkedAt:item.checkedAt,fresh:item.fresh};
+}
+function offerPlanFingerprint(intent){
+  return JSON.stringify({intent,plan,amount:$("planAmount").value,sourceChosen:planSourceChosen});
+}
+function closePlanReplacement(){
+  planReplacement=null;$("planReplacePanel").hidden=true;
+  $("planOfferButton").setAttribute("aria-expanded","false");
+}
+function cancelOfferPlan(){closePlanReplacement();$("planOfferButton").focus();}
+function startOfferPlan(intent){
+  // A new calculation starts with exactly the exchange shown, without old fees or directed quotes.
+  const leg=planLegs[intent.currency+"GEL"],manual=intent.kind==="manual";
+  Object.assign(plan,{from:intent.currency,to:"GEL",via:intent.currency==="RUB"?"direct":"USD",mode:"give",
+    quotes:manual?{[leg.quote]:inputValue(nominalQuote(intent.buy,leg.nominal))}:{},
+    quoteMeta:manual?{[leg.quote]:{checkedAt:intent.checkedAt}}:{},fees:{},
+    sourceKey:manual?"":intent.key,sourceCurrency:intent.currency,sourceCity:intent.city,initialized:true});
+  $("planAmount").value=intent.amount;planSourceChosen=true;
+  closePlanReplacement();showView("calculator");
+}
+function confirmOfferPlan(){
+  if(!planReplacement)return;
+  const intent=offerPlanIntent();
+  if(currentView!=="exchange"||!intent||planReplacement!==offerPlanFingerprint(intent)){
+    closePlanReplacement();announce("Данные изменились. Проверьте сумму и курс, затем начните расчёт снова.");
+    if(currentView==="exchange"){
+      renderOffers();
+      ($("planOfferButton").hidden||$("planOfferButton").disabled?$("exchangeHeading"):$("planOfferButton")).focus();
+    }
+    return;
+  }
+  startOfferPlan(intent);
+}
 function useOfferForPlan(){
   const item=offersForCity().find(row=>row.key===selectedOffer);
   if(!item||editingExchangeRate()||item.kind!=="manual"&&!item.fresh)return;
@@ -114,26 +155,14 @@ function useOfferForPlan(){
     }else{
       plan.sourceKey=item.key;delete plan.quotes[row.quote];delete plan.quoteMeta[row.quote];
     }
-    showView("calculator");return;
+    planSourceChosen=true;showView("calculator");return;
   }
-  const amount=C.number($("exchangeAmount").value);
-  if(!(amount>0&&amount<=1e9))return;
-  if(!plan.initialized||exchangeCurrency!=="USD"||plan.sourceCurrency!=="USD"){
-    plan.from=exchangeCurrency;plan.to="GEL";plan.mode="give";$("planAmount").value=$("exchangeAmount").value;
-  }
-  plan.sourceCurrency=exchangeCurrency;plan.sourceCity=chosenCity();
-  const buyLeg=planLegs[exchangeCurrency+"GEL"],sellLeg=planLegs["GEL"+exchangeCurrency];
-  if(item.kind==="manual"){
-    plan.sourceKey="";plan.quotes[buyLeg.quote]=inputValue(nominalQuote(item.buy,buyLeg.nominal));delete plan.quotes[sellLeg.quote];
-    plan.quoteMeta[buyLeg.quote]={checkedAt:item.checkedAt};delete plan.quoteMeta[sellLeg.quote];
-  }else{
-    plan.sourceKey=item.key;delete plan.quotes[buyLeg.quote];delete plan.quotes[sellLeg.quote];
-    delete plan.quoteMeta[buyLeg.quote];delete plan.quoteMeta[sellLeg.quote];
-  }
-  // An explicitly chosen cash offer starts a cash route, never a USDT route.
-  if(plan.from==="USDT"||plan.to==="USDT"||plan.from===plan.to){plan.from="RUB";plan.to="GEL";}
-  plan.via=exchangeCurrency==="RUB"?"direct":"USD";
-  plan.initialized=true;showView("calculator");
+  const intent=offerPlanIntent();if(!intent)return;
+  if(!hasPlanDraft()){startOfferPlan(intent);return;}
+  planReplacement=offerPlanFingerprint(intent);
+  $("planReplaceText").textContent="Новый расчёт: "+intent.amount.trim().replace(".",",")+" "+planUnits[intent.currency]+" → лари, без учёта комиссий. Он заменит текущий черновик, включая его курсы и комиссии. Покупки и история сохранятся.";
+  $("planReplacePanel").hidden=false;$("planOfferButton").setAttribute("aria-expanded","true");
+  $("planReplaceText").focus();
 }
 function showPlanLocation(){
   const item=offersForCity(plan.sourceCurrency,plan.sourceCity).find(row=>row.key===plan.sourceKey);
@@ -239,6 +268,9 @@ function calculationFeedback(message,method,view=currentView){
 }
 function showView(view){
   if(!["purchase","exchange","data","calculator","insurance"].includes(view))return;
+  if(view==="insurance"&&currentView===view)return;
+  if(currentView==="insurance"&&view!=="insurance")window.GamarjiInsurance?.captureContext?.();
+  if(view!=="exchange")closePlanReplacement();
   if(view!=="exchange")planQuoteSelection=null;
   currentView=view;
   for(const name of ["purchase","exchange","data"]){
@@ -248,13 +280,14 @@ function showView(view){
   $("calculatorView").hidden=view!=="calculator";
   $("insuranceView").hidden=view!=="insurance";
   $("insuranceNav").setAttribute("aria-current",view==="insurance"?"page":"false");
-  $("purchaseNav").setAttribute("aria-current",view==="calculator"?"page":"false");
+  $("purchaseNav").setAttribute("aria-current",["calculator","data","purchase"].includes(view)?"page":"false");
   if(view==="calculator"){
     if(!plan.initialized){const item=offersForCity("USD").find(row=>row.key===selectedOffer&&row.kind!=="manual"&&row.fresh);if(item){plan.sourceKey=item.key;plan.sourceCity=chosenCity();}plan.initialized=true;}
     renderPlanner();
   }
   // Section changes leave unfinished fields intact.
   renderOffers();
+  if(view==="insurance"&&window.GamarjiInsurance?.restoreContext?.())return;
   (view==="insurance"&&!$("insuranceComparison").hidden?$("insuranceCompareHeading"):$(view+"Heading")).focus({preventScroll:true});
   window.scrollTo?.({top:0,behavior:"instant"});
 }
@@ -1187,7 +1220,7 @@ function renderOffers(){
   $("offerList").replaceChildren(...nodes.flatMap(node=>node.dataset.offerKey===selectedOffer?[node,actionPanel]:[node]));$("offerList").hidden=!rows.length;
   renderOfferLocation(rows.find(row=>row.key===expandedOffer));
   if(focused)nodes.find(node=>node.dataset.offerKey===focused)?.focus({preventScroll:true});
-  else if(focusedBranch&&["branchChoice","openDeviceMap","branchSource","closeLocationButton","offerAddressButton","planOfferButton"].includes(focusedBranch))$(focusedBranch).focus({preventScroll:true});
+  else if(focusedBranch&&["branchChoice","openDeviceMap","branchSource","closeLocationButton","offerAddressButton","planOfferButton","planReplaceText","planReplaceConfirm","planReplaceCancel"].includes(focusedBranch))$(focusedBranch).focus({preventScroll:true});
   $("moreOffers").hidden=rows.length<=3;
   $("moreOffers").textContent=allOffers?"Свернуть список":"Все предложения ("+rows.length+")";
   $("moreOffers").setAttribute("aria-expanded",String(allOffers));
@@ -1217,10 +1250,16 @@ function renderOffers(){
   $("applyOfferButton").disabled=editingExchangeRate()||!(item&&(item.kind==="manual"||item.fresh)&&valid);
   $("planOfferButton").hidden=editingExchangeRate()||Boolean(item&&item.kind!=="manual"&&!item.fresh);
   const incompatible=selecting&&(exchangeCurrency!==planQuoteSelection.currency||!item||!C.positive(item[side])||(item.kind==="manual"&&side==="sell"));
-  $("planOfferButton").textContent=selecting?"Использовать курс":"В калькулятор";
+  $("planOfferButton").textContent=selecting?"Использовать курс":"Рассчитать эту сумму";
   $("planOfferButton").disabled=editingExchangeRate()||incompatible||!(item&&(item.kind==="manual"||item.fresh)&&(selecting||valid));
   $("offerActionNote").textContent=incompatible?"Нужен курс "+(side==="sell"?"продажи ":"покупки ")+planQuoteSelection.currency+". Расчёт сохранён.":!selecting&&!valid?"Введите сумму выше.":item&&item.kind!=="manual"&&!item.fresh?"Чтобы применить курс, обновите данные или введите свой.":selecting?"Сумма, направление и комиссии останутся прежними.":"";
   $("offerActionNote").hidden=!$("offerActionNote").textContent;
+  if(planReplacement&&planReplacement!==offerPlanFingerprint(offerPlanIntent())){
+    closePlanReplacement();announce("Данные изменились. Проверьте сумму и курс, затем начните расчёт снова.");
+    if(["planReplaceText","planReplaceConfirm","planReplaceCancel"].includes(focusedBranch)){
+      ($("planOfferButton").hidden||$("planOfferButton").disabled?$("exchangeHeading"):$("planOfferButton")).focus();
+    }
+  }
   $("applyOfferButton").textContent="Применить курс";
 }
 async function applyOffer(){
