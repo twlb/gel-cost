@@ -39,16 +39,31 @@ header .brand { margin: 0; padding: 0; min-height: 44px; }
 .brand-art img { filter: grayscale(1) contrast(10); }
 [data-theme="dark"] .brand-art { mix-blend-mode: screen; }
 [data-theme="dark"] .brand-art img { filter: grayscale(1) contrast(10) invert(1); }
-.brand-tagline { grid-column: 1 / 3; color: var(--muted); font-size: 13px; margin: 0; }
-.theme-toggle.text-button { grid-column: 3; font-size: 11px; min-height: 44px; text-align: right; padding: 6px 0; text-decoration: none; }
+.header-secondary { grid-column: 1 / -1; display: flex; align-items: center; justify-content: space-between; gap: 10px; min-width: 0; margin-top: 4px; }
+.brand-tagline { color: var(--muted); font-size: 13px; line-height: 1.4; margin: 0; }
+.icon-button { display: inline-flex; justify-content: center; align-items: center; gap: 6px; min-height: 44px; color: var(--text); background: transparent; border: 1px solid transparent; }
+.icon-button { width: 44px; min-width: 44px; padding: 10px; border-radius: 12px; border-color: var(--border); }
+.icon-button:hover { background: var(--selected); }
+.ui-icon { display: block; flex: none; object-fit: contain; }
+[data-theme="dark"] .ui-icon { filter: invert(1); }
 .header-city { min-width: 0; }
 .header-city select { width: 106px; padding: 8px 0 8px 4px; min-height: 44px; border: 0; background: transparent; font-size: 16px; font-weight: 650; }
 .weather { min-width: 46px; text-align: center; color: var(--muted); }
-.weather-reading { display: flex; align-items: center; justify-content: center; gap: 3px; }
+.weather-reading { display: flex; align-items: center; justify-content: center; gap: 3px; min-height: 44px; color: var(--muted); text-decoration: none; border-radius: 8px; }
+.weather-reading:hover { color: var(--text); }
 #weatherTemperature { font-size: 20px; line-height: 1.2; font-variant-numeric: tabular-nums; white-space: nowrap; }
 #weatherIcon { width: 22px; height: 22px; object-fit: contain; }
 [data-theme="dark"] #weatherIcon { filter: invert(1); }
-.weather a { display: block; font-size: 9px; line-height: 1.3; padding: 2px 0; color: var(--muted); }
+.app-sources { margin: 24px 0 0; color: var(--muted); font-size: 12px; border-top: 1px solid var(--border); }
+.app-sources summary { font-size: 12px; }
+.app-sources p { margin: 0 0 12px; }
+.services-city { margin: 4px 0 12px; color: var(--muted); font-size: 14px; }
+.service-row { padding: 16px 0; border-top: 1px solid var(--border); }
+.service-row h2 { display: flex; align-items: center; gap: 8px; font-size: 16px; margin: 0 0 6px; }
+.service-row p { font-size: 13px; margin: 6px 0; color: var(--muted); overflow-wrap: anywhere; }
+.service-row a { display: inline-flex; align-items: center; min-height: 44px; margin-right: 16px; font-size: 14px; }
+.best-offer-jump { flex: none; max-width: 132px; min-height: 44px; padding: 6px 0 6px 8px; text-align: right; font-size: 12px; line-height: 1.4; }
+.best-offer-scope { margin: 0 0 12px; font-size: 12px; }
 .visually-hidden { position: absolute!important; width: 1px!important; height: 1px!important; padding: 0!important; margin: -1px!important; overflow: hidden!important; clip-path: inset(50%); white-space: nowrap; border: 0!important; }
 h1,#exchangeHeading,#purchaseHeading,#insuranceView h1 { font-size: 30px; font-weight: 700; line-height: 1.2; letter-spacing: -.8px; margin: 0 0 24px; }
 label,.field-label,summary,.disclosure>summary { color: var(--muted); }
@@ -78,6 +93,17 @@ button:not(:disabled):active { opacity: .8; }
 .offer-tools .text-button { background: transparent; border-color: var(--border); }
 .offer-tools { margin: 10px 0 0; }
 .offer-tools .text-button { padding: 8px 0; border: 0; }
+#offerRefreshHome:empty { display: none; }
+#offerRefreshAction, #offerRefreshAction>button { width: 100%; }
+#offerRefreshAction>button { font-size: 16px; }
+.calculator-heading { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 4px 12px; margin-bottom: 16px; }
+.calculator-heading h1 { margin: 0; font-size: 28px; }
+.calculator-heading .text-button { font-size: 13px; flex-shrink: 0; }
+#calculatorView .mode-switch { margin-top: 0; }
+#calculatorView #planViaGroup { margin-bottom: 16px; }
+#calculatorView .plan-feedback { margin: 8px 0 16px; padding: 0; border: 0; }
+#calculatorView .plan-result.is-pending { margin: 0; padding: 0; }
+#calculatorView .plan-step h3 { margin-bottom: 12px; }
 #exchangeView .section-head h2 { font-size: 15px; font-weight: 400; color: var(--muted); }
 .offer-list { border: 0; border-radius: 0; overflow: visible; }
 .offer-row { padding: 18px 0; border-left: 0; }
@@ -96,11 +122,14 @@ button:not(:disabled):active { opacity: .8; }
 .plan-replacement h3 { margin: 0 0 8px; font-size: 18px; line-height: 1.35; }
 .plan-replacement p { margin: 0 0 16px; font-size: 15px; overflow-wrap: anywhere; }
 .exchange-result strong { font-size: 44px; font-variant-numeric: tabular-nums; letter-spacing: -1.2px; }
-.offer-best { color: var(--accent); background: var(--selected); border-color: var(--border); }
+.offer-best { color: var(--text); background: var(--selected); border-color: var(--border); }
 .offer-location { background: var(--surface); }
-.bottom-nav { width: min(100%,530px); background: var(--bg); padding: 8px 12px max(16px,env(safe-area-inset-bottom)); }
-.bottom-nav button { color: var(--muted); font-size: 13px; display: flex; flex-direction: column; align-items: center; gap: 5px; border-top: 0; padding: 8px 4px; }
-.bottom-nav img { width: 24px; height: 24px; opacity: .75; }
+.branch-travel-actions { display: grid; gap: 8px; }
+.bottom-nav { width: min(100%,530px); background: var(--bg); display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); padding: 8px 8px max(16px,env(safe-area-inset-bottom)); }
+.bottom-nav button { position: relative; color: var(--muted); font-size: 13px; display: flex; flex-direction: column; align-items: center; gap: 5px; border-top: 0; padding: 8px 4px; }
+.bottom-nav img { position: relative; width: 24px; height: 24px; opacity: .75; }
+/* A shape marks the current section; keyboard focus still outlines the whole button. */
+.bottom-nav button[aria-current=page]::before { content: ""; position: absolute; top: 4px; left: 50%; transform: translateX(-50%); width: 48px; height: 32px; box-sizing: border-box; border: 1px solid var(--accent); border-radius: 10px; background: var(--selected); pointer-events: none; }
 [data-theme="dark"] .bottom-nav img { filter: invert(1); }
 .bottom-nav button[aria-current=page] img { opacity: 1; }
 .bottom-nav button[aria-current=page] { color: var(--accent); }
@@ -111,6 +140,12 @@ button:not(:disabled):active { opacity: .8; }
   .brand-art { width: 112px; }
   .header-city select { width: 94px; font-size: 14px; }
   .brand-tagline { font-size: 12px; }
+  .header-secondary { gap: 6px; }
+  .bottom-nav { padding-inline: 4px; }
+  .bottom-nav button { font-size: 12px; padding-inline: 2px; }
   h1,#exchangeHeading,#purchaseHeading,#insuranceView h1 { font-size: 28px; }
   .exchange-result strong { font-size: 36px; }
+}
+@media(max-width:340px) {
+  .bottom-nav button { font-size: 11px; }
 }

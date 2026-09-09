@@ -1,0 +1,178 @@
+{
+  "schemaVersion": 1,
+  "stage": "local-preview",
+  "generatedAt": "2026-09-09T05:14:41.255273Z",
+  "city": "batumi",
+  "coverage": "partial",
+  "queries": [
+    {
+      "key": "batumi",
+      "status": "partial",
+      "lastAttemptAt": "2026-09-09T05:09:46.289817Z",
+      "lastSuccessAt": "2026-09-09T05:09:46.289817Z",
+      "errorCode": null
+    },
+    {
+      "key": "khelvachauri",
+      "status": "partial",
+      "lastAttemptAt": "2026-09-09T05:12:11.976623Z",
+      "lastSuccessAt": "2026-09-09T05:12:11.976623Z",
+      "errorCode": null
+    }
+  ],
+  "quality": {
+    "omitted": 93
+  },
+  "events": [
+    {
+      "id": "energo:080892a86ae48d5f01eb90f0e1a28501",
+      "kind": "planned",
+      "addresses": [
+        {
+          "original": "ბათუმი/ფრიდონ ხალვაშის გამზირი",
+          "display": "Батуми/проспект Фридона Халваши",
+          "translationStatus": "verified-dictionary",
+          "houseTokens": [],
+          "needsReview": false
+        },
+        {
+          "original": "ბათუმი/დიდაჭარის 1 ჩიხი",
+          "display": "Батуми/დიდაჭარის 1 ჩიხი",
+          "translationStatus": "partial",
+          "houseTokens": [
+            "1"
+          ],
+          "needsReview": true
+        }
+      ],
+      "startLocal": "2026-09-09 16:00",
+      "endLocal": "2026-09-09 18:00",
+      "endMeaning": "unconfirmed",
+      "restoration": "unconfirmed",
+      "firstSeenAt": "2026-09-09T05:12:11.976623Z",
+      "lastSeenAt": "2026-09-09T05:12:11.976623Z",
+      "provenance": [
+        {
+          "query": "khelvachauri",
+          "seenAt": "2026-09-09T05:12:11.976623Z",
+          "inLatestResponse": true
+        }
+      ]
+    },
+    {
+      "id": "energo:163cc09cb388fea8f647d5a2a02761c4",
+      "kind": "planned",
+      "addresses": [
+        {
+          "original": "ბათუმი/ფრიდონ ხალვაშის გამზირი",
+          "display": "Батуми/проспект Фридона Халваши",
+          "translationStatus": "verified-dictionary",
+          "houseTokens": [],
+          "needsReview": false
+        }
+      ],
+      "startLocal": "2026-09-09 14:00",
+      "endLocal": "2026-09-09 16:00",
+      "endMeaning": "unconfirmed",
+      "restoration": "unconfirmed",
+      "firstSeenAt": "2026-09-09T05:12:11.976623Z",
+      "lastSeenAt": "2026-09-09T05:12:11.976623Z",
+      "provenance": [
+        {
+          "query": "khelvachauri",
+          "seenAt": "2026-09-09T05:12:11.976623Z",
+          "inLatestResponse": true
+        }
+      ]
+    },
+    {
+      "id": "energo:8b4dbc7d2a2f5b39b95067523534c373",
+      "kind": "planned",
+      "addresses": [
+        {
+          "original": "ბათუმი/ფრიდონ ხალვაშის გამზირი",
+          "display": "Батуми/проспект Фридона Халваши",
+          "translationStatus": "verified-dictionary",
+          "houseTokens": [],
+          "needsReview": false
+        },
+        {
+          "original": "ბათუმი/ნიკო მუსხელიშვილის I შესახვევი",
+          "display": "Батуми/ნიკო მუსხელიშვილის I შესახვევი",
+          "translationStatus": "partial",
+          "houseTokens": [],
+          "needsReview": true
+        }
+      ],
+      "startLocal": "2026-09-09 11:00",
+      "endLocal": "2026-09-09 13:00",
+      "endMeaning": "unconfirmed",
+      "restoration": "unconfirmed",
+      "firstSeenAt": "2026-09-09T05:12:11.976623Z",
+      "lastSeenAt": "2026-09-09T05:12:11.976623Z",
+      "provenance": [
+        {
+          "query": "khelvachauri",
+          "seenAt": "2026-09-09T05:12:11.976623Z",
+          "inLatestResponse": true
+        }
+      ]
+    },
+    {
+      "id": "energo:5ae361a3aa1c5d84c68d4fa3f1092793",
+      "kind": "unplanned",
+      "addresses": [
+        {
+          "original": "ბათუმი, თამარ მეფის III შესახვევი, შენ. 1ა",
+          "display": "Батуми, თამარ მეფის III შესახვევი, д. 1ა",
+          "translationStatus": "partial",
+          "houseTokens": [
+            "1ა"
+          ],
+          "needsReview": true
+        }
+      ],
+      "startLocal": "2026-09-02 17:43",
+      "endLocal": "2026-09-02 21:43",
+      "endMeaning": "unconfirmed",
+      "restoration": "unconfirmed",
+      "firstSeenAt": "2026-09-09T05:09:46.289817Z",
+      "lastSeenAt": "2026-09-09T05:09:46.289817Z",
+      "provenance": [
+        {
+          "query": "batumi",
+          "seenAt": "2026-09-09T05:09:46.289817Z",
+          "inLatestResponse": true
+        }
+      ]
+    },
+    {
+      "id": "energo:d0dcb603b254b3d3a295d697782138b8",
+      "kind": "unplanned",
+      "addresses": [
+        {
+          "original": "ბათუმი, პუშკინის, შენ. 156v",
+          "display": "Батуми, პუშკინის, д. 156v",
+          "translationStatus": "partial",
+          "houseTokens": [
+            "156v"
+          ],
+          "needsReview": true
+        }
+      ],
+      "startLocal": "2026-09-02 08:46",
+      "endLocal": "2026-09-02 12:46",
+      "endMeaning": "unconfirmed",
+      "restoration": "unconfirmed",
+      "firstSeenAt": "2026-09-09T05:09:46.289817Z",
+      "lastSeenAt": "2026-09-09T05:09:46.289817Z",
+      "provenance": [
+        {
+          "query": "batumi",
+          "seenAt": "2026-09-09T05:09:46.289817Z",
+          "inLatestResponse": true
+        }
+      ]
+    }
+  ]
+}

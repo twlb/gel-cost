@@ -181,7 +181,7 @@
       const option=el('option',label);option.value=key;jump.append(option);
     }
     const selectors=el('div',null,'insurance-plan-selectors');
-    plans.forEach((p,i)=>{const cell=el('div'),label=el('label','План '+(i+1)),select=el('select');select.id='insurancePlan'+i;label.htmlFor=select.id;for(const optionPlan of catalog.products){const option=el('option',optionPlan.insurer+' · '+optionPlan.plan);option.value=optionPlan.id;option.selected=optionPlan.id===p.id;option.disabled=optionPlan.id===plans[1-i].id;select.append(option);}select.addEventListener('change',()=>{selected=new Set(plans.map((plan,index)=>index===i?select.value:plan.id));controls();compare(false);$('insurancePlan'+i).focus();});cell.append(label,select,el('p',p.insurer+' · '+p.plan,'insurance-plan-name'));selectors.append(cell);});host.append(selectors,el('p','Сравниваем опубликованные условия. Приём иностранцев, семейную цену и клиники Батуми уточните у страховой.','note'));
+    plans.forEach((p,i)=>{const cell=el('div'),label=el('label','План '+(i+1)),select=el('select');select.id='insurancePlan'+i;label.htmlFor=select.id;for(const optionPlan of catalog.products){const option=el('option',optionPlan.insurer+' · '+optionPlan.plan);option.value=optionPlan.id;option.selected=optionPlan.id===p.id;option.disabled=optionPlan.id===plans[1-i].id;select.append(option);}select.addEventListener('change',()=>{selected=new Set(plans.map((plan,index)=>index===i?select.value:plan.id));controls();compare(false);$('insurancePlan'+i).focus();});cell.append(label,select,el('p',p.insurer+' · '+p.plan,'insurance-plan-name'));selectors.append(cell);});host.append(selectors,el('p','Сравниваем опубликованные условия. Приём иностранцев, семейную цену и клиники в вашем городе уточните у страховой.','note'));
     host.append(el('p','Проценты и лимиты приведены как в источнике — это не расчёт вашей доплаты. Лимиты нельзя складывать; период и применимость уточняются по договору.','note'));
     for(const [key,name,get] of [['restrictions','Важные ограничения',C.caution],['price','Опубликованная цена',C.priceText]]){
       const section=el('section',null,'insurance-compare-row');section.append(el('h2',name));
@@ -198,9 +198,12 @@
   }
   $('insuranceCompare').addEventListener('click',()=>compare());
   async function load(){
-    if(busy)return;busy=true;$('insuranceRetry').hidden=true;$('insuranceStatus').textContent='Загрузка справочника…';
+    if(busy)return;
+    // A JSON retry cannot restore a missing script. Keep the static page-reload fallback.
+    if(!C)return;
+    busy=true;$('insuranceReload').hidden=true;$('insuranceRetry').hidden=true;$('insuranceCompany').disabled=true;$('insuranceSelection').hidden=true;$('insuranceStatus').textContent='Загрузка справочника…';
     const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),10000);
-    try{if(!C)throw Error('module');const response=await fetch('./insurance-data.json',{signal:controller.signal,cache:'no-cache'});if(!response.ok)throw Error('network');catalog=C.validate(await response.json());cards.clear();selected=new Set([...selected].filter(id=>catalog.products.some(p=>p.id===id)));render();}
+    try{const response=await fetch('./insurance-data.json',{signal:controller.signal,cache:'no-cache'});if(!response.ok)throw Error('network');catalog=C.validate(await response.json());cards.clear();selected=new Set([...selected].filter(id=>catalog.products.some(p=>p.id===id)));render();$('insuranceCompany').disabled=false;$('insuranceSelection').hidden=false;}
     catch{catalog=null;$('insuranceStatus').textContent='Не удалось загрузить проверенный справочник. Обмен и калькулятор доступны.';$('insuranceRetry').hidden=false;}
     finally{clearTimeout(timer);busy=false;}
   }

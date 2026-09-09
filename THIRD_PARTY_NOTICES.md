@@ -59,6 +59,21 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
+## Lucide interface icons
+
+`brand/icons/interface/house-plug.svg`, `zap.svg`, `droplet.svg`, `flame.svg`,
+and `x.svg` are unchanged original SVGs from
+https://github.com/lucide-icons/lucide/tree/main/icons (2026-09-08).
+The ISC notice above applies. Theme switching reuses the existing sun and moon
+assets, with the relevant ISC/MIT notices above. No runtime icon CDN is used.
+
+## Open-Meteo attribution placement
+
+The weather reading itself links directly to Open-Meteo; its accessible name
+and tooltip identify the provider. The expandable sources block names
+Open-Meteo, links CC BY 4.0, and explains rounding and translation.
+Placement checked against https://open-meteo.com/en/licence on 2026-09-08.
+
 ## Open-Meteo weather data
 
 Weather is model-derived current data from https://open-meteo.com/, under

@@ -10,8 +10,11 @@
     if (meta) meta.content = theme === "dark" ? "#11151b" : "#faf9f6";
     const button = document.getElementById("themeToggle");
     if (button) {
-      button.textContent = theme === "dark" ? "Светлая тема" : "Тёмная тема";
-      button.setAttribute("aria-label", "Включить " + (theme === "dark" ? "светлую" : "тёмную") + " тему");
+      const label = "Включить " + (theme === "dark" ? "светлую" : "тёмную") + " тему";
+      button.setAttribute("aria-label", label);
+      button.setAttribute("title", label);
+      const icon = document.getElementById("themeIcon");
+      if (icon) icon.setAttribute("src", "brand/icons/weather/" + (theme === "dark" ? "sun" : "moon") + ".svg");
     }
   }
   apply();

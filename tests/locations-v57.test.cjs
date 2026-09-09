@@ -105,17 +105,12 @@ test('V5.7 all map URLs remain place/search links without a fixed or inferred ro
   }
 });
 
-test('V5.7 Android intents carry only the new destination and keep exact HTTPS fallback',()=>{
+test('New-city Android map links preserve the exact point or address without generic geo handlers',()=>{
   for(const city of Object.keys(additions))for(const row of L.branches('rico',city)){
-    const links=L.branchLinks(row),intent=L.deviceMapLink(links);
-    assert.match(intent,/^intent:0,0\?q=/);
-    assert.ok(intent.includes('#Intent;scheme=geo;action=android.intent.action.VIEW;'));
-    const query=intent.slice('intent:0,0?q='.length,intent.indexOf('#Intent;'));
-    assert.equal(decodeURIComponent(query),row.point?row.point.join(','):row.destination);
-    const fallback=/;S\.browser_fallback_url=([^;]+);end$/.exec(intent);
-    assert.ok(fallback);
-    assert.equal(decodeURIComponent(fallback[1]),links.google);
-    assert.equal(/origin=|saddr=|rtext=|package=/.test(intent),false);
+    const links=L.branchLinks(row),link=L.deviceMapLink(links);
+    assert.equal(link,links.google);
+    assert.equal(new URL(link).searchParams.get('query'),row.point?row.point.join(','):row.destination);
+    assert.equal(/origin=|saddr=|rtext=|package=/.test(link),false);
   }
 });
 

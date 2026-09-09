@@ -7,29 +7,50 @@
 <meta name="description" content="Обмен рублей, долларов и евро на лари: курсы банков и обменников, адреса на карте и расчёт с комиссиями.">
 <title>Gamarji — Гамарджи</title>
 <link rel="icon" href="data:,">
-<script src="theme.js?v=5.10.0-test-1"></script>
-<link rel="stylesheet" href="styles.css?v=5.10.0-test-1">
-<link rel="stylesheet" href="insurance.css?v=5.10.1-test-1">
-<link rel="stylesheet" href="brand/brand.css?v=5.10.0-test-1">
-<link rel="stylesheet" href="theme.css?v=5.10.1-test-1">
+<script src="theme.js?v=5.10.3-test-1"></script>
+<link rel="stylesheet" href="styles.css?v=5.10.3-test-1">
+<link rel="stylesheet" href="insurance.css?v=5.10.3-test-1">
+<link rel="stylesheet" href="brand/brand.css?v=5.10.3-test-1">
+<link rel="stylesheet" href="theme.css?v=5.10.3-test-1">
+<link rel="stylesheet" href="outages.css?v=5.10.3-test-1">
 </head>
 <body>
 <a class="skip" href="#main">К содержимому</a>
 <div class="app">
 <header>
 <a class="brand" href="#exchange" aria-label="Gamarji — Гамарджи, обмен валют" onclick="showView('exchange')"><span class="brand-art"><img src="brand/references/gamarji-primary-approved-concept.png" alt="Gamarji" width="1681" height="936" fetchpriority="high"></span></a>
-<div class="weather" id="weatherStatus" role="status"><div class="weather-reading"><img id="weatherIcon" alt="" width="24" height="24" hidden><span id="weatherTemperature">—°</span></div><span id="weatherDescription" class="visually-hidden"></span><a href="https://open-meteo.com/" target="_blank" rel="noopener noreferrer">Open-Meteo</a></div>
+<div class="weather" id="weatherStatus" role="status"><a class="weather-reading" href="https://open-meteo.com/" target="_blank" rel="noopener noreferrer" aria-label="Источник погоды — Open-Meteo" aria-describedby="weatherDescription" title="Источник погоды — Open-Meteo"><img id="weatherIcon" alt="" width="24" height="24" hidden><span id="weatherTemperature">—°</span></a><span id="weatherDescription" class="visually-hidden"></span></div>
 <div class="header-city"><label class="visually-hidden" for="exchangeCity">Город</label><select id="exchangeCity"><option value="batumi" selected>Батуми</option><option value="kobuleti">Кобулети</option><option value="poti">Поти</option><option value="kutaisi">Кутаиси</option><option value="tbilisi">Тбилиси</option></select></div>
-<p class="brand-tagline">Грузия, давай на ты.</p><button id="themeToggle" class="text-button theme-toggle" type="button">Тёмная тема</button>
+<div class="header-secondary"><p class="brand-tagline">Грузия, давай на ты.</p><button id="themeToggle" class="icon-button theme-toggle" type="button" aria-label="Включить тёмную тему" title="Включить тёмную тему"><img id="themeIcon" class="ui-icon" src="brand/icons/weather/moon.svg" alt="" width="22" height="22"></button></div>
 </header>
 <main id="main">
 <noscript><p class="notice">Для работы сервиса включите JavaScript в браузере.</p></noscript>
 <div class="notice" id="storageNotice" role="status" hidden></div>
+<section id="servicesView" aria-labelledby="servicesHeading" hidden>
+<h1 id="servicesHeading" tabindex="-1">Отключения</h1>
+<p id="servicesCity" class="services-city"></p>
+<div id="outageFeed">
+<div class="outage-kinds" role="group" aria-label="Вид услуги">
+<button type="button" id="outagePower" aria-pressed="true">Свет</button><button type="button" id="outageWater" aria-pressed="false">Вода</button><button type="button" id="outageGas" aria-pressed="false">Газ</button>
+</div>
+<h2 class="outage-heading visually-hidden">Объявления поставщика</h2>
+<p id="outageStatus" class="note" role="status">Лента не загрузилась. Ниже доступны контакты поставщиков.</p>
+<div id="outageControls" hidden><label for="outageSearch">Улица или адрес</label><input id="outageSearch" type="search" maxlength="120" autocomplete="off" placeholder="По-русски или по-грузински" aria-describedby="outageSearchHelp"><p id="outageSearchHelp" class="visually-hidden">Русский поиск доступен для переведённых улиц. Буквы в номерах домов сохранены как у поставщика.</p><button id="outageRefresh" type="button" class="text-button">Проверить обновления</button></div>
+<div id="outageMetadata"></div>
+<div id="outageList"></div>
+<p class="note" id="outageCaution" hidden>Это объявления поставщика, не проверка света в доме. Список может быть неполным.</p>
+</div>
+<details class="disclosure" id="servicesDirectory"><summary>Сайты и телефоны поставщиков</summary>
+<p id="servicesUnavailable" class="notice" role="status">Не удалось загрузить справочник. Перезагрузите страницу. Это не означает, что отключений нет.</p>
+<div id="servicesList"></div>
+<p class="note" id="servicesNote">На сайте поставщика проверьте дату и свой адрес. Отсутствие объявления не означает, что отключений нет.</p>
+</details>
+</section>
 <div class="notice" id="migrationNotice" hidden>Курс из V5.4 пересчитан без неподтверждённого кешбэка. История покупок сохранена. При необходимости уточните курс USDT по операции.</div>
 <div id="actionStatus" class="action-status" role="status" aria-live="polite"></div>
 <section id="calculatorView" hidden aria-labelledby="calculatorHeading">
-<h1 id="calculatorHeading" tabindex="-1">Рассчитать обмен</h1>
-<div class="personal-entry"><button class="text-button" id="dataNav" onclick="showView('data')" aria-describedby="dataEntryHelp">Мои данные</button><p class="note" id="dataEntryHelp">Покупки валюты, история и настройки</p></div>
+<div class="calculator-heading"><h1 id="calculatorHeading" tabindex="-1">Калькулятор</h1><button class="text-button" id="dataNav" onclick="showView('data')" aria-describedby="dataEntryHelp">Мои данные</button></div>
+<p class="visually-hidden" id="dataEntryHelp">Покупки валюты, история и настройки</p>
 <div class="mode-switch" role="group" aria-label="Задача расчёта"><button id="planGive" aria-pressed="true" onclick="setPlanMode('give')">Сколько получу</button><button id="planWant" aria-pressed="false" onclick="setPlanMode('want')">Сколько нужно</button></div>
 <div class="grid plan-currencies">
 <div><label for="planFrom">Отдаю</label><select id="planFrom" onchange="changePlanRoute('from')"><option value="RUB">Рубли</option><option value="USD">USD</option><option value="EUR">Евро</option><option value="USDT">USDT</option><option value="GEL">Лари</option></select></div>
@@ -117,7 +138,7 @@
 </details>
 <div id="purchaseHomeHost">
 <button class="text-button full" id="buyCurrencyButton" aria-expanded="false" onclick="togglePurchaseChooser()">Добавить покупку валюты</button>
-<div id="purchaseChooser" class="chooser" hidden><p>Что купили за рубли?</p><div class="actions"><button class="secondary" onclick="openPurchase('usd')">Наличные USD</button><button class="secondary" onclick="openPurchase('usdt')">USDT</button></div></div>
+<div id="purchaseChooser" class="chooser" hidden><p>Что купили за рубли?</p><div class="actions"><button class="secondary" onclick="openPurchase('usd',this)">Наличные USD</button><button class="secondary" onclick="openPurchase('usdt',this)">USDT</button></div></div>
 </div>
 <p class="footnote">Это пересчёт цены, не платёж. История покупок — в «Моих данных».</p>
 </section>
@@ -128,14 +149,15 @@
 <div class="input amount"><input id="exchangeAmount" type="text" inputmode="decimal" value="100" maxlength="18" autocomplete="off" aria-describedby="exchangeError"><span class="unit visually-hidden" id="exchangeAmountUnit">USD</span></div>
 <div class="error" id="exchangeError" role="alert"></div></div>
 <div class="exchange-currency"><label id="exchangeCurrencyLabel" for="exchangeCurrency">Отдаю</label><select id="exchangeCurrency"><option value="USD" selected>USD</option><option value="RUB">RUB</option><option value="EUR">EUR</option></select></div></div>
-<div class="section-head"><h2 id="offerListHeading">Выбранное предложение</h2><span id="exchangeListNote" class="note">За вашу сумму</span></div>
+<div class="section-head"><h2 id="offerListHeading">Выбранное предложение</h2><span id="exchangeListNote" class="note">За вашу сумму</span><button id="bestOfferJump" class="text-button best-offer-jump" type="button" onclick="focusBestOffer()" aria-describedby="bestOfferHelp" hidden>Лучший из источников</button></div>
+<p id="bestOfferScope" class="note best-offer-scope" hidden></p>
 <p class="note" id="currencyCoverage" hidden></p>
-<div id="offerToolsHome"><div id="offerToolsPanel"><div class="offer-tools"><button class="text-button" id="refreshOffersButton" onclick="refreshAllRates()">Обновить курсы</button><button class="text-button" id="manualRateButton" onclick="openExchangeManual()" aria-expanded="false">Свой курс</button></div>
+<div id="offerToolsHome"><div id="offerToolsPanel"><div class="offer-tools"><div id="offerRefreshHome"><button class="text-button" id="refreshOffersButton" onclick="refreshAllRates()">Обновить курсы</button></div><button class="text-button" id="manualRateButton" onclick="openExchangeManual(this)" aria-expanded="false">Свой курс</button></div>
 <div id="cashRateHost"><form class="inline" id="exchangeManualPanel" onsubmit="event.preventDefault();saveExchangeManual()">
 <h3 id="exchangeManualTitle">Свой курс</h3>
 <label id="exchangeManualLabel" for="exchangeManualValue">За 1 EUR дают</label><div class="input"><input id="exchangeManualValue" type="text" inputmode="decimal" maxlength="18" autocomplete="off" aria-describedby="exchangeManualError exchangeManualPreview"><span class="unit">₾</span></div>
 <p class="note" id="exchangeManualPreview" aria-live="polite"></p><p class="error" id="exchangeManualError" role="alert"></p>
-<div class="actions"><button class="primary" type="submit">Сохранить курс</button><button class="secondary" type="button" onclick="closeInline('exchangeManualPanel')">Закрыть</button></div>
+<div class="actions"><button class="primary" type="submit">Сохранить курс</button><button class="secondary" type="button" onclick="dismissInline('exchangeManualPanel')">Закрыть</button></div>
 </form></div></div></div>
 <div class="offer-list" id="offerList" aria-label="Предложения обмена"></div>
 <button class="text-button full" id="moreOffers" onclick="toggleAllOffers()">Показать все предложения</button>
@@ -143,6 +165,7 @@
 <div id="offerActionsHome"><div class="offer-actions-panel" id="offerActions" hidden>
 <div id="exchangeSummary" class="exchange-result" aria-live="polite"><p id="exchangeResultLabel">По выбранному курсу</p><strong id="exchangeReceive">— ₾</strong></div>
 <div class="actions exchange-actions">
+<div id="offerRefreshAction" hidden></div>
 <button class="primary" id="offerAddressButton" onclick="toggleOfferLocation()" aria-expanded="false" aria-controls="offerLocationPanel" hidden>Смотреть адреса</button>
 <button class="secondary" id="planOfferButton" onclick="useOfferForPlan()" aria-describedby="offerActionNote" aria-expanded="false" aria-controls="planReplacePanel" disabled>Рассчитать эту сумму</button>
 </div>
@@ -157,8 +180,13 @@
 <div class="branch-header"><h3 id="branchHeading">Адреса и карты</h3><button type="button" class="text-button" id="closeLocationButton" onclick="closeOfferLocation()">Свернуть</button></div>
 <div id="branchChoiceGroup"><label for="branchChoice">Отделение</label><select id="branchChoice" aria-describedby="branchNotice"></select></div>
 <p class="branch-address" id="branchAddress"></p>
+<p class="note" id="branchAddressLatin" hidden></p>
 <p class="note" id="branchMapHint"></p>
+<div class="branch-travel-actions">
 <a class="secondary full map-launch-link" id="openDeviceMap" rel="noopener noreferrer" target="_blank" aria-describedby="branchAddress branchMapHint branchNotice" hidden>Смотреть на карте</a>
+<a class="secondary full map-launch-link" id="openYandexGo" rel="noopener noreferrer" target="_self" aria-describedby="branchAddress branchTaxiHint branchNotice" hidden>Ехать в Яндекс Go</a>
+</div>
+<p class="note" id="branchTaxiHint" hidden></p>
 <p class="note" id="branchNotice"></p>
 <p class="note" id="branchChecked"></p>
 <a id="branchSource" target="_blank" rel="noopener noreferrer" hidden>Все адреса на сайте сети ↗</a>
@@ -181,7 +209,9 @@
 <p class="note">Обменники: публичный курс сети, не конкретной кассы. Банки: отделения, запрос на 1 000 GEL в витрине НБГ; город и наличный обмен для вашей суммы нужно уточнить. Список не охватывает весь рынок.</p>
 <p class="note">Обновляем курсы в фоне. Если проверка не удалась или данным больше двух часов, опубликованный курс нельзя применить. Просмотр остаётся доступен. Время проверки — не время изменения курса у источника.</p>
 <p class="note">USDT → наличные здесь пока не подключено. Оплату через USDT считаем отдельно, по вашему списанию или прогнозному курсу.</p>
-<p class="note">Кнопка открывает место или поиск адреса: на Android — карты телефона, на Apple — Apple Maps, иначе — Google Maps. Откроется приложение или сайт — зависит от браузера и настроек. Маршрут стройте в картах: «Маршрут» → «Моё местоположение». Калькулятор не запрашивает геопозицию и передаёт только точку или адрес, без покупок и сумм. Список адресов неполный; он обновляется отдельно от курсов.</p>
+<p class="note">Карта: на Apple — Apple Maps, на Android и компьютерах — Google Maps. Для отдельных неточно определяемых адресов используем Google Maps с предупреждением. Откроется приложение или сайт — зависит от настроек устройства. Маршрут стройте от «Моего местоположения».</p>
+<p class="note">Яндекс Go: передаём подтверждённую точку отделения как пункт назначения. Без приложения ссылка ведёт на сайт сервиса. Если геопозиция недоступна, укажите место подачи в такси вручную. Для другого такси используйте адрес отделения. Заказ и оплата — только в выбранном сервисе.</p>
+<p class="note">Мы не запрашиваем вашу геопозицию. При нажатии карты или такси передаём внешнему сервису точку либо адрес, без покупок и сумм. Ссылка Яндекс Go проходит через AppMetrica с именем нашего сайта; переход обрабатывается по правилам Яндекса. Список адресов неполный и обновляется отдельно от курсов.</p>
 <button class="text-button full" onclick="refreshAllRates()">Повторить проверку курсов</button>
 </details>
 </section>
@@ -190,19 +220,19 @@
 <h1 id="dataHeading" tabindex="-1">Мои данные</h1>
 <button class="secondary full" onclick="showView('purchase')">Пересчитать цену в рубли</button><p class="note">Цена с ценника или из меню — по вашим покупкам валюты. Будущий обмен — во вкладке «Калькулятор».</p>
 <p class="note">Средняя цена считается отдельно для USD и USDT: потраченные рубли ÷ купленная валюта за период. Расходы и остаток не учитываются.</p>
-<div class="data-group"><div class="pathrow"><h2>Наличные USD</h2><b id="dataUsdAvg">—</b></div><button class="text-button" onclick="openPurchase('usd')">Добавить покупку USD</button><details><summary>История покупок USD</summary><div id="usdHistory"></div></details></div>
-<div class="data-group"><div class="pathrow"><h2>USDT</h2><b id="dataUsdtAvg">—</b></div><button class="text-button" onclick="openPurchase('usdt')">Добавить покупку USDT</button><details><summary>История покупок USDT</summary><div id="usdtHistory"></div></details></div>
+<div class="data-group"><div class="pathrow"><h2>Наличные USD</h2><b id="dataUsdAvg">—</b></div><button class="text-button" onclick="openPurchase('usd',this)">Добавить покупку USD</button><details><summary>История покупок USD</summary><div id="usdHistory"></div></details></div>
+<div class="data-group"><div class="pathrow"><h2>USDT</h2><b id="dataUsdtAvg">—</b></div><button class="text-button" onclick="openPurchase('usdt',this)">Добавить покупку USDT</button><details><summary>История покупок USDT</summary><div id="usdtHistory"></div></details></div>
 <div id="purchaseDataHost"></div>
 <details class="disclosure"><summary>Официальный ориентир</summary>
 <div class="pathrow"><b id="marketPrice">—</b><span class="note" id="marketStatus">загрузка</span></div><p class="note" id="marketStamp"></p><p class="note" id="marketNote"></p>
 <p class="note">ЦБ РФ и НБГ — только для сравнения. По этому курсу нельзя гарантированно обменять деньги.</p>
 </details>
-<button class="secondary full" onclick="openSettings()">Условия прогноза USDT</button>
+<button class="secondary full" id="settingsToggle" onclick="openSettings(this)" aria-expanded="false" aria-controls="settingsPanel">Условия прогноза USDT</button>
 <div class="inline" id="settingsPanel">
-<h3>Проценты для прогноза</h3><p class="note">Только для режима «Ввести курс». Оба процента от базовой стоимости. В расчёте по операции повторно их не учитываем.</p>
+<h3>Прогноз оплаты через USDT</h3><p class="note" id="settingsScope">Для инструмента «Пересчитать цену в рубли» при оплате через USDT по введённому курсу. Комиссии калькулятора задаются отдельно.</p><p class="note">Оба процента — от базовой стоимости. В режиме «По операции» повторно не учитываются.</p>
 <div class="grid settings-grid"><div><label for="feePct">Комиссия, %</label><input id="feePct" type="text" inputmode="decimal" value="0"></div><div><label for="cashbackPct">Ожидаемый кешбэк, %</label><input id="cashbackPct" type="text" inputmode="decimal" value="0"></div></div>
 <div class="error" id="settingsError" role="alert"></div>
-<div class="actions"><button class="primary" onclick="saveSettings()">Сохранить условия</button><button class="secondary" onclick="closeInline('settingsPanel')">Закрыть</button></div>
+<div class="actions"><button class="primary" onclick="saveSettings()">Сохранить условия</button><button class="secondary" onclick="dismissInline('settingsPanel')">Закрыть</button></div>
 <details><summary>Исходные официальные курсы</summary>
 <div class="official-fields">
 <div><label for="officialRub">USD/RUB — ЦБ РФ</label><input id="officialRub" type="text" readonly></div>
@@ -215,15 +245,16 @@
 </section>
 <section id="insuranceView" hidden aria-labelledby="insuranceHeading">
 <div id="insuranceBrowseIntro">
-<h1 id="insuranceHeading" tabindex="-1">Медицинская страховка</h1>
-<p class="subtitle">Для жизни в Грузии. Откройте условия и выберите два плана.</p>
-<p class="notice">Это справочник, не персональный подбор. Приём иностранцев и клиники Батуми нужно уточнить.</p>
+<h1 id="insuranceHeading" tabindex="-1">Страховки</h1>
+<p class="subtitle">Медицинские полисы для жизни в Грузии.</p>
+<p class="notice">Это справочник, не персональный подбор. Приём иностранцев и клиники в вашем городе уточните у страховой.</p>
 <label for="insuranceCompany">Страховая компания</label>
-<select id="insuranceCompany"><option value="">Все компании</option><option>Unison</option><option>ARDI</option><option>GPI Holding</option></select>
-<p id="insuranceStatus" class="note" role="status">Загрузка справочника…</p>
+<select id="insuranceCompany" disabled><option value="">Все компании</option><option>Unison</option><option>ARDI</option><option>GPI Holding</option></select>
+<p id="insuranceStatus" class="note" role="status">Раздел страховок не загрузился. Обновите страницу; несохранённый расчёт сбросится. Обмен и калькулятор доступны.</p>
+<button id="insuranceReload" class="secondary" onclick="window.location.reload()">Обновить страницу</button>
 <button id="insuranceRetry" class="secondary" hidden>Повторить загрузку</button>
 </div>
-<div id="insuranceSelection" class="insurance-selection"><span id="insuranceSelectedCount">Выберите два плана</span><button id="insuranceCompare" class="primary" disabled>Сравнить</button><button id="insuranceClear" class="text-button" hidden>Снять выбор</button></div>
+<div id="insuranceSelection" class="insurance-selection" hidden><span id="insuranceSelectedCount">Выберите два плана</span><button id="insuranceCompare" class="primary" disabled>Сравнить</button><button id="insuranceClear" class="text-button" hidden>Снять выбор</button></div>
 <section id="insuranceComparison" hidden aria-labelledby="insuranceCompareHeading">
 <h1 id="insuranceCompareHeading" tabindex="-1">Сравнение планов</h1>
 <div class="insurance-comparison-tools">
@@ -236,14 +267,15 @@
 <div id="insuranceList"></div>
 </section>
 </main>
-<p class="build-note">V5.10.1 · тестовый выпуск</p>
-<nav class="bottom-nav" aria-label="Разделы"><button id="exchangeNav" aria-current="page" onclick="showView('exchange')"><img src="brand/icons/navigation/arrow-right-left.svg" width="24" height="24" alt="">Обмен</button><button id="purchaseNav" onclick="showView('calculator')"><img src="brand/icons/navigation/calculator.svg" width="24" height="24" alt="">Калькулятор</button><button id="insuranceNav" aria-current="false" onclick="showView('insurance')"><img src="brand/icons/navigation/shield-plus.svg" width="24" height="24" alt="">Страховки</button></nav>
+<details class="app-sources"><summary>Об источниках</summary><p>Погода — <a href="https://open-meteo.com/" target="_blank" rel="noopener noreferrer">Open-Meteo</a>, <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noopener noreferrer">CC BY 4.0</a>. Температура округлена до целых °C, описания переведены. Это расчёт модели, не измерение у вашего дома.</p><p>Курсы: источник и время проверки указаны у предложения. Свет Батуми: тестовая лента публичных объявлений Energo-Pro, список неполный. Перевод улиц — по проверенному словарю; оригиналы и номера сохранены. Вода, газ и другие города — пока ссылки на поставщиков.</p></details>
+<p class="build-note">V5.10.3 · тестовый выпуск</p>
+<nav class="bottom-nav" aria-label="Разделы"><button id="exchangeNav" aria-current="page" onclick="showView('exchange')"><img src="brand/icons/navigation/arrow-right-left.svg" width="24" height="24" alt="">Обмен</button><button id="purchaseNav" onclick="showView('calculator')"><img src="brand/icons/navigation/calculator.svg" width="24" height="24" alt="">Калькулятор</button><button id="insuranceNav" aria-current="false" onclick="showView('insurance')"><img src="brand/icons/navigation/shield-plus.svg" width="24" height="24" alt="">Страховки</button><button id="servicesNav" aria-current="false" onclick="showView('services')"><img src="brand/icons/interface/house-plug.svg" width="24" height="24" alt="">Отключения</button></nav>
 </div>
 <form class="inline" id="purchasePanel" onsubmit="event.preventDefault();savePurchase()">
 <h3 id="purchaseTitle">Купил валюту</h3>
 <div class="grid"><div><label for="purchaseRub">Потратил рублей</label><div class="input"><input id="purchaseRub" type="text" inputmode="decimal" maxlength="18"><span class="unit">₽</span></div></div><div><label for="purchaseQty">Получил валюты</label><div class="input"><input id="purchaseQty" type="text" inputmode="decimal" maxlength="18"><span class="unit" id="purchaseUnit">USD</span></div></div></div>
 <p class="note" id="purchasePreview" aria-live="polite"></p><div class="error" id="purchaseError" role="alert"></div>
-<div class="actions"><button class="primary" type="submit">Сохранить покупку</button><button class="secondary" type="button" onclick="closeInline('purchasePanel')">Закрыть</button></div>
+<div class="actions"><button class="primary" type="submit">Сохранить покупку</button><button class="secondary" type="button" onclick="dismissInline('purchasePanel')">Закрыть</button></div>
 </form>
 <form class="inline" id="ratePanel" onsubmit="event.preventDefault();saveRate()">
 <h3 id="rateTitle">Обновить курс</h3>
@@ -251,13 +283,15 @@
 <div class="mode" id="quoteMode"><label id="rateLabel" for="rateValue">За 1 USD дают</label><div class="input"><input id="rateValue" type="text" inputmode="decimal" maxlength="18"><span class="unit">₾</span></div><p class="note" id="quoteHelp">Курс до комиссии и кешбэка. Проценты — в «Моих данных».</p></div>
 <div class="mode" id="actualMode"><p class="note">Откройте последнюю оплату через USDT и перенесите две суммы. Так комиссия уже попадёт в расчёт.</p><div class="grid"><div><label for="actualGel">Сумма покупки</label><div class="input"><input id="actualGel" type="text" inputmode="decimal" maxlength="18"><span class="unit">₾</span></div></div><div><label for="actualUsdt">Списано USDT</label><div class="input"><input id="actualUsdt" type="text" inputmode="decimal" maxlength="18"><span class="unit">USDT</span></div></div></div><details id="rewardDetails"><summary>Полученный кешбэк за покупку</summary><label for="actualReward">Подтверждённый возврат, USDT</label><input id="actualReward" type="text" inputmode="decimal" placeholder="0" maxlength="18"><p class="note">Только полученные USDT. Баллы и ожидаемый кешбэк не вычитаем. Если возврата нет, оставьте 0.</p></details></div>
 <p class="note" id="ratePreview" aria-live="polite"></p><div class="error" id="rateError" role="alert"></div>
-<div class="actions"><button type="submit" class="primary" id="saveRateButton">Сохранить курс</button><button type="button" class="secondary" onclick="closeInline('ratePanel')">Закрыть</button></div>
+<div class="actions"><button type="submit" class="primary" id="saveRateButton">Сохранить курс</button><button type="button" class="secondary" onclick="dismissInline('ratePanel')">Закрыть</button></div>
 </form>
-<script src="core.js?v=5.8-release-1"></script>
-<script src="locations.js?v=5.8-release-1"></script>
-<script src="app.js?v=5.10.1-test-1"></script>
-<script src="weather.js?v=5.10.0-test-1"></script>
-<script src="insurance-core.js?v=5.10.0-test-1"></script>
-<script src="insurance.js?v=5.10.1-test-1"></script>
+<script src="core.js?v=5.10.3-test-1"></script>
+<script src="locations.js?v=5.10.3-test-1"></script>
+<script src="app.js?v=5.10.3-test-1"></script>
+<script src="services.js?v=5.10.3-test-1"></script>
+<script src="outages.js?v=5.10.3-test-1"></script>
+<script src="weather.js?v=5.10.3-test-1"></script>
+<script src="insurance-core.js?v=5.10.3-test-1"></script>
+<script src="insurance.js?v=5.10.3-test-1"></script>
 </body>
 </html>

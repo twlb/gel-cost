@@ -9,7 +9,7 @@ const boundary=harnessSource.indexOf('\nfunction inteliResponses(){');
 assert.ok(boundary>0,'Existing app harness boundary must be reviewed if its layout changes');
 const preamble=harnessSource.slice(0,boundary);
 assert.ok(!/^test\(/m.test(preamble),'Only harness helpers may be imported');
-const {app,C}=new Function('require','__dirname',preamble+'\nreturn {app,C};')(require,__dirname);
+const {app,C,purchase}=new Function('require','__dirname',preamble+'\nreturn {app,C,purchase};')(require,__dirname);
 
 function goal(a,{from='GEL',to='EUR',via='USD',amount='123,45',fees={GELEUR:{fixed:'6',pct:'10'}}}={}){
   a.run(`Object.assign(plan,${JSON.stringify({from,to,via,mode:'want',fees,initialized:true})});showView('calculator')`);
@@ -100,7 +100,7 @@ test('sell selector orders fresh offers by lowest sell and renders sell, not buy
   const rows=a.els.offerList.children.filter(node=>node.dataset.offerKey);
   assert.equal(rows[0].dataset.offerKey,'office:EUR:rico');
   assert.equal(rows[0].children[0].children[1].textContent,'3,0600 ₾');
-  assert.match(rows[0].children[1].textContent,/Продажа · за 1 EUR/);
+  assert.match(rows[0].children[1].textContent,/Платите за 1 EUR/);
   assert.equal(a.els.exchangeAmountGroup.hidden,true);assert.equal(a.els.exchangeSummary.hidden,true);
   assert.equal(a.els.returnToPlan.hidden,false);
 });
@@ -126,13 +126,62 @@ test('explicit return from selection keeps goal and restores ordinary exchange c
   assert.equal(a.els.exchangeSummary.hidden,false);assert.equal(a.els.planOfferButton.textContent,'Рассчитать эту сумму');
 });
 
-test('nested financial screens keep their calculator parent active without a fourth main tab',async()=>{
+test('four main tabs keep exactly one active parent, including nested financial screens',async()=>{
   const a=await app();
-  for(const view of ['calculator','data','purchase','exchange','insurance']){
+  for(const view of ['calculator','data','purchase','exchange','insurance','services']){
     a.run(`showView(${JSON.stringify(view)})`);
-    const active=['exchangeNav','purchaseNav','insuranceNav'].filter(id=>a.els[id].attrs['aria-current']==='page');
-    assert.deepEqual(active,[view==='exchange'?'exchangeNav':view==='insurance'?'insuranceNav':'purchaseNav']);
+    const active=['exchangeNav','purchaseNav','insuranceNav','servicesNav'].filter(id=>a.els[id].attrs['aria-current']==='page');
+    assert.deepEqual(active,[view==='exchange'?'exchangeNav':view==='insurance'?'insuranceNav':view==='services'?'servicesNav':'purchaseNav']);
   }
+});
+
+test('services navigation preserves complete and unfinished planner input plus existing personal purchases',async()=>{
+  const a=await app();await purchase(a,'usd',9000,100);await purchase(a,'usdt',4600,50);
+  assert.equal(a.state().usdPurchases.length,1);assert.equal(a.state().usdtPurchases.length,1);
+  goal(a,{from:'RUB',to:'GEL',amount:'12,',fees:{RUBUSD:{pct:'1,',fixed:'bad'},USDGEL:{pct:'0',fixed:''}}});
+  a.run('plan.quotes.rubBuy="90,";plan.quotes.gelBuy="bad";renderPlanner()');
+  const before=fullPlan(a),saved=JSON.stringify(a.writes),state=JSON.stringify(a.state());
+  const ids=['planAmount','planQuote0','planQuote1','planPct0','planFixed0','planPct1','planFixed1'];
+  const input=()=>Object.fromEntries(ids.map(id=>[id,a.els[id].value])),fields=input();
+  a.run('showView("services")');assert.deepEqual(fullPlan(a),before);assert.deepEqual(input(),fields);
+  a.run('showView("calculator")');assert.deepEqual(fullPlan(a),before);assert.deepEqual(input(),fields);
+  assert.equal(JSON.stringify(a.writes),saved);assert.equal(JSON.stringify(a.state()),state);
+});
+
+test('services navigation leaves an unsaved manual exchange-rate editor intact',async()=>{
+  const a=await app();a.run('changeExchangeCurrency("EUR");openExchangeManual()');
+  a.els.exchangeAmount.value='123,45';a.els.exchangeManualValue.value='3,2x';a.els.exchangeManualValue.events.input();
+  const saved=JSON.stringify(a.writes);a.run('showView("services");showView("exchange")');
+  assert.equal(a.els.exchangeAmount.value,'123,45');assert.equal(a.els.exchangeManualValue.value,'3,2x');
+  assert.equal(a.els.exchangeManualPanel.classList.contains('show'),true);assert.equal(JSON.stringify(a.writes),saved);
+});
+
+test('services is a deliberate exit from quote selection but cannot alter the existing calculation',async()=>{
+  const a=await app();goal(a);const before=fullPlan(a),original=intent(a);
+  a.run('choosePlanOffice();showView("services")');assert.equal(a.run('planQuoteSelection'),null);
+  assert.deepEqual(fullPlan(a),before);assert.deepEqual(intent(a),original);
+  a.run('showView("exchange")');assert.equal(a.els.returnToPlan.hidden,true);assert.equal(a.els.planOfferButton.textContent,'Рассчитать эту сумму');
+  assert.deepEqual(fullPlan(a),before);
+});
+
+test('services closes only a pending replacement prompt without erasing the calculation it protects',async()=>{
+  const a=await app();goal(a);const before=fullPlan(a),original=intent(a),saved=JSON.stringify(a.writes);
+  a.run('showView("exchange");changeExchangeCurrency("EUR");selectOffer("office:EUR:rico");useOfferForPlan()');
+  assert.equal(a.els.planReplacePanel.hidden,false);a.run('showView("services")');
+  assert.equal(a.els.planReplacePanel.hidden,true);assert.deepEqual(fullPlan(a),before);assert.deepEqual(intent(a),original);
+  assert.equal(JSON.stringify(a.writes),saved);
+});
+
+test('reselecting active services cannot rerender sources, reset scroll, or steal focus',async()=>{
+  const a=await app();a.run('showView("services");const servicesRepeats=[];window.GamarjiServices={render(){servicesRepeats.push("render")}};window.scrollTo=()=>servicesRepeats.push("scroll");$("servicesHeading").focus=()=>servicesRepeats.push("focus");showView("services")');
+  assert.equal(a.run('JSON.stringify(servicesRepeats)'),'[]');assert.equal(a.els.servicesView.hidden,false);
+});
+
+test('visiting services preserves the insurance capture and restore contract',async()=>{
+  const a=await app();
+  a.run('const serviceContextCalls=[];window.GamarjiInsurance={captureContext(){serviceContextCalls.push(["capture",$("insuranceView").hidden])},restoreContext(){serviceContextCalls.push(["restore",$("insuranceView").hidden]);return true}};showView("insurance");serviceContextCalls.length=0;showView("services");showView("insurance")');
+  assert.deepEqual(JSON.parse(a.run('JSON.stringify(serviceContextCalls)')),[['capture',false],['restore',false]]);
+  assert.equal(a.els.servicesView.hidden,true);assert.equal(a.els.insuranceView.hidden,false);
 });
 
 test('insurance captures before hiding and a successful context return keeps its focus and scroll',async()=>{

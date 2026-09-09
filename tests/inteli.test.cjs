@@ -36,5 +36,5 @@ test('Apple fallback is limited to Inteli; other providers keep Apple Maps',()=>
   assert.equal(L.branchLinks(inteli).apple,L.branchLinks(inteli).google);
   assert.equal(new URL(L.branchLinks(rico).apple).hostname,'maps.apple.com');
   assert.equal(new URL(L.mapLinks('Unknown address').apple).hostname,'maps.apple.com');
-  assert.match(L.deviceMapLink(L.branchLinks(inteli)),/^intent:0,0\?q=41\.6492744%2C41\.6374353#/);
+  assert.equal(L.deviceMapLink(L.branchLinks(inteli)),L.branchLinks(inteli).google);
 });

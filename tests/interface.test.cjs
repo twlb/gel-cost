@@ -29,7 +29,7 @@ test('personal data remains reachable from calculator and exchange with an expli
   assert.match(data,/<button[^>]+id="returnDataCalculator"[^>]+onclick="showView\('calculator'\)"/);
   const legacy=block('<details class="disclosure" id="legacyOfferDetails"','<p class="footnote">Перед поездкой');
   assert.match(legacy,/showView\('(?:data|purchase)'\)/);
-  for(const action of ['exportData()','resetPeriod(','openSettings()','openPurchase('])assert.ok(data.includes(action),action+' remains accessible');
+  for(const action of ['exportData()','resetPeriod(','openSettings(','openPurchase('])assert.ok(data.includes(action),action+' remains accessible');
 });
 
 class Node {
@@ -47,17 +47,47 @@ class Node {
 }
 function walk(n){return [n,...n.children.flatMap(walk)];}
 const cardDetails=card=>card.children.find(n=>n.tagName==='DETAILS');
-async function insurance(data=catalogue){
+async function insurance(data=catalogue,options={}){
   const roots=Array.from(html.matchAll(/\bid="([^"]+)"/g),m=>{const n=new Node();n.id=m[1];return n;});
   const get=id=>roots.flatMap(walk).find(n=>n.id===id);
+  get('insuranceCompany').disabled=true;get('insuranceSelection').hidden=true;get('insuranceRetry').hidden=true;
+  get('insuranceStatus').textContent='Раздел страховок не загрузился.';
   get('insuranceSelection').append(get('insuranceSelectedCount'),get('insuranceCompare'),get('insuranceClear'));
-  const ctx={window:{InsuranceCore:C},document:{getElementById:get,createElement:tag=>new Node(tag)},fetch:async()=>({ok:true,json:async()=>structuredClone(data)}),AbortController,setTimeout:()=>1,clearTimeout:()=>{}};
+  const ctx={window:{InsuranceCore:options.missingCore?undefined:C},document:{getElementById:get,createElement:tag=>new Node(tag)},fetch:async()=>({ok:!options.fetchError,json:async()=>structuredClone(data)}),AbortController,setTimeout:()=>1,clearTimeout:()=>{}};
   vm.runInNewContext(fs.readFileSync(path.join(root,'insurance.js'),'utf8'),ctx);
   await new Promise(resolve=>setImmediate(resolve));
   const cards=()=>get('insuranceList').children;
   const choose=id=>{const button=cards().flatMap(walk).find(n=>n.dataset.plan===id);assert.ok(button);assert.equal(button.disabled,false);button.events.click();};
   return {get,cards,choose};
 }
+
+test('missing insurance script has a truthful static fallback and a working page reload action',()=>{
+  const section=block('<section id="insuranceView"','</main>');
+  assert.match(section,/<p id="insuranceStatus"[^>]*>Раздел страховок не загрузился\./);
+  assert.match(section,/<button id="insuranceReload"[^>]*onclick="window\.location\.reload\(\)"[^>]*>Обновить страницу<\/button>/);
+  assert.match(section,/<select id="insuranceCompany" disabled>/);
+  assert.match(section,/<div id="insuranceSelection"[^>]* hidden>/);
+});
+
+test('insurance module replaces static fallback only with genuine loading, data error or loaded controls',async()=>{
+  const a=await insurance();
+  assert.equal(a.get('insuranceReload').hidden,true);
+  assert.equal(a.get('insuranceCompany').disabled,false);
+  assert.equal(a.get('insuranceSelection').hidden,false);
+  assert.match(a.get('insuranceStatus').textContent,/15 планов/);
+  const failed=await insurance(catalogue,{fetchError:true});
+  assert.equal(failed.get('insuranceReload').hidden,true);
+  assert.equal(failed.get('insuranceCompany').disabled,true);
+  assert.equal(failed.get('insuranceSelection').hidden,true);
+  assert.equal(failed.get('insuranceRetry').hidden,false);
+  assert.match(failed.get('insuranceStatus').textContent,/Не удалось загрузить/);
+  const missingCore=await insurance(catalogue,{missingCore:true});
+  assert.equal(missingCore.get('insuranceReload').hidden,false);
+  assert.equal(missingCore.get('insuranceRetry').hidden,true);
+  assert.equal(missingCore.get('insuranceCompany').disabled,true);
+  assert.equal(missingCore.get('insuranceSelection').hidden,true);
+  assert.match(missingCore.get('insuranceStatus').textContent,/Раздел страховок не загрузился/);
+});
 
 test('insurance selection preserves card nodes and expanded conditions while updating every button',async()=>{
   const a=await insurance(),cards=[...a.cards()];

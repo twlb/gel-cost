@@ -540,23 +540,19 @@ test('Batumi remains the HTML default and empty-city fallback',async()=>{
   a.els.exchangeCity.value='';a.run('selectOffer("office:rico");toggleOfferLocation("office:rico")');assert.match(a.els.branchAddress.textContent,/^Батуми,/);
   assert.equal(require('../locations.js').branches('rico')[0].city,'batumi');assert.equal(a.writes[C.STORAGE_KEY],undefined);
 });
-test('Android hands the same point or search to the OS without choosing a package or origin',async()=>{
+test('Android maps use a provider HTTPS link, not a generic chooser containing taxi apps',async()=>{
   const L=require('../locations.js');
   for(const row of [...L.branches('mjc','all'),...L.branches('rico','all')]){
-    const links=L.branchLinks(row),intent=L.deviceMapLink(links);
-    assert.ok(intent.startsWith('intent:0,0?q='));
-    const [data,extras]=intent.split('#Intent;');
-    assert.equal(decodeURIComponent(data.split('?q=')[1]),new URL(links.google).searchParams.get('query'));
-    assert.match(extras,/scheme=geo;action=android.intent.action.VIEW;/);
-    assert.equal(decodeURIComponent(extras.split('S.browser_fallback_url=')[1].split(';')[0]),links.google);
-    assert.doesNotMatch(intent,/package=|component=|origin=|rtext=|daddr=|destination=/);
+    const links=L.branchLinks(row),link=L.deviceMapLink(links);
+    assert.equal(link,links.google);
+    assert.doesNotMatch(link,/^intent:|^geo:|package=|component=|origin=|rtext=|daddr=|destination=/);
   }
   assert.equal(L.deviceMapLink(null),null);
   assert.equal(L.deviceMapLink({google:'javascript:alert(1)'}),null);
   assert.equal(L.deviceMapLink({google:'https://evil.example/maps/search/?query=a'}),null);
   const injected=L.deviceMapLink(L.mapLinks('A #Intent;package=evil;end & extra=value'));
-  assert.equal(injected.split('#Intent;').length,2);
-  assert.equal(injected.split(';package=').length,1);
+  assert.equal(new URL(injected).searchParams.get('query'),'A #Intent;package=evil;end & extra=value');
+  assert.equal(new URL(injected).hash,'');
   const a=await app({},false,{userAgent:'Mozilla/5.0 (Linux; Android 15) Chrome/140 Mobile'});
   a.run('selectOffer("office:mjc");toggleOfferLocation("office:mjc")');
   assert.equal(a.els.openDeviceMap.hidden,false);assert.equal(a.els.openDeviceMap.target,'_self');
@@ -602,9 +598,71 @@ test('denied storage cannot prevent direct map opening',async()=>{
   for(const userAgent of ['Android','iPhone','Windows']){
     const a=await app({},true,{userAgent});a.run('selectOffer("office:mjc");toggleOfferLocation("office:mjc")');
     assert.equal(a.els.openDeviceMap.hidden,false);
-    assert.match(a.els.openDeviceMap.href,userAgent==='Android'?/^intent:/:/^https:/);
+    assert.match(a.els.openDeviceMap.href,/^https:/);
     assert.equal(a.els.openDeviceMap.events.click,undefined);
   }
+});
+test('Taxi handoff is explicit on Android, Apple and desktop without GPS, booking or financial writes',async()=>{
+  const L=require('../locations.js'),branch=L.branches('rico','batumi')[0];
+  for(const userAgent of ['Android','iPhone','iPad','Macintosh','Windows','']){
+    let gps=0;const a=await app({},false,{city:'batumi',userAgent,geolocation:{getCurrentPosition(){gps++;}}});
+    await purchase(a,'usd',8800,100);const before=a.writes[C.STORAGE_KEY];
+    a.run('selectOffer("office:rico");toggleOfferLocation()');
+    assert.equal(a.els.openYandexGo.hidden,false);
+    assert.equal(a.els.openYandexGo.href,L.yandexGoLink(branch));
+    assert.equal(a.els.openYandexGo.target,'_self');
+    assert.equal(a.els.openYandexGo.events.click,undefined);
+    assert.match(a.els.branchTaxiHint.textContent,/пункт назначения/);
+    assert.equal(gps,0);assert.equal(a.writes[C.STORAGE_KEY],before);
+    assert.ok(a.requests.every(url=>url.startsWith('./')));
+  }
+});
+test('Taxi follows branch changes and never reuses a pin for an unverified address, bank or manual quote',async()=>{
+  const a=await app({},false,{city:'batumi',userAgent:'Android'}),L=require('../locations.js');
+  const open=()=>a.run('selectOffer("office:rico");toggleOfferLocation()');
+  open();const first=a.els.openYandexGo.href;
+  a.els.branchChoice.value='rico:batumi:3';a.run('selectBranch()');
+  const next=L.yandexGoLink(L.branches('rico','batumi')[3]);assert.notEqual(next,first);
+  assert.equal(a.els.openYandexGo.href,next);
+  a.run('showView("calculator");showView("exchange")');assert.equal(a.els.openYandexGo.href,next);
+  a.els.branchChoice.value='rico:batumi:1';a.run('selectBranch()');
+  assert.equal(a.els.openYandexGo.hidden,true);assert.equal(a.els.openYandexGo.href,'');
+  assert.match(a.els.branchTaxiHint.textContent,/вручную/);assert.equal(a.els.openDeviceMap.hidden,false);
+  a.els.branchChoice.value='rico:batumi:0';a.run('selectBranch()');assert.equal(a.els.openYandexGo.href,first);
+  a.run('closeOfferLocation()');assert.equal(a.els.openYandexGo.hidden,true);assert.equal(a.els.openYandexGo.href,'');
+  open();a.els.exchangeCity.value='kobuleti';a.els.exchangeCity.events.change();
+  assert.equal(a.els.openYandexGo.hidden,true);assert.equal(a.els.openYandexGo.href,'');
+  open();assert.equal(a.els.openYandexGo.hidden,true);assert.match(a.els.branchAddress.textContent,/Кобулети/);
+  a.run('renderOfferLocation(offersForCity().find(row=>row.kind==="bank"))');
+  assert.equal(a.els.openYandexGo.href,'');assert.equal(a.els.openYandexGo.hidden,true);
+  assert.match(a.els.branchTaxiHint.textContent,/Сначала выберите отделение/);
+  await cash(a,3);a.run('selectOffer("manual");toggleOfferLocation()');
+  assert.equal(a.els.openYandexGo.href,'');assert.equal(a.els.openYandexGo.hidden,true);
+  assert.equal(a.els.branchTaxiHint.hidden,true);
+});
+
+test('Inteli Go mismatch clears a previous valid taxi handoff without removing its address or map',async()=>{
+  const a=await app({},false,{city:'batumi',userAgent:'Android',responses:inteliResponses()});
+  a.run('selectOffer("office:rico");toggleOfferLocation()');
+  assert.equal(a.els.openYandexGo.hidden,false);
+  a.run('selectOffer("office:inteli");toggleOfferLocation()');
+  assert.equal(a.els.openYandexGo.hidden,true);
+  assert.equal(a.els.openYandexGo.href,'');
+  assert.equal(a.els.openDeviceMap.hidden,false);
+  assert.match(a.els.branchAddress.textContent,/Бараташвили, 25/);
+  assert.equal(a.els.branchTaxiHint.hidden,false);
+  assert.match(a.els.branchTaxiHint.textContent,/Адрес в Яндекс Go не совпал/);
+  a.run('selectOffer("office:rico");toggleOfferLocation()');
+  assert.equal(a.els.openYandexGo.hidden,false);
+  assert.doesNotMatch(a.els.branchTaxiHint.textContent,/не совпал/);
+});
+test('Taxi remains usable with denied storage and hidden when locations are unavailable',async()=>{
+  const a=await app({},true,{city:'batumi',userAgent:'Android'});
+  a.run('selectOffer("office:rico");toggleOfferLocation()');assert.equal(a.els.openYandexGo.hidden,false);
+  const b=await app({},false,{city:'batumi',userAgent:'Android',noLocations:true});
+  b.run('selectOffer("office:rico");toggleOfferLocation()');
+  assert.equal(b.els.openYandexGo.href,'');assert.equal(b.els.openYandexGo.hidden,true);
+  assert.equal(b.els.openDeviceMap.hidden,true);
 });
 test('malformed point coordinates fall back to address search rather than an incorrect pin',()=>{
   const L=require('../locations.js'),branch=L.branches('mjc','tbilisi')[0];
@@ -1560,7 +1618,7 @@ test('V5.7 stale cached EUR remains dated on offline reload and never borrows fr
   stale.fetchedAt=stamp;for(const row of stale.offers)row.checkedAt=stamp;
   const a=await app({'gelcost-v5.7-offices-EUR':JSON.stringify(stale)},false,{responses:{'./exchange-rates-eur.json':new Error('offline'),'./market-rates-eur.json':new Error('offline')}});
   a.run('changeExchangeCurrency("EUR");selectOffer("office:EUR:rico")');
-  assert.equal(a.els.planOfferButton.disabled,true);assert.match(a.els.exchangeResultLabel.textContent,/Нужна проверка/);
+  assert.equal(a.els.planOfferButton.disabled,true);assert.match(a.els.exchangeResultLabel.textContent,/Курс требует проверки/);
   assert.equal(a.run('offersForCity().every(row=>row.currency==="EUR"&&!row.fresh)'),true);
   assert.equal(a.run('offersForCity().find(row=>row.id==="rico").checkedAt'),stamp);
   a.run('changeExchangeCurrency("USD")');assert.equal(a.els.planOfferButton.disabled,false);
@@ -1584,7 +1642,7 @@ test('V5.7 new-city addresses stay city-bound for every currency while bank sear
     a.run(`changeExchangeCurrency('${currency}')`);a.els.exchangeCity.value=city;a.els.exchangeCity.events.change();
     const key=currency==='USD'?'office:rico':'office:'+currency+':rico';
     a.run(`selectOffer('${key}');toggleOfferLocation()`);
-    assert.equal(a.els.branchAddress.textContent,L.branches('rico',city)[0].address);
+    assert.equal(a.els.branchAddress.textContent,L.branches('rico',city)[0].displayAddress);
     assert.equal(a.els.openDeviceMap.href,L.branchLinks(L.branches('rico',city)[0]).google);
     if(city!=='tbilisi')assert.equal(a.run('offersForCity().some(row=>row.id==="mjc")'),false);
     assert.equal(a.els.offerLocationPanel.hidden,false);
@@ -1800,7 +1858,7 @@ test('V5.7 copy: stale public rates remain inspectable with maps, while transfer
     a.advance(3*3600000);a.run('renderOffers()');
     const plan=a.run('JSON.stringify(plan)'),personal=a.writes[C.STORAGE_KEY];
     assert.equal(a.els.exchangeReceive.textContent,result,'A dated estimate stays visible');
-    assert.equal(a.els.exchangeResultLabel.textContent,'Нужна проверка · Rico');assert.equal(a.els.exchangeResultLabel.classes.has('stale'),true);
+    assert.equal(a.els.exchangeResultLabel.textContent,'Курс требует проверки. Сумма — для справки.');assert.equal(a.els.exchangeResultLabel.classes.has('stale'),true);
     assert.match(a.els.selectedOfferDetail.textContent,/Проверено .*Курс нельзя применить: данные устарели или не подтверждены\./);
     assert.equal(a.els.offerActionNote.hidden,false);
     assert.equal(a.els.offerActionNote.textContent,'Чтобы применить курс, обновите данные или введите свой.');

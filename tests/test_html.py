@@ -29,7 +29,7 @@ class Page(HTMLParser):
 class HTMLTests(unittest.TestCase):
     def test_brand_uses_approved_asset_and_preserves_navigation(self):
         source=(ROOT/"index.html").read_text(encoding="utf-8")
-        self.assertIn('href="brand/brand.css?v=5.10.0-test-1"', source)
+        self.assertIn('href="brand/brand.css?v=5.10.3-test-1"', source)
         header=source.split('<header>',1)[1].split('</header>',1)[0]
         self.assertIn('<p class="brand-tagline">Грузия, давай на ты.</p>', header)
         self.assertLess(header.index('class="brand"'), header.index('brand-tagline'))
@@ -46,7 +46,7 @@ class HTMLTests(unittest.TestCase):
 
     def test_build_note_is_unique_and_outside_main_before_navigation(self):
         source=(ROOT/"index.html").read_text(encoding="utf-8")
-        note='<p class="build-note">V5.10.1 · тестовый выпуск</p>'
+        note='<p class="build-note">V5.10.3 · тестовый выпуск</p>'
         self.assertEqual(source.count(note), 1)
         self.assertEqual(source.count('class="build-note"'), 1)
         self.assertLess(source.index('</main>'), source.index(note))
@@ -57,9 +57,11 @@ class HTMLTests(unittest.TestCase):
         self.assertEqual(p.stack,[])
         self.assertTrue(all(n == 1 for n in Counter(p.ids).values()))
         self.assertTrue(all(i in p.labels for i in p.inputs))
-        self.assertEqual(p.scripts,["theme.js?v=5.10.0-test-1","core.js?v=5.8-release-1","locations.js?v=5.8-release-1","app.js?v=5.10.1-test-1","weather.js?v=5.10.0-test-1","insurance-core.js?v=5.10.0-test-1","insurance.js?v=5.10.1-test-1"])
+        self.assertEqual(p.scripts,[name+"?v=5.10.3-test-1" for name in ["theme.js","core.js","locations.js","app.js","services.js","outages.js","weather.js","insurance-core.js","insurance.js"]])
         source=(ROOT/"app.js").read_text(encoding="utf-8")
         for handler in p.handlers:
+            if handler == "window.location.reload":
+                continue  # Standard browser API; all application handlers must still resolve.
             self.assertRegex(source,r"function\s+"+re.escape(handler)+r"\(")
         source=(ROOT/"index.html").read_text(encoding="utf-8")
         self.assertIn("<title>Gamarji — Гамарджи</title>",source)
@@ -72,10 +74,14 @@ class HTMLTests(unittest.TestCase):
         self.assertIn('<section id="exchangeView" aria-labelledby=', source)
         nav=source.split('<nav class="bottom-nav"')[1].split('</nav>')[0]
         self.assertLess(nav.index('id="exchangeNav"'), nav.index('id="purchaseNav"'))
+        self.assertEqual(re.findall(r'<button[^>]*\bid="([^"]+)"', nav), ['exchangeNav', 'purchaseNav', 'insuranceNav', 'servicesNav'])
         self.assertIn('id="exchangeNav" aria-current="page"', nav)
         self.assertIn('>Калькулятор</button>', nav)
         self.assertIn("onclick=\"showView('calculator')\"", nav)
         self.assertIn('<section id="calculatorView" hidden', source)
+        self.assertIn('<section id="servicesView" aria-labelledby="servicesHeading" hidden>', source)
+        self.assertIn('id="servicesNav" aria-current="false" onclick="showView(\'services\')"', nav)
+        self.assertIn('src="brand/icons/interface/house-plug.svg" width="24" height="24" alt="">Отключения</button>', nav)
         self.assertNotIn('Bybit', source)
         self.assertIn('<details class="disclosure" id="comparisonDetails">', source)
         self.assertIn('<details class="disclosure" id="paymentSetup">', source)
@@ -87,10 +93,35 @@ class HTMLTests(unittest.TestCase):
         official=source.split('<div class="official-fields">', 1)[1].split('</details>', 1)[0]
         for field, label in [('officialRub', 'USD/RUB — ЦБ РФ'), ('officialGel', 'USD/GEL — НБГ')]:
             self.assertIn(f'<div><label for="{field}">{label}</label><input id="{field}" type="text" readonly></div>', official)
-        self.assertIn('href="styles.css?v=5.10.0-test-1"', source)
-        self.assertIn('<p class="build-note">V5.10.1 · тестовый выпуск</p>', source)
-        self.assertIn('href="insurance.css?v=5.10.1-test-1"', source)
-        self.assertIn('href="theme.css?v=5.10.1-test-1"', source)
+        self.assertIn('href="styles.css?v=5.10.3-test-1"', source)
+        self.assertIn('<p class="build-note">V5.10.3 · тестовый выпуск</p>', source)
+        self.assertIn('href="insurance.css?v=5.10.3-test-1"', source)
+        self.assertIn('href="theme.css?v=5.10.3-test-1"', source)
+
+    def test_balanced_entry_keeps_data_visible_and_task_details_intact(self):
+        source=(ROOT/"index.html").read_text(encoding="utf-8")
+        heading=source.split('<div class="calculator-heading">',1)[1].split('</div>',1)[0]
+        self.assertIn('id="calculatorHeading"',heading)
+        self.assertIn('id="dataNav"',heading)
+        self.assertIn('class="visually-hidden" id="dataEntryHelp"',source)
+        self.assertLess(source.index('id="dataNav"'),source.index('id="planAmount"'))
+        for i in range(2):
+            self.assertIn(f'id="planFee{i}"',source)
+            self.assertIn(f'id="planQuoteError{i}"',source)
+        self.assertIn('Медицинские полисы для жизни в Грузии.',source)
+        self.assertIn('Приём иностранцев и клиники в вашем городе уточните у страховой.',source)
+        self.assertIn('Это объявления поставщика, не проверка света в доме.',source)
+
+    def test_services_is_a_main_view_not_a_second_header_panel(self):
+        source=(ROOT/"index.html").read_text(encoding="utf-8")
+        main=source.split('<main id="main">', 1)[1].split('</main>', 1)[0]
+        self.assertIn('<section id="servicesView" aria-labelledby="servicesHeading" hidden>', main)
+        self.assertIn('<h1 id="servicesHeading" tabindex="-1">Отключения</h1>', main)
+        for old_id in ['servicesToggle', 'servicesPanel', 'servicesClose']:
+            self.assertNotIn(f'id="{old_id}"', source)
+        header=source.split('<header>', 1)[1].split('</header>', 1)[0]
+        self.assertNotIn('servicesNav', header)
+        self.assertIn('id="themeToggle"', header)
 
     def test_audit_actions_feedback_and_warnings_stay_near_the_task(self):
         source=(ROOT/"index.html").read_text(encoding="utf-8")

@@ -10,6 +10,26 @@
     rustavi:{name:"Рустави",map:"Rustavi"},kobuleti:{name:"Кобулети",map:"Kobuleti"},
     poti:{name:"Поти",map:"Poti"},kutaisi:{name:"Кутаиси",map:"Kutaisi"}
   };
+  // Display-only vocabulary: verified RU street names, never a geocoder.
+  // Exact city/street matches only. Numbers, suffixes and navigation text stay intact.
+  const russianStreets={batumi:{
+    "Ilia Chavchavadze Street":"ул. И. Чавчавадзе",
+    "Baratashvili Street":"ул. Бараташвили",
+    "Airport Highway":"Аэропортовое шоссе",
+    "Kobaladze Street":"ул. Кобаладзе",
+    "Severiane Achareli Street":"ул. Святого Севериана Аджарели",
+    "Sherif Khimshiashvili Street":"ул. Шерифа Химшиашвили"
+  }};
+  function localizeAddress(original,city){
+    const fallback={original,display:original,status:"unverified",source:null,checkedOn:null};
+    if(typeof original!=="string"||!Object.hasOwn(russianStreets,city))return fallback;
+    // Do not partially translate a multi-street notice, apartment or ambiguous building.
+    const match=original.match(/^(\d+[a-zA-Z]?(?:\/\d+[a-zA-Z]?)?) (.+)$/);
+    if(!match||!Object.hasOwn(russianStreets[city],match[2]))return fallback;
+    return {original,display:russianStreets[city][match[2]]+", "+match[1],
+      house:match[1],streetOriginal:match[2],status:"verified-street",
+      source:"https://www.rico.ge/ru/branches/",checkedOn:"2026-09-08"};
+  }
   const directories={
     // Apple web place cards reverse-geocode this POI to a street and lose the
     // destination in Directions. Use a verified Google coordinate pin for this branch only.
@@ -86,15 +106,22 @@
     // Kutaisi, Chavchavadze 62: place 0x405c8cc969988cd5:0x1e1b2afb5bc4fba8.
     "rico:kutaisi:62 Ilia Chavchavadze Avenue":[42.2579718,42.6691528]
   };
+  // Provider-specific quarantine, not a change to the official address/map pin.
+  // 2026-09-09: actual Go web handoff named Irakli Abashidze 7A instead of
+  // the supplier's Baratashvili 25. Do not guess a replacement entrance.
+  const yandexGoIssues={"inteli:batumi:25 Baratashvili Street":"address-mismatch"};
   function branches(office,city="batumi"){
     const directory=Object.hasOwn(directories,office)?directories[office]:null;
     if(!directory)return [];
     return Object.entries(directory.addresses).flatMap(([key,addresses])=>
       city!=="all"&&city!==key?[]:addresses.map((address,index)=>({
         id:office+":"+key+":"+index,city:key,address:cities[key].name+", "+address,
+        displayAddress:cities[key].name+", "+localizeAddress(address,key).display,
+        addressTranslation:localizeAddress(address,key),
         destination:address+", "+cities[key].map+", Georgia",source:directory.source,
         checkedAt:directory.checkedByCity?.[key]||checkedAt,
         point:points[office+":"+key+":"+address]||null,
+        yandexGoIssue:yandexGoIssues[office+":"+key+":"+address]||null,
         appleFallback:directory.appleFallback||null
       })));
   }
@@ -125,22 +152,35 @@
   function validPoint(point){
     return Array.isArray(point)&&point.length===2&&point.every(Number.isFinite)&&Math.abs(point[0])<=90&&Math.abs(point[1])<=180;
   }
-  // Generic Android geo Intent: Android, not this site, resolves installed handlers.
-  // An HTTPS fallback avoids dead-end custom-scheme probes. No package enumeration.
+  // A generic geo Intent also offers taxi handlers, which do not reliably treat
+  // its query as a ride destination. Use the maps HTTPS link; taxis are separate.
   function deviceMapLink(links){
     try{
       const url=new URL(links?.google);
       if(url.protocol!=="https:"||url.hostname!=="www.google.com"||url.pathname!=="/maps/search/")return null;
       const query=url.searchParams.get("query");
       if(!query)return null;
-      return "intent:0,0?q="+encodeURIComponent(query)+"#Intent;scheme=geo;action=android.intent.action.VIEW;S.browser_fallback_url="+encodeURIComponent(url.href)+";end";
+      return mapLinks(query).google;
     }catch{return null;}
+  }
+  function yandexGoLink(branch){
+    // Never geocode/guess a bank search or send the branch as the pickup point.
+    if(branch?.yandexGoIssue||!validPoint(branch?.point))return null;
+    const url=new URL("https://3.redirect.appmetrica.yandex.com/route");
+    url.searchParams.set("end-lat",String(branch.point[0]));
+    url.searchParams.set("end-lon",String(branch.point[1]));
+    url.searchParams.set("ref","gamarji");
+    // Official public redirect ID: website fallback, not forced app installation.
+    // https://yandex.ru/support/taxi-distr/ru/api/deeplinks
+    url.searchParams.set("appmetrica_tracking_id","25395763362139037");
+    url.searchParams.set("lang","ru");
+    return url.href;
   }
   function bankSearch(name,city){
     const place=Object.hasOwn(cities,city)?cities[city].map:"Georgia";
     return mapLinks(String(name).slice(0,120)+" bank branches, "+place+(place==="Georgia"?"":", Georgia"));
   }
-  const api={checkedAt,branches,mapLinks,branchLinks,bankSearch,validPoint,deviceMapLink};
+  const api={checkedAt,branches,localizeAddress,mapLinks,branchLinks,bankSearch,validPoint,deviceMapLink,yandexGoLink};
   if(typeof module!=="undefined"&&module.exports)module.exports=api;
   else root.GelLocations=api;
 })(typeof window!=="undefined"?window:this);

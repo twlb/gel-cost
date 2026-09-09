@@ -24,17 +24,18 @@ function theme(saved={},options={}){
   const button={textContent:'',attrs:{},events:{},
     setAttribute(name,value){this.attrs[name]=value;},
     addEventListener(name,callback){this.events[name]=callback;}};
+  const icon={attrs:{},setAttribute(name,value){this.attrs[name]=value;}};
   let ready=false;
   const document={documentElement,
     querySelector(selector){assert.equal(selector,'meta[name="theme-color"]');return meta;},
-    getElementById(id){assert.equal(id,'themeToggle');return ready&&!options.noButton?button:null;},
+    getElementById(id){assert.ok(['themeToggle','themeIcon'].includes(id));return ready&&!options.noButton?(id==='themeToggle'?button:icon):null;},
     addEventListener(name,callback){events[name]=callback;}};
   const localStorage={
     getItem(key){reads.push(key);if(options.getBlocked)throw Error('Storage unavailable');return store[key]??null;},
     setItem(key,value){writes.push([key,value]);if(options.setBlocked)throw Error('Storage unavailable');store[key]=value;}
   };
   vm.runInNewContext(source,{document,localStorage});
-  return {store,reads,writes,documentElement,meta,button,
+  return {store,reads,writes,documentElement,meta,button,icon,
     ready(){ready=true;assert.equal(typeof events.DOMContentLoaded,'function');events.DOMContentLoaded();},
     click(){assert.equal(typeof button.events.click,'function');button.events.click();}};
 }
@@ -42,8 +43,10 @@ function theme(saved={},options={}){
 function assertAppearance(a,value){
   assert.equal(a.documentElement.dataset.theme,value);
   if(a.meta)assert.equal(a.meta.content,value==='dark'?'#11151b':'#faf9f6');
-  assert.equal(a.button.textContent,value==='dark'?'Светлая тема':'Тёмная тема');
+  assert.equal(a.button.textContent,'','Theme changes must not erase the icon DOM');
+  assert.equal(a.icon.attrs.src,'brand/icons/weather/'+(value==='dark'?'sun':'moon')+'.svg');
   assert.equal(a.button.attrs['aria-label'],value==='dark'?'Включить светлую тему':'Включить тёмную тему');
+  assert.equal(a.button.attrs.title,a.button.attrs['aria-label']);
 }
 
 test('theme starts light before body parsing and initializes its button on DOMContentLoaded',()=>{
