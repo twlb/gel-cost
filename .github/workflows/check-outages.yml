@@ -1,0 +1,72 @@
+name: Check outages manually
+
+"on":
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: Inspect saved state, or explicitly collect once (never publishes the site)
+        type: choice
+        options: [inspect, collect]
+        default: inspect
+        required: true
+      confirm_collection:
+        description: I approve source requests and saving the collector state for this run
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: outage-collector-manual
+  cancel-in-progress: false
+
+jobs:
+  inspect:
+    if: github.repository == 'twlb/gel-cost' && github.ref == 'refs/heads/main' && inputs.mode == 'inspect'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4, verified 2026-09-09
+        with:
+          persist-credentials: false
+      - name: Validate collector and calculation contracts
+        run: |
+          python3 -m unittest discover -s tests -p 'test_*.py'
+          node --test --test-reporter=dot tests/*.test.cjs
+      - name: Inspect saved state without source requests or writes
+        env:
+          OUTAGE_MODE: inspect
+          OUTAGE_GITHUB_TOKEN: ${{ github.token }}
+        run: python3 scripts/outage_actions.py
+
+  collect:
+    if: github.repository == 'twlb/gel-cost' && github.ref == 'refs/heads/main' && inputs.mode == 'collect'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    steps:
+      - name: Require operator enablement and per-run consent
+        env:
+          ENABLED: ${{ vars.OUTAGE_MANUAL_COLLECTION_ENABLED }}
+          CONFIRMED: ${{ inputs.confirm_collection }}
+        run: |
+          if [ "$ENABLED" != 'true' ] || [ "$CONFIRMED" != 'true' ]; then
+            echo 'Collection is disabled or not confirmed. No state or source changes made.'
+            exit 1
+          fi
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4, verified 2026-09-09
+        with:
+          persist-credentials: false
+      - name: Validate collector and calculation contracts
+        run: |
+          python3 -m unittest discover -s tests -p 'test_*.py'
+          node --test --test-reporter=dot tests/*.test.cjs
+      - name: Collect once into state branch only
+        env:
+          OUTAGE_MODE: collect
+          OUTAGE_COLLECTION_ENABLED: ${{ vars.OUTAGE_MANUAL_COLLECTION_ENABLED }}
+          OUTAGE_CONFIRM_COLLECTION: ${{ inputs.confirm_collection }}
+          OUTAGE_GITHUB_TOKEN: ${{ github.token }}
+        run: python3 scripts/outage_actions.py
