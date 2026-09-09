@@ -24,6 +24,7 @@ class RefreshTests(unittest.TestCase):
         self.addCleanup(self.tmp.cleanup)
         self.base = Path(self.tmp.name)
         self.state, self.output = self.base/'private', self.base/'outages.json'
+        refresh.initialize(self.state, self.output, now=NOW)
 
     def run_once(self, **kwargs):
         return refresh.run(self.state, self.output, now=kwargs.pop('now', NOW), fetcher=kwargs.pop('fetcher', fixture), **kwargs)
