@@ -7,7 +7,7 @@
   "channel": "Branch",
   "userType": "PhysicalPerson",
   "queryAmountGel": 1000,
-  "fetchedAt": "2026-09-09T13:42:59.574362Z",
+  "fetchedAt": "2026-09-09T15:41:58.164041Z",
   "source": {
     "name": "Банковская витрина НБГ",
     "url": "https://nbg.gov.ge/en/currency-rates",
@@ -45,8 +45,8 @@
     {
       "id": "4",
       "bank": "Khalyk Bank Georgia",
-      "buy": 2.601,
-      "sell": 2.631,
+      "buy": 2.6,
+      "sell": 2.63,
       "sourceUpdatedAt": null
     },
     {

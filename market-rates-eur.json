@@ -7,7 +7,7 @@
   "channel": "Branch",
   "userType": "PhysicalPerson",
   "queryAmountGel": 1000,
-  "fetchedAt": "2026-09-09T13:42:59.574362Z",
+  "fetchedAt": "2026-09-09T15:41:58.164041Z",
   "source": {
     "name": "Банковская витрина НБГ",
     "url": "https://nbg.gov.ge/en/currency-rates",
@@ -15,17 +15,10 @@
   },
   "offers": [
     {
-      "id": "2",
-      "bank": "Credo Bank",
-      "buy": 3.031,
-      "sell": 3.055,
-      "sourceUpdatedAt": null
-    },
-    {
       "id": "6",
       "bank": "Silk Bank",
-      "buy": 3.03,
-      "sell": 3.05,
+      "buy": 3.024,
+      "sell": 3.058,
       "sourceUpdatedAt": null
     },
     {
@@ -43,17 +36,17 @@
       "sourceUpdatedAt": null
     },
     {
-      "id": "9",
-      "bank": "Bank of Georgia",
-      "buy": 2.999,
-      "sell": 3.083,
+      "id": "2",
+      "bank": "Credo Bank",
+      "buy": 3.004,
+      "sell": 3.082,
       "sourceUpdatedAt": null
     },
     {
-      "id": "10",
-      "bank": "Basisbank",
-      "buy": 2.9941,
-      "sell": 3.0815,
+      "id": "9",
+      "bank": "Bank of Georgia",
+      "buy": 2.995,
+      "sell": 3.079,
       "sourceUpdatedAt": null
     },
     {
@@ -71,6 +64,13 @@
       "sourceUpdatedAt": null
     },
     {
+      "id": "10",
+      "bank": "Basisbank",
+      "buy": 2.9809,
+      "sell": 3.0944,
+      "sourceUpdatedAt": null
+    },
+    {
       "id": "12",
       "bank": "Liberty Bank",
       "buy": 2.979,
@@ -80,15 +80,15 @@
     {
       "id": "7",
       "bank": "Procredit bank",
-      "buy": 2.967,
-      "sell": 3.116,
+      "buy": 2.964,
+      "sell": 3.113,
       "sourceUpdatedAt": null
     },
     {
       "id": "11",
       "bank": "TBC Bank",
-      "buy": 2.966,
-      "sell": 3.114,
+      "buy": 2.961,
+      "sell": 3.109,
       "sourceUpdatedAt": null
     },
     {
@@ -101,8 +101,8 @@
     {
       "id": "3",
       "bank": "Pasha Bank Georgia",
-      "buy": 2.9034,
-      "sell": 3.1748,
+      "buy": 2.8934,
+      "sell": 3.1921,
       "sourceUpdatedAt": null
     }
   ],
