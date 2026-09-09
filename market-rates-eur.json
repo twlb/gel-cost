@@ -110,5 +110,7 @@
     "minimumBanks": 3,
     "rejectedCount": 0,
     "officialReferenceChecked": true
-  }
+  },
+  "refreshFailed": true,
+  "lastAttemptAt": "2026-09-09T17:17:51.825463Z"
 }
