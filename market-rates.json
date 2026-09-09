@@ -7,7 +7,7 @@
   "channel": "Branch",
   "userType": "PhysicalPerson",
   "queryAmountGel": 1000,
-  "fetchedAt": "2026-09-09T06:50:09.597154Z",
+  "fetchedAt": "2026-09-09T09:12:48.254766Z",
   "source": {
     "name": "Банковская витрина НБГ",
     "url": "https://nbg.gov.ge/en/currency-rates",
@@ -78,17 +78,17 @@
       "sourceUpdatedAt": null
     },
     {
-      "id": "12",
-      "bank": "Liberty Bank",
-      "buy": 2.563,
-      "sell": 2.663,
-      "sourceUpdatedAt": null
-    },
-    {
       "id": "3",
       "bank": "Pasha Bank Georgia",
       "buy": 2.561,
       "sell": 2.661,
+      "sourceUpdatedAt": null
+    },
+    {
+      "id": "12",
+      "bank": "Liberty Bank",
+      "buy": 2.56,
+      "sell": 2.66,
       "sourceUpdatedAt": null
     },
     {
