@@ -7,7 +7,7 @@
   "channel": "Branch",
   "userType": "PhysicalPerson",
   "queryAmountGel": 1000,
-  "fetchedAt": "2026-09-10T17:53:06.829589Z",
+  "fetchedAt": "2026-09-10T20:51:27.853205Z",
   "source": {
     "name": "Банковская витрина НБГ",
     "url": "https://nbg.gov.ge/en/currency-rates",
@@ -19,13 +19,6 @@
       "bank": "Tera Bank",
       "buy": 2.61,
       "sell": 2.616,
-      "sourceUpdatedAt": null
-    },
-    {
-      "id": "13",
-      "bank": "Ziraatbank",
-      "buy": 2.61,
-      "sell": 2.64,
       "sourceUpdatedAt": null
     },
     {
@@ -47,6 +40,13 @@
       "bank": "Khalyk Bank Georgia",
       "buy": 2.6,
       "sell": 2.63,
+      "sourceUpdatedAt": null
+    },
+    {
+      "id": "13",
+      "bank": "Ziraatbank",
+      "buy": 2.6,
+      "sell": 2.627,
       "sourceUpdatedAt": null
     },
     {
