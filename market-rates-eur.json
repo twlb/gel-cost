@@ -7,7 +7,7 @@
   "channel": "Branch",
   "userType": "PhysicalPerson",
   "queryAmountGel": 1000,
-  "fetchedAt": "2026-09-11T11:19:54.282614Z",
+  "fetchedAt": "2026-09-12T01:33:45.848887Z",
   "source": {
     "name": "Банковская витрина НБГ",
     "url": "https://nbg.gov.ge/en/currency-rates",
@@ -22,13 +22,6 @@
       "sourceUpdatedAt": null
     },
     {
-      "id": "2",
-      "bank": "Credo Bank",
-      "buy": 3.016,
-      "sell": 3.042,
-      "sourceUpdatedAt": null
-    },
-    {
       "id": "5",
       "bank": "Tera Bank",
       "buy": 3.015,
@@ -38,7 +31,7 @@
     {
       "id": "4",
       "bank": "Khalyk Bank Georgia",
-      "buy": 2.99,
+      "buy": 3.0,
       "sell": 3.07,
       "sourceUpdatedAt": null
     },
@@ -50,17 +43,17 @@
       "sourceUpdatedAt": null
     },
     {
-      "id": "9",
-      "bank": "Bank of Georgia",
-      "buy": 2.983,
-      "sell": 3.067,
+      "id": "2",
+      "bank": "Credo Bank",
+      "buy": 2.989,
+      "sell": 3.074,
       "sourceUpdatedAt": null
     },
     {
-      "id": "10",
-      "bank": "Basisbank",
-      "buy": 2.9818,
-      "sell": 3.0691,
+      "id": "9",
+      "bank": "Bank of Georgia",
+      "buy": 2.984,
+      "sell": 3.068,
       "sourceUpdatedAt": null
     },
     {
@@ -71,24 +64,31 @@
       "sourceUpdatedAt": null
     },
     {
+      "id": "10",
+      "bank": "Basisbank",
+      "buy": 2.9715,
+      "sell": 3.0848,
+      "sourceUpdatedAt": null
+    },
+    {
       "id": "12",
       "bank": "Liberty Bank",
-      "buy": 2.962,
-      "sell": 3.078,
+      "buy": 2.966,
+      "sell": 3.082,
       "sourceUpdatedAt": null
     },
     {
       "id": "7",
       "bank": "Procredit bank",
-      "buy": 2.952,
-      "sell": 3.101,
+      "buy": 2.956,
+      "sell": 3.105,
       "sourceUpdatedAt": null
     },
     {
       "id": "11",
       "bank": "TBC Bank",
-      "buy": 2.95,
-      "sell": 3.098,
+      "buy": 2.951,
+      "sell": 3.099,
       "sourceUpdatedAt": null
     },
     {
@@ -101,8 +101,8 @@
     {
       "id": "3",
       "bank": "Pasha Bank Georgia",
-      "buy": 2.8961,
-      "sell": 3.1667,
+      "buy": 2.8814,
+      "sell": 3.1791,
       "sourceUpdatedAt": null
     }
   ],
@@ -110,7 +110,5 @@
     "minimumBanks": 3,
     "rejectedCount": 0,
     "officialReferenceChecked": true
-  },
-  "refreshFailed": true,
-  "lastAttemptAt": "2026-09-11T23:32:00.656427Z"
+  }
 }
