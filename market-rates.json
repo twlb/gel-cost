@@ -7,7 +7,7 @@
   "channel": "Branch",
   "userType": "PhysicalPerson",
   "queryAmountGel": 1000,
-  "fetchedAt": "2026-09-18T09:46:25.295891Z",
+  "fetchedAt": "2026-09-18T13:53:54.043253Z",
   "source": {
     "name": "Банковская витрина НБГ",
     "url": "https://nbg.gov.ge/en/currency-rates",
@@ -17,8 +17,8 @@
     {
       "id": "6",
       "bank": "Silk Bank",
-      "buy": 2.604,
-      "sell": 2.609,
+      "buy": 2.605,
+      "sell": 2.61,
       "sourceUpdatedAt": null
     },
     {
@@ -31,8 +31,8 @@
     {
       "id": "2",
       "bank": "Credo Bank",
-      "buy": 2.601,
-      "sell": 2.615,
+      "buy": 2.602,
+      "sell": 2.616,
       "sourceUpdatedAt": null
     },
     {
@@ -45,14 +45,14 @@
     {
       "id": "4",
       "bank": "Khalyk Bank Georgia",
-      "buy": 2.597,
-      "sell": 2.627,
+      "buy": 2.595,
+      "sell": 2.625,
       "sourceUpdatedAt": null
     },
     {
       "id": "10",
       "bank": "Basisbank",
-      "buy": 2.59,
+      "buy": 2.592,
       "sell": 2.62,
       "sourceUpdatedAt": null
     },
@@ -78,6 +78,13 @@
       "sourceUpdatedAt": null
     },
     {
+      "id": "12",
+      "bank": "Liberty Bank",
+      "buy": 2.56,
+      "sell": 2.66,
+      "sourceUpdatedAt": null
+    },
+    {
       "id": "7",
       "bank": "Procredit bank",
       "buy": 2.557,
@@ -89,13 +96,6 @@
       "bank": "Pasha Bank Georgia",
       "buy": 2.556,
       "sell": 2.656,
-      "sourceUpdatedAt": null
-    },
-    {
-      "id": "12",
-      "bank": "Liberty Bank",
-      "buy": 2.555,
-      "sell": 2.655,
       "sourceUpdatedAt": null
     },
     {
