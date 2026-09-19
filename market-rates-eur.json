@@ -7,7 +7,7 @@
   "channel": "Branch",
   "userType": "PhysicalPerson",
   "queryAmountGel": 1000,
-  "fetchedAt": "2026-09-18T17:40:51.054986Z",
+  "fetchedAt": "2026-09-19T05:05:18.670800Z",
   "source": {
     "name": "Банковская витрина НБГ",
     "url": "https://nbg.gov.ge/en/currency-rates",
@@ -87,8 +87,8 @@
     {
       "id": "11",
       "bank": "TBC Bank",
-      "buy": 2.92,
-      "sell": 3.066,
+      "buy": 2.922,
+      "sell": 3.068,
       "sourceUpdatedAt": null
     },
     {
@@ -110,7 +110,5 @@
     "minimumBanks": 3,
     "rejectedCount": 0,
     "officialReferenceChecked": true
-  },
-  "refreshFailed": true,
-  "lastAttemptAt": "2026-09-19T00:38:30.297926Z"
+  }
 }
