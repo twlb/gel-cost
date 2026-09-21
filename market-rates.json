@@ -7,7 +7,7 @@
   "channel": "Branch",
   "userType": "PhysicalPerson",
   "queryAmountGel": 1000,
-  "fetchedAt": "2026-09-21T01:41:40.310180Z",
+  "fetchedAt": "2026-09-21T07:11:46.002632Z",
   "source": {
     "name": "Банковская витрина НБГ",
     "url": "https://nbg.gov.ge/en/currency-rates",
@@ -17,8 +17,8 @@
     {
       "id": "6",
       "bank": "Silk Bank",
-      "buy": 2.605,
-      "sell": 2.61,
+      "buy": 2.604,
+      "sell": 2.609,
       "sourceUpdatedAt": null
     },
     {
@@ -53,7 +53,7 @@
       "id": "10",
       "bank": "Basisbank",
       "buy": 2.592,
-      "sell": 2.62,
+      "sell": 2.619,
       "sourceUpdatedAt": null
     },
     {
