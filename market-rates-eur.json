@@ -7,7 +7,7 @@
   "channel": "Branch",
   "userType": "PhysicalPerson",
   "queryAmountGel": 1000,
-  "fetchedAt": "2026-09-21T19:27:03.317409Z",
+  "fetchedAt": "2026-09-22T06:47:53.797534Z",
   "source": {
     "name": "Банковская витрина НБГ",
     "url": "https://nbg.gov.ge/en/currency-rates",
@@ -24,8 +24,15 @@
     {
       "id": "6",
       "bank": "Silk Bank",
-      "buy": 2.978,
-      "sell": 3.01,
+      "buy": 2.985,
+      "sell": 3.003,
+      "sourceUpdatedAt": null
+    },
+    {
+      "id": "2",
+      "bank": "Credo Bank",
+      "buy": 2.983,
+      "sell": 3.007,
       "sourceUpdatedAt": null
     },
     {
@@ -43,17 +50,17 @@
       "sourceUpdatedAt": null
     },
     {
-      "id": "2",
-      "bank": "Credo Bank",
-      "buy": 2.954,
-      "sell": 3.031,
+      "id": "10",
+      "bank": "Basisbank",
+      "buy": 2.9476,
+      "sell": 3.0319,
       "sourceUpdatedAt": null
     },
     {
       "id": "9",
       "bank": "Bank of Georgia",
-      "buy": 2.948,
-      "sell": 3.032,
+      "buy": 2.946,
+      "sell": 3.03,
       "sourceUpdatedAt": null
     },
     {
@@ -66,29 +73,15 @@
     {
       "id": "16",
       "bank": "Is Bank",
-      "buy": 2.936,
-      "sell": 3.055,
+      "buy": 2.935,
+      "sell": 3.054,
       "sourceUpdatedAt": null
     },
     {
       "id": "12",
       "bank": "Liberty Bank",
-      "buy": 2.934,
-      "sell": 3.05,
-      "sourceUpdatedAt": null
-    },
-    {
-      "id": "10",
-      "bank": "Basisbank",
-      "buy": 2.9339,
-      "sell": 3.0442,
-      "sourceUpdatedAt": null
-    },
-    {
-      "id": "7",
-      "bank": "Procredit bank",
-      "buy": 2.918,
-      "sell": 3.067,
+      "buy": 2.931,
+      "sell": 3.047,
       "sourceUpdatedAt": null
     },
     {
@@ -99,10 +92,17 @@
       "sourceUpdatedAt": null
     },
     {
+      "id": "7",
+      "bank": "Procredit bank",
+      "buy": 2.915,
+      "sell": 3.065,
+      "sourceUpdatedAt": null
+    },
+    {
       "id": "3",
       "bank": "Pasha Bank Georgia",
-      "buy": 2.8454,
-      "sell": 3.1395,
+      "buy": 2.8597,
+      "sell": 3.1273,
       "sourceUpdatedAt": null
     }
   ],
@@ -110,7 +110,5 @@
     "minimumBanks": 3,
     "rejectedCount": 0,
     "officialReferenceChecked": true
-  },
-  "refreshFailed": true,
-  "lastAttemptAt": "2026-09-22T01:36:08.238135Z"
+  }
 }
