@@ -7,7 +7,7 @@
   "channel": "Branch",
   "userType": "PhysicalPerson",
   "queryAmountGel": 1000,
-  "fetchedAt": "2026-09-23T20:21:24.572955Z",
+  "fetchedAt": "2026-09-23T23:09:41.314991Z",
   "source": {
     "name": "Банковская витрина НБГ",
     "url": "https://nbg.gov.ge/en/currency-rates",
@@ -52,8 +52,8 @@
     {
       "id": "9",
       "bank": "Bank of Georgia",
-      "buy": 2.947,
-      "sell": 3.031,
+      "buy": 2.946,
+      "sell": 3.03,
       "sourceUpdatedAt": null
     },
     {
