@@ -7,7 +7,7 @@
   "channel": "Branch",
   "userType": "PhysicalPerson",
   "queryAmountGel": 1000,
-  "fetchedAt": "2026-09-23T12:12:18.312574Z",
+  "fetchedAt": "2026-09-23T20:21:24.572955Z",
   "source": {
     "name": "Банковская витрина НБГ",
     "url": "https://nbg.gov.ge/en/currency-rates",
@@ -19,13 +19,6 @@
       "bank": "Ziraatbank",
       "buy": 2.99,
       "sell": 3.08,
-      "sourceUpdatedAt": null
-    },
-    {
-      "id": "2",
-      "bank": "Credo Bank",
-      "buy": 2.983,
-      "sell": 3.01,
       "sourceUpdatedAt": null
     },
     {
@@ -43,10 +36,10 @@
       "sourceUpdatedAt": null
     },
     {
-      "id": "9",
-      "bank": "Bank of Georgia",
-      "buy": 2.953,
-      "sell": 3.037,
+      "id": "2",
+      "bank": "Credo Bank",
+      "buy": 2.951,
+      "sell": 3.034,
       "sourceUpdatedAt": null
     },
     {
@@ -57,10 +50,10 @@
       "sourceUpdatedAt": null
     },
     {
-      "id": "10",
-      "bank": "Basisbank",
-      "buy": 2.9465,
-      "sell": 3.0389,
+      "id": "9",
+      "bank": "Bank of Georgia",
+      "buy": 2.947,
+      "sell": 3.031,
       "sourceUpdatedAt": null
     },
     {
@@ -71,13 +64,6 @@
       "sourceUpdatedAt": null
     },
     {
-      "id": "12",
-      "bank": "Liberty Bank",
-      "buy": 2.935,
-      "sell": 3.051,
-      "sourceUpdatedAt": null
-    },
-    {
       "id": "16",
       "bank": "Is Bank",
       "buy": 2.931,
@@ -85,17 +71,31 @@
       "sourceUpdatedAt": null
     },
     {
-      "id": "7",
-      "bank": "Procredit bank",
-      "buy": 2.917,
-      "sell": 3.066,
+      "id": "12",
+      "bank": "Liberty Bank",
+      "buy": 2.931,
+      "sell": 3.047,
+      "sourceUpdatedAt": null
+    },
+    {
+      "id": "10",
+      "bank": "Basisbank",
+      "buy": 2.9309,
+      "sell": 3.0495,
       "sourceUpdatedAt": null
     },
     {
       "id": "11",
       "bank": "TBC Bank",
-      "buy": 2.915,
-      "sell": 3.067,
+      "buy": 2.913,
+      "sell": 3.064,
+      "sourceUpdatedAt": null
+    },
+    {
+      "id": "7",
+      "bank": "Procredit bank",
+      "buy": 2.912,
+      "sell": 3.061,
       "sourceUpdatedAt": null
     },
     {
@@ -110,7 +110,5 @@
     "minimumBanks": 3,
     "rejectedCount": 0,
     "officialReferenceChecked": true
-  },
-  "refreshFailed": true,
-  "lastAttemptAt": "2026-09-23T16:56:53.394372Z"
+  }
 }
