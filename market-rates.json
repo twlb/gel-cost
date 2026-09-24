@@ -7,7 +7,7 @@
   "channel": "Branch",
   "userType": "PhysicalPerson",
   "queryAmountGel": 1000,
-  "fetchedAt": "2026-09-24T01:23:40.248669Z",
+  "fetchedAt": "2026-09-24T06:45:57.396505Z",
   "source": {
     "name": "Банковская витрина НБГ",
     "url": "https://nbg.gov.ge/en/currency-rates",
@@ -24,15 +24,15 @@
     {
       "id": "5",
       "bank": "Tera Bank",
-      "buy": 2.618,
-      "sell": 2.63,
+      "buy": 2.62,
+      "sell": 2.632,
       "sourceUpdatedAt": null
     },
     {
       "id": "2",
       "bank": "Credo Bank",
-      "buy": 2.616,
-      "sell": 2.635,
+      "buy": 2.618,
+      "sell": 2.637,
       "sourceUpdatedAt": null
     },
     {
@@ -40,6 +40,13 @@
       "bank": "Basisbank",
       "buy": 2.605,
       "sell": 2.64,
+      "sourceUpdatedAt": null
+    },
+    {
+      "id": "8",
+      "bank": "Cartu Bank",
+      "buy": 2.605,
+      "sell": 2.655,
       "sourceUpdatedAt": null
     },
     {
@@ -57,13 +64,6 @@
       "sourceUpdatedAt": null
     },
     {
-      "id": "8",
-      "bank": "Cartu Bank",
-      "buy": 2.595,
-      "sell": 2.65,
-      "sourceUpdatedAt": null
-    },
-    {
       "id": "9",
       "bank": "Bank of Georgia",
       "buy": 2.593,
@@ -73,15 +73,15 @@
     {
       "id": "16",
       "bank": "Is Bank",
-      "buy": 2.577,
-      "sell": 2.657,
+      "buy": 2.59,
+      "sell": 2.67,
       "sourceUpdatedAt": null
     },
     {
       "id": "12",
       "bank": "Liberty Bank",
-      "buy": 2.575,
-      "sell": 2.675,
+      "buy": 2.578,
+      "sell": 2.678,
       "sourceUpdatedAt": null
     },
     {
