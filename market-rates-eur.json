@@ -7,7 +7,7 @@
   "channel": "Branch",
   "userType": "PhysicalPerson",
   "queryAmountGel": 1000,
-  "fetchedAt": "2026-09-23T23:09:41.314991Z",
+  "fetchedAt": "2026-09-24T01:23:40.248669Z",
   "source": {
     "name": "Банковская витрина НБГ",
     "url": "https://nbg.gov.ge/en/currency-rates",
@@ -52,8 +52,8 @@
     {
       "id": "9",
       "bank": "Bank of Georgia",
-      "buy": 2.946,
-      "sell": 3.03,
+      "buy": 2.945,
+      "sell": 3.029,
       "sourceUpdatedAt": null
     },
     {
@@ -85,17 +85,17 @@
       "sourceUpdatedAt": null
     },
     {
-      "id": "11",
-      "bank": "TBC Bank",
-      "buy": 2.913,
-      "sell": 3.064,
-      "sourceUpdatedAt": null
-    },
-    {
       "id": "7",
       "bank": "Procredit bank",
       "buy": 2.912,
       "sell": 3.061,
+      "sourceUpdatedAt": null
+    },
+    {
+      "id": "11",
+      "bank": "TBC Bank",
+      "buy": 2.911,
+      "sell": 3.062,
       "sourceUpdatedAt": null
     },
     {
