@@ -7,7 +7,7 @@
   "channel": "Branch",
   "userType": "PhysicalPerson",
   "queryAmountGel": 1000,
-  "fetchedAt": "2026-09-26T09:52:19.766101Z",
+  "fetchedAt": "2026-09-26T14:29:15.423906Z",
   "source": {
     "name": "Банковская витрина НБГ",
     "url": "https://nbg.gov.ge/en/currency-rates",
@@ -19,13 +19,6 @@
       "bank": "Ziraatbank",
       "buy": 2.99,
       "sell": 3.08,
-      "sourceUpdatedAt": null
-    },
-    {
-      "id": "2",
-      "bank": "Credo Bank",
-      "buy": 2.961,
-      "sell": 2.986,
       "sourceUpdatedAt": null
     },
     {
@@ -47,6 +40,13 @@
       "bank": "Khalyk Bank Georgia",
       "buy": 2.94,
       "sell": 3.01,
+      "sourceUpdatedAt": null
+    },
+    {
+      "id": "2",
+      "bank": "Credo Bank",
+      "buy": 2.932,
+      "sell": 3.016,
       "sourceUpdatedAt": null
     },
     {
