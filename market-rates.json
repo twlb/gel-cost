@@ -7,7 +7,7 @@
   "channel": "Branch",
   "userType": "PhysicalPerson",
   "queryAmountGel": 1000,
-  "fetchedAt": "2026-09-28T19:40:13.909244Z",
+  "fetchedAt": "2026-09-29T05:42:54.917531Z",
   "source": {
     "name": "Банковская витрина НБГ",
     "url": "https://nbg.gov.ge/en/currency-rates",
@@ -59,8 +59,8 @@
     {
       "id": "8",
       "bank": "Cartu Bank",
-      "buy": 2.585,
-      "sell": 2.635,
+      "buy": 2.58,
+      "sell": 2.63,
       "sourceUpdatedAt": null
     },
     {
