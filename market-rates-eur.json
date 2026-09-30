@@ -7,7 +7,7 @@
   "channel": "Branch",
   "userType": "PhysicalPerson",
   "queryAmountGel": 1000,
-  "fetchedAt": "2026-09-30T00:46:13.351252Z",
+  "fetchedAt": "2026-09-30T06:00:50.341759Z",
   "source": {
     "name": "Банковская витрина НБГ",
     "url": "https://nbg.gov.ge/en/currency-rates",
@@ -52,15 +52,15 @@
     {
       "id": "9",
       "bank": "Bank of Georgia",
-      "buy": 2.913,
-      "sell": 2.995,
+      "buy": 2.914,
+      "sell": 2.996,
       "sourceUpdatedAt": null
     },
     {
-      "id": "8",
-      "bank": "Cartu Bank",
-      "buy": 2.91,
-      "sell": 3.01,
+      "id": "10",
+      "bank": "Basisbank",
+      "buy": 2.9112,
+      "sell": 2.995,
       "sourceUpdatedAt": null
     },
     {
@@ -71,10 +71,10 @@
       "sourceUpdatedAt": null
     },
     {
-      "id": "10",
-      "bank": "Basisbank",
-      "buy": 2.8992,
-      "sell": 3.0094,
+      "id": "8",
+      "bank": "Cartu Bank",
+      "buy": 2.9,
+      "sell": 3.0,
       "sourceUpdatedAt": null
     },
     {
