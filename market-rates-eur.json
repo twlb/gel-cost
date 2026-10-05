@@ -7,7 +7,7 @@
   "channel": "Branch",
   "userType": "PhysicalPerson",
   "queryAmountGel": 1000,
-  "fetchedAt": "2026-10-05T09:02:30.039172Z",
+  "fetchedAt": "2026-10-05T18:26:29.478292Z",
   "source": {
     "name": "Банковская витрина НБГ",
     "url": "https://nbg.gov.ge/en/currency-rates",
@@ -22,23 +22,16 @@
       "sourceUpdatedAt": null
     },
     {
-      "id": "2",
-      "bank": "Credo Bank",
-      "buy": 2.908,
-      "sell": 2.932,
+      "id": "5",
+      "bank": "Tera Bank",
+      "buy": 2.905,
+      "sell": 2.93,
       "sourceUpdatedAt": null
     },
     {
       "id": "6",
       "bank": "Silk Bank",
-      "buy": 2.905,
-      "sell": 2.925,
-      "sourceUpdatedAt": null
-    },
-    {
-      "id": "5",
-      "bank": "Tera Bank",
-      "buy": 2.905,
+      "buy": 2.898,
       "sell": 2.93,
       "sourceUpdatedAt": null
     },
@@ -50,10 +43,10 @@
       "sourceUpdatedAt": null
     },
     {
-      "id": "10",
-      "bank": "Basisbank",
-      "buy": 2.8775,
-      "sell": 2.959,
+      "id": "2",
+      "bank": "Credo Bank",
+      "buy": 2.879,
+      "sell": 2.954,
       "sourceUpdatedAt": null
     },
     {
@@ -78,31 +71,38 @@
       "sourceUpdatedAt": null
     },
     {
+      "id": "10",
+      "bank": "Basisbank",
+      "buy": 2.8609,
+      "sell": 2.9684,
+      "sourceUpdatedAt": null
+    },
+    {
       "id": "12",
       "bank": "Liberty Bank",
-      "buy": 2.856,
-      "sell": 2.972,
+      "buy": 2.852,
+      "sell": 2.968,
       "sourceUpdatedAt": null
     },
     {
       "id": "11",
       "bank": "TBC Bank",
       "buy": 2.846,
-      "sell": 2.99,
+      "sell": 2.991,
       "sourceUpdatedAt": null
     },
     {
       "id": "7",
       "bank": "Procredit bank",
-      "buy": 2.842,
-      "sell": 2.991,
+      "buy": 2.839,
+      "sell": 2.988,
       "sourceUpdatedAt": null
     },
     {
       "id": "3",
       "bank": "Pasha Bank Georgia",
-      "buy": 2.783,
-      "sell": 3.0433,
+      "buy": 2.7763,
+      "sell": 3.0633,
       "sourceUpdatedAt": null
     }
   ],
