@@ -7,7 +7,7 @@
   "channel": "Branch",
   "userType": "PhysicalPerson",
   "queryAmountGel": 1000,
-  "fetchedAt": "2026-10-08T01:19:56.607246Z",
+  "fetchedAt": "2026-10-08T07:59:30.432930Z",
   "source": {
     "name": "Банковская витрина НБГ",
     "url": "https://nbg.gov.ge/en/currency-rates",
@@ -22,6 +22,13 @@
       "sourceUpdatedAt": null
     },
     {
+      "id": "6",
+      "bank": "Silk Bank",
+      "buy": 2.906,
+      "sell": 2.919,
+      "sourceUpdatedAt": null
+    },
+    {
       "id": "5",
       "bank": "Tera Bank",
       "buy": 2.905,
@@ -29,10 +36,10 @@
       "sourceUpdatedAt": null
     },
     {
-      "id": "6",
-      "bank": "Silk Bank",
-      "buy": 2.899,
-      "sell": 2.919,
+      "id": "2",
+      "bank": "Credo Bank",
+      "buy": 2.904,
+      "sell": 2.929,
       "sourceUpdatedAt": null
     },
     {
@@ -43,10 +50,10 @@
       "sourceUpdatedAt": null
     },
     {
-      "id": "2",
-      "bank": "Credo Bank",
-      "buy": 2.875,
-      "sell": 2.95,
+      "id": "10",
+      "bank": "Basisbank",
+      "buy": 2.8706,
+      "sell": 2.9565,
       "sourceUpdatedAt": null
     },
     {
@@ -71,38 +78,31 @@
       "sourceUpdatedAt": null
     },
     {
-      "id": "10",
-      "bank": "Basisbank",
-      "buy": 2.8513,
-      "sell": 2.9628,
-      "sourceUpdatedAt": null
-    },
-    {
       "id": "12",
       "bank": "Liberty Bank",
-      "buy": 2.851,
-      "sell": 2.967,
+      "buy": 2.853,
+      "sell": 2.969,
       "sourceUpdatedAt": null
     },
     {
       "id": "11",
       "bank": "TBC Bank",
-      "buy": 2.842,
-      "sell": 2.985,
+      "buy": 2.841,
+      "sell": 2.984,
       "sourceUpdatedAt": null
     },
     {
       "id": "7",
       "bank": "Procredit bank",
-      "buy": 2.831,
-      "sell": 2.98,
+      "buy": 2.832,
+      "sell": 2.982,
       "sourceUpdatedAt": null
     },
     {
       "id": "3",
       "bank": "Pasha Bank Georgia",
-      "buy": 2.7927,
-      "sell": 3.0538,
+      "buy": 2.7865,
+      "sell": 3.0474,
       "sourceUpdatedAt": null
     }
   ],
