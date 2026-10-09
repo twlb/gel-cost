@@ -5,15 +5,15 @@
   "nominal": 1,
   "channel": "Cash",
   "side": "buy",
-  "fetchedAt": "2026-10-09T14:40:45.934450Z",
+  "fetchedAt": "2026-10-09T19:47:05.483570Z",
   "offers": [
     {
       "id": "mjc",
-      "buy": 2.598,
-      "sell": 2.601,
+      "buy": 2.597,
+      "sell": 2.6,
       "nominal": 1,
       "sourceNominal": 1,
-      "checkedAt": "2026-10-09T14:40:45.934450Z",
+      "checkedAt": "2026-10-09T19:47:05.483570Z",
       "sourceUpdatedAt": null
     },
     {
@@ -22,7 +22,7 @@
       "sell": 2.601,
       "nominal": 1,
       "sourceNominal": 1,
-      "checkedAt": "2026-10-09T14:40:45.934450Z",
+      "checkedAt": "2026-10-09T19:47:05.483570Z",
       "sourceUpdatedAt": null
     },
     {
@@ -31,7 +31,7 @@
       "sell": 2.602,
       "nominal": 1,
       "sourceNominal": 1,
-      "checkedAt": "2026-10-09T14:40:45.934450Z",
+      "checkedAt": "2026-10-09T19:47:05.483570Z",
       "sourceUpdatedAt": null
     }
   ],
