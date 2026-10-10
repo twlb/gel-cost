@@ -7,20 +7,13 @@
   "channel": "Branch",
   "userType": "PhysicalPerson",
   "queryAmountGel": 1000,
-  "fetchedAt": "2026-10-10T09:04:49.431043Z",
+  "fetchedAt": "2026-10-10T15:22:18.660178Z",
   "source": {
     "name": "Банковская витрина НБГ",
     "url": "https://nbg.gov.ge/en/currency-rates",
     "api": "https://tariffcompare.nbg.gov.ge/api/Exchanges/get-exchanges"
   },
   "offers": [
-    {
-      "id": "2",
-      "bank": "Credo Bank",
-      "buy": 2.904,
-      "sell": 2.928,
-      "sourceUpdatedAt": null
-    },
     {
       "id": "5",
       "bank": "Tera Bank",
@@ -47,6 +40,13 @@
       "bank": "Khalyk Bank Georgia",
       "buy": 2.88,
       "sell": 2.95,
+      "sourceUpdatedAt": null
+    },
+    {
+      "id": "2",
+      "bank": "Credo Bank",
+      "buy": 2.875,
+      "sell": 2.958,
       "sourceUpdatedAt": null
     },
     {
