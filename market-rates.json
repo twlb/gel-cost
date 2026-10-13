@@ -7,7 +7,7 @@
   "channel": "Branch",
   "userType": "PhysicalPerson",
   "queryAmountGel": 1000,
-  "fetchedAt": "2026-10-13T08:27:30.467472Z",
+  "fetchedAt": "2026-10-13T16:27:09.547982Z",
   "source": {
     "name": "Банковская витрина НБГ",
     "url": "https://nbg.gov.ge/en/currency-rates",
@@ -36,13 +36,6 @@
       "sourceUpdatedAt": null
     },
     {
-      "id": "4",
-      "bank": "Khalyk Bank Georgia",
-      "buy": 2.59,
-      "sell": 2.615,
-      "sourceUpdatedAt": null
-    },
-    {
       "id": "13",
       "bank": "Ziraatbank",
       "buy": 2.59,
@@ -50,10 +43,17 @@
       "sourceUpdatedAt": null
     },
     {
+      "id": "4",
+      "bank": "Khalyk Bank Georgia",
+      "buy": 2.588,
+      "sell": 2.618,
+      "sourceUpdatedAt": null
+    },
+    {
       "id": "10",
       "bank": "Basisbank",
-      "buy": 2.582,
-      "sell": 2.611,
+      "buy": 2.58,
+      "sell": 2.61,
       "sourceUpdatedAt": null
     },
     {
@@ -92,17 +92,17 @@
       "sourceUpdatedAt": null
     },
     {
+      "id": "7",
+      "bank": "Procredit bank",
+      "buy": 2.549,
+      "sell": 2.649,
+      "sourceUpdatedAt": null
+    },
+    {
       "id": "11",
       "bank": "TBC Bank",
       "buy": 2.547,
       "sell": 2.637,
-      "sourceUpdatedAt": null
-    },
-    {
-      "id": "7",
-      "bank": "Procredit bank",
-      "buy": 2.543,
-      "sell": 2.643,
       "sourceUpdatedAt": null
     }
   ],
