@@ -7,7 +7,7 @@
   "channel": "Branch",
   "userType": "PhysicalPerson",
   "queryAmountGel": 1000,
-  "fetchedAt": "2026-10-16T09:47:47.492569Z",
+  "fetchedAt": "2026-10-16T14:50:57.671950Z",
   "source": {
     "name": "Банковская витрина НБГ",
     "url": "https://nbg.gov.ge/en/currency-rates",
@@ -15,17 +15,10 @@
   },
   "offers": [
     {
-      "id": "2",
-      "bank": "Credo Bank",
-      "buy": 2.912,
-      "sell": 2.937,
-      "sourceUpdatedAt": null
-    },
-    {
       "id": "6",
       "bank": "Silk Bank",
       "buy": 2.911,
-      "sell": 2.931,
+      "sell": 2.937,
       "sourceUpdatedAt": null
     },
     {
@@ -39,7 +32,7 @@
       "id": "4",
       "bank": "Khalyk Bank Georgia",
       "buy": 2.89,
-      "sell": 2.95,
+      "sell": 2.96,
       "sourceUpdatedAt": null
     },
     {
@@ -50,6 +43,20 @@
       "sourceUpdatedAt": null
     },
     {
+      "id": "2",
+      "bank": "Credo Bank",
+      "buy": 2.887,
+      "sell": 2.963,
+      "sourceUpdatedAt": null
+    },
+    {
+      "id": "11",
+      "bank": "TBC Bank",
+      "buy": 2.885,
+      "sell": 2.963,
+      "sourceUpdatedAt": null
+    },
+    {
       "id": "9",
       "bank": "Bank of Georgia",
       "buy": 2.882,
@@ -57,17 +64,17 @@
       "sourceUpdatedAt": null
     },
     {
-      "id": "10",
-      "bank": "Basisbank",
-      "buy": 2.878,
-      "sell": 2.9637,
-      "sourceUpdatedAt": null
-    },
-    {
       "id": "8",
       "bank": "Cartu Bank",
       "buy": 2.87,
       "sell": 2.97,
+      "sourceUpdatedAt": null
+    },
+    {
+      "id": "10",
+      "bank": "Basisbank",
+      "buy": 2.8648,
+      "sell": 2.9767,
       "sourceUpdatedAt": null
     },
     {
@@ -80,22 +87,15 @@
     {
       "id": "12",
       "bank": "Liberty Bank",
-      "buy": 2.862,
-      "sell": 2.978,
+      "buy": 2.863,
+      "sell": 2.979,
       "sourceUpdatedAt": null
     },
     {
       "id": "7",
       "bank": "Procredit bank",
-      "buy": 2.851,
-      "sell": 3.0,
-      "sourceUpdatedAt": null
-    },
-    {
-      "id": "11",
-      "bank": "TBC Bank",
-      "buy": 2.851,
-      "sell": 2.996,
+      "buy": 2.852,
+      "sell": 3.001,
       "sourceUpdatedAt": null
     },
     {
