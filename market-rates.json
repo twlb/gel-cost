@@ -7,7 +7,7 @@
   "channel": "Branch",
   "userType": "PhysicalPerson",
   "queryAmountGel": 1000,
-  "fetchedAt": "2026-10-19T05:20:22.926715Z",
+  "fetchedAt": "2026-10-19T11:16:26.091067Z",
   "source": {
     "name": "Банковская витрина НБГ",
     "url": "https://nbg.gov.ge/en/currency-rates",
@@ -18,7 +18,7 @@
       "id": "5",
       "bank": "Tera Bank",
       "buy": 2.596,
-      "sell": 2.602,
+      "sell": 2.601,
       "sourceUpdatedAt": null
     },
     {
@@ -59,8 +59,8 @@
     {
       "id": "8",
       "bank": "Cartu Bank",
-      "buy": 2.575,
-      "sell": 2.625,
+      "buy": 2.57,
+      "sell": 2.62,
       "sourceUpdatedAt": null
     },
     {
@@ -80,8 +80,8 @@
     {
       "id": "16",
       "bank": "Is Bank",
-      "buy": 2.563,
-      "sell": 2.643,
+      "buy": 2.562,
+      "sell": 2.642,
       "sourceUpdatedAt": null
     },
     {
