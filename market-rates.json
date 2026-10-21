@@ -7,7 +7,7 @@
   "channel": "Branch",
   "userType": "PhysicalPerson",
   "queryAmountGel": 1000,
-  "fetchedAt": "2026-10-21T06:01:12.680136Z",
+  "fetchedAt": "2026-10-21T11:47:03.185979Z",
   "source": {
     "name": "Банковская витрина НБГ",
     "url": "https://nbg.gov.ge/en/currency-rates",
@@ -101,8 +101,8 @@
     {
       "id": "7",
       "bank": "Procredit bank",
-      "buy": 2.547,
-      "sell": 2.648,
+      "buy": 2.546,
+      "sell": 2.646,
       "sourceUpdatedAt": null
     }
   ],
