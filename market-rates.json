@@ -7,7 +7,7 @@
   "channel": "Branch",
   "userType": "PhysicalPerson",
   "queryAmountGel": 1000,
-  "fetchedAt": "2026-10-23T10:02:30.113844Z",
+  "fetchedAt": "2026-10-23T15:03:19.692276Z",
   "source": {
     "name": "Банковская витрина НБГ",
     "url": "https://nbg.gov.ge/en/currency-rates",
@@ -17,7 +17,7 @@
     {
       "id": "5",
       "bank": "Tera Bank",
-      "buy": 2.596,
+      "buy": 2.595,
       "sell": 2.601,
       "sourceUpdatedAt": null
     },
