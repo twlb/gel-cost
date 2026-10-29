@@ -7,7 +7,7 @@
   "channel": "Branch",
   "userType": "PhysicalPerson",
   "queryAmountGel": 1000,
-  "fetchedAt": "2026-10-29T19:41:16.305222Z",
+  "fetchedAt": "2026-10-29T23:36:04.492221Z",
   "source": {
     "name": "Банковская витрина НБГ",
     "url": "https://nbg.gov.ge/en/currency-rates",
@@ -78,6 +78,13 @@
       "sourceUpdatedAt": null
     },
     {
+      "id": "11",
+      "bank": "TBC Bank",
+      "buy": 2.829,
+      "sell": 2.973,
+      "sourceUpdatedAt": null
+    },
+    {
       "id": "12",
       "bank": "Liberty Bank",
       "buy": 2.828,
@@ -89,13 +96,6 @@
       "bank": "Procredit bank",
       "buy": 2.827,
       "sell": 2.976,
-      "sourceUpdatedAt": null
-    },
-    {
-      "id": "11",
-      "bank": "TBC Bank",
-      "buy": 2.825,
-      "sell": 2.969,
       "sourceUpdatedAt": null
     },
     {
