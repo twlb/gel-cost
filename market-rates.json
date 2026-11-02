@@ -7,7 +7,7 @@
   "channel": "Branch",
   "userType": "PhysicalPerson",
   "queryAmountGel": 1000,
-  "fetchedAt": "2026-11-02T06:52:10.117381Z",
+  "fetchedAt": "2026-11-02T17:03:34.798156Z",
   "source": {
     "name": "Банковская витрина НБГ",
     "url": "https://nbg.gov.ge/en/currency-rates",
@@ -17,7 +17,7 @@
     {
       "id": "6",
       "bank": "Silk Bank",
-      "buy": 2.593,
+      "buy": 2.594,
       "sell": 2.6,
       "sourceUpdatedAt": null
     },
@@ -101,8 +101,8 @@
     {
       "id": "7",
       "bank": "Procredit bank",
-      "buy": 2.545,
-      "sell": 2.646,
+      "buy": 2.547,
+      "sell": 2.648,
       "sourceUpdatedAt": null
     }
   ],
