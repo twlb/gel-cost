@@ -1,8 +1,8 @@
 {
   "usdRub": 82.1386,
-  "usdGel": 2.5949,
+  "usdGel": 2.5943,
   "updatedAt": "2026-11-07T00:00:00Z",
-  "fetchedAt": "2026-11-09T09:46:31.906128Z",
+  "fetchedAt": "2026-11-09T20:10:35.506131Z",
   "sources": {
     "usdRub": {
       "name": "Банк России",
@@ -12,7 +12,7 @@
     "usdGel": {
       "name": "Национальный банк Грузии",
       "url": "https://services.nbg.gov.ge/Rates/Service.asmx",
-      "date": "2026-11-07T00:00:00Z"
+      "date": "2026-11-10T00:00:00Z"
     }
   }
 }
