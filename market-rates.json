@@ -7,7 +7,7 @@
   "channel": "Branch",
   "userType": "PhysicalPerson",
   "queryAmountGel": 1000,
-  "fetchedAt": "2026-11-10T18:16:34.840802Z",
+  "fetchedAt": "2026-11-10T23:27:30.251426Z",
   "source": {
     "name": "Банковская витрина НБГ",
     "url": "https://nbg.gov.ge/en/currency-rates",
@@ -31,8 +31,8 @@
     {
       "id": "13",
       "bank": "Ziraatbank",
-      "buy": 2.59,
-      "sell": 2.622,
+      "buy": 2.5905,
+      "sell": 2.605,
       "sourceUpdatedAt": null
     },
     {
