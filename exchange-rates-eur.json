@@ -5,33 +5,33 @@
   "nominal": 1,
   "channel": "Cash",
   "side": "buy",
-  "fetchedAt": "2026-11-10T10:27:52.241459Z",
+  "fetchedAt": "2026-11-10T18:16:41.958556Z",
   "offers": [
     {
       "id": "mjc",
-      "buy": 2.907,
-      "sell": 2.914,
+      "buy": 2.89,
+      "sell": 2.897,
       "nominal": 1,
       "sourceNominal": 1,
-      "checkedAt": "2026-11-10T10:27:52.241459Z",
+      "checkedAt": "2026-11-10T18:16:41.958556Z",
       "sourceUpdatedAt": null
     },
     {
       "id": "rico",
-      "buy": 2.906,
-      "sell": 2.916,
+      "buy": 2.889,
+      "sell": 2.899,
       "nominal": 1,
       "sourceNominal": 1,
-      "checkedAt": "2026-11-10T10:27:52.241459Z",
+      "checkedAt": "2026-11-10T18:16:41.958556Z",
       "sourceUpdatedAt": null
     },
     {
       "id": "inteli",
-      "buy": 2.903,
-      "sell": 2.917,
+      "buy": 2.888,
+      "sell": 2.9,
       "nominal": 1,
       "sourceNominal": 1,
-      "checkedAt": "2026-11-10T10:27:52.241459Z",
+      "checkedAt": "2026-11-10T18:16:41.958556Z",
       "sourceUpdatedAt": null
     }
   ],
