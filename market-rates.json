@@ -7,7 +7,7 @@
   "channel": "Branch",
   "userType": "PhysicalPerson",
   "queryAmountGel": 1000,
-  "fetchedAt": "2026-11-11T03:01:54.318088Z",
+  "fetchedAt": "2026-11-11T10:54:57.534622Z",
   "source": {
     "name": "Банковская витрина НБГ",
     "url": "https://nbg.gov.ge/en/currency-rates",
@@ -15,17 +15,17 @@
   },
   "offers": [
     {
-      "id": "6",
-      "bank": "Silk Bank",
-      "buy": 2.593,
-      "sell": 2.597,
-      "sourceUpdatedAt": null
-    },
-    {
       "id": "5",
       "bank": "Terabank",
       "buy": 2.592,
       "sell": 2.598,
+      "sourceUpdatedAt": null
+    },
+    {
+      "id": "6",
+      "bank": "Silk Bank",
+      "buy": 2.591,
+      "sell": 2.596,
       "sourceUpdatedAt": null
     },
     {
@@ -59,8 +59,8 @@
     {
       "id": "16",
       "bank": "Is Bank",
-      "buy": 2.577,
-      "sell": 2.657,
+      "buy": 2.576,
+      "sell": 2.656,
       "sourceUpdatedAt": null
     },
     {
@@ -101,8 +101,8 @@
     {
       "id": "7",
       "bank": "Procredit bank",
-      "buy": 2.544,
-      "sell": 2.645,
+      "buy": 2.543,
+      "sell": 2.644,
       "sourceUpdatedAt": null
     }
   ],
