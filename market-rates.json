@@ -7,7 +7,7 @@
   "channel": "Branch",
   "userType": "PhysicalPerson",
   "queryAmountGel": 1000,
-  "fetchedAt": "2026-11-13T10:56:43.390592Z",
+  "fetchedAt": "2026-11-13T18:30:59.008726Z",
   "source": {
     "name": "Банковская витрина НБГ",
     "url": "https://nbg.gov.ge/en/currency-rates",
@@ -38,8 +38,8 @@
     {
       "id": "2",
       "bank": "Credo Bank",
-      "buy": 2.59,
-      "sell": 2.604,
+      "buy": 2.589,
+      "sell": 2.603,
       "sourceUpdatedAt": null
     },
     {
@@ -94,15 +94,15 @@
     {
       "id": "12",
       "bank": "Liberty Bank",
-      "buy": 2.546,
-      "sell": 2.646,
+      "buy": 2.543,
+      "sell": 2.643,
       "sourceUpdatedAt": null
     },
     {
       "id": "7",
       "bank": "Procredit bank",
       "buy": 2.543,
-      "sell": 2.644,
+      "sell": 2.643,
       "sourceUpdatedAt": null
     }
   ],
