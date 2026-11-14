@@ -7,7 +7,7 @@
   "channel": "Branch",
   "userType": "PhysicalPerson",
   "queryAmountGel": 1000,
-  "fetchedAt": "2026-11-14T06:19:39.034133Z",
+  "fetchedAt": "2026-11-14T13:47:58.754123Z",
   "source": {
     "name": "Банковская витрина НБГ",
     "url": "https://nbg.gov.ge/en/currency-rates",
@@ -29,13 +29,6 @@
       "sourceUpdatedAt": null
     },
     {
-      "id": "2",
-      "bank": "Credo Bank",
-      "buy": 2.852,
-      "sell": 2.877,
-      "sourceUpdatedAt": null
-    },
-    {
       "id": "6",
       "bank": "Silk Bank",
       "buy": 2.846,
@@ -54,6 +47,13 @@
       "bank": "Khalyk Bank Georgia",
       "buy": 2.83,
       "sell": 2.9,
+      "sourceUpdatedAt": null
+    },
+    {
+      "id": "2",
+      "bank": "Credo Bank",
+      "buy": 2.825,
+      "sell": 2.898,
       "sourceUpdatedAt": null
     },
     {
