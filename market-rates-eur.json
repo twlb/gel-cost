@@ -7,7 +7,7 @@
   "channel": "Branch",
   "userType": "PhysicalPerson",
   "queryAmountGel": 1000,
-  "fetchedAt": "2026-11-17T11:49:20.987572Z",
+  "fetchedAt": "2026-11-17T20:53:47.026793Z",
   "source": {
     "name": "Банковская витрина НБГ",
     "url": "https://nbg.gov.ge/en/currency-rates",
@@ -22,24 +22,17 @@
       "sourceUpdatedAt": null
     },
     {
-      "id": "6",
-      "bank": "Silk Bank",
-      "buy": 2.845,
-      "sell": 2.865,
-      "sourceUpdatedAt": null
-    },
-    {
       "id": "5",
       "bank": "Terabank",
-      "buy": 2.845,
-      "sell": 2.88,
+      "buy": 2.84,
+      "sell": 2.87,
       "sourceUpdatedAt": null
     },
     {
-      "id": "2",
-      "bank": "Credo Bank",
-      "buy": 2.844,
-      "sell": 2.869,
+      "id": "6",
+      "bank": "Silk Bank",
+      "buy": 2.829,
+      "sell": 2.861,
       "sourceUpdatedAt": null
     },
     {
@@ -59,15 +52,15 @@
     {
       "id": "9",
       "bank": "Bank of Georgia",
-      "buy": 2.812,
-      "sell": 2.892,
+      "buy": 2.816,
+      "sell": 2.896,
       "sourceUpdatedAt": null
     },
     {
-      "id": "10",
-      "bank": "Basisbank",
-      "buy": 2.8047,
-      "sell": 2.8908,
+      "id": "2",
+      "bank": "Credo Bank",
+      "buy": 2.813,
+      "sell": 2.888,
       "sourceUpdatedAt": null
     },
     {
@@ -85,24 +78,31 @@
       "sourceUpdatedAt": null
     },
     {
-      "id": "7",
-      "bank": "Procredit bank",
-      "buy": 2.778,
-      "sell": 2.927,
+      "id": "10",
+      "bank": "Basisbank",
+      "buy": 2.7892,
+      "sell": 2.9013,
       "sourceUpdatedAt": null
     },
     {
       "id": "11",
       "bank": "TBC Bank",
+      "buy": 2.78,
+      "sell": 2.923,
+      "sourceUpdatedAt": null
+    },
+    {
+      "id": "7",
+      "bank": "Procredit bank",
       "buy": 2.777,
-      "sell": 2.92,
+      "sell": 2.926,
       "sourceUpdatedAt": null
     },
     {
       "id": "3",
       "bank": "Pasha Bank Georgia",
-      "buy": 2.748,
-      "sell": 2.9642,
+      "buy": 2.7319,
+      "sell": 2.9735,
       "sourceUpdatedAt": null
     }
   ],
