@@ -7,7 +7,7 @@
   "channel": "Branch",
   "userType": "PhysicalPerson",
   "queryAmountGel": 1000,
-  "fetchedAt": "2026-11-19T09:30:20.675330Z",
+  "fetchedAt": "2026-11-19T18:40:29.155202Z",
   "source": {
     "name": "Банковская витрина НБГ",
     "url": "https://nbg.gov.ge/en/currency-rates",
@@ -15,16 +15,9 @@
   },
   "offers": [
     {
-      "id": "6",
-      "bank": "Silk Bank",
-      "buy": 2.592,
-      "sell": 2.596,
-      "sourceUpdatedAt": null
-    },
-    {
       "id": "5",
       "bank": "Terabank",
-      "buy": 2.592,
+      "buy": 2.591,
       "sell": 2.598,
       "sourceUpdatedAt": null
     },
@@ -36,10 +29,17 @@
       "sourceUpdatedAt": null
     },
     {
+      "id": "6",
+      "bank": "Silk Bank",
+      "buy": 2.59,
+      "sell": 2.595,
+      "sourceUpdatedAt": null
+    },
+    {
       "id": "2",
       "bank": "Credo Bank",
-      "buy": 2.589,
-      "sell": 2.603,
+      "buy": 2.588,
+      "sell": 2.602,
       "sourceUpdatedAt": null
     },
     {
@@ -73,15 +73,15 @@
     {
       "id": "9",
       "bank": "Bank of Georgia",
-      "buy": 2.562,
-      "sell": 2.626,
+      "buy": 2.561,
+      "sell": 2.625,
       "sourceUpdatedAt": null
     },
     {
       "id": "3",
       "bank": "Pasha Bank Georgia",
-      "buy": 2.562,
-      "sell": 2.626,
+      "buy": 2.561,
+      "sell": 2.625,
       "sourceUpdatedAt": null
     },
     {
