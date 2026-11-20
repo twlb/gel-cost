@@ -1,18 +1,18 @@
 {
-  "usdRub": 82.2281,
-  "usdGel": 2.5927,
-  "updatedAt": "2026-11-19T00:00:00Z",
-  "fetchedAt": "2026-11-19T18:40:29.087285Z",
+  "usdRub": 81.929,
+  "usdGel": 2.5933,
+  "updatedAt": "2026-11-20T00:00:00Z",
+  "fetchedAt": "2026-11-20T00:55:14.290991Z",
   "sources": {
     "usdRub": {
       "name": "Банк России",
       "url": "https://www.cbr.ru/scripts/XML_daily.asp",
-      "date": "2026-11-19T00:00:00Z"
+      "date": "2026-11-20T00:00:00Z"
     },
     "usdGel": {
       "name": "Национальный банк Грузии",
       "url": "https://services.nbg.gov.ge/Rates/Service.asmx",
-      "date": "2026-11-19T00:00:00Z"
+      "date": "2026-11-20T00:00:00Z"
     }
   }
 }
