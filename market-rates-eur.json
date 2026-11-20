@@ -7,7 +7,7 @@
   "channel": "Branch",
   "userType": "PhysicalPerson",
   "queryAmountGel": 1000,
-  "fetchedAt": "2026-11-20T00:55:14.371626Z",
+  "fetchedAt": "2026-11-20T08:31:58.912872Z",
   "source": {
     "name": "Банковская витрина НБГ",
     "url": "https://nbg.gov.ge/en/currency-rates",
@@ -29,10 +29,17 @@
       "sourceUpdatedAt": null
     },
     {
+      "id": "2",
+      "bank": "Credo Bank",
+      "buy": 2.839,
+      "sell": 2.863,
+      "sourceUpdatedAt": null
+    },
+    {
       "id": "6",
       "bank": "Silk Bank",
-      "buy": 2.835,
-      "sell": 2.861,
+      "buy": 2.837,
+      "sell": 2.857,
       "sourceUpdatedAt": null
     },
     {
@@ -40,13 +47,6 @@
       "bank": "Khalyk Bank Georgia",
       "buy": 2.82,
       "sell": 2.89,
-      "sourceUpdatedAt": null
-    },
-    {
-      "id": "2",
-      "bank": "Credo Bank",
-      "buy": 2.818,
-      "sell": 2.892,
       "sourceUpdatedAt": null
     },
     {
@@ -64,31 +64,31 @@
       "sourceUpdatedAt": null
     },
     {
+      "id": "10",
+      "bank": "Basisbank",
+      "buy": 2.8037,
+      "sell": 2.8887,
+      "sourceUpdatedAt": null
+    },
+    {
       "id": "8",
       "bank": "Cartu Bank",
-      "buy": 2.805,
-      "sell": 2.905,
+      "buy": 2.795,
+      "sell": 2.895,
       "sourceUpdatedAt": null
     },
     {
       "id": "12",
       "bank": "Liberty Bank",
-      "buy": 2.794,
-      "sell": 2.91,
-      "sourceUpdatedAt": null
-    },
-    {
-      "id": "10",
-      "bank": "Basisbank",
-      "buy": 2.7936,
-      "sell": 2.9054,
+      "buy": 2.787,
+      "sell": 2.903,
       "sourceUpdatedAt": null
     },
     {
       "id": "7",
       "bank": "Procredit bank",
-      "buy": 2.776,
-      "sell": 2.925,
+      "buy": 2.773,
+      "sell": 2.923,
       "sourceUpdatedAt": null
     },
     {
@@ -101,8 +101,8 @@
     {
       "id": "3",
       "bank": "Pasha Bank Georgia",
-      "buy": 2.7321,
-      "sell": 2.9736,
+      "buy": 2.7382,
+      "sell": 2.9536,
       "sourceUpdatedAt": null
     }
   ],
