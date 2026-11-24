@@ -7,7 +7,7 @@
   "channel": "Branch",
   "userType": "PhysicalPerson",
   "queryAmountGel": 1000,
-  "fetchedAt": "2026-11-20T08:31:58.912872Z",
+  "fetchedAt": "2026-11-24T17:41:25.928094Z",
   "source": {
     "name": "Банковская витрина НБГ",
     "url": "https://nbg.gov.ge/en/currency-rates",
@@ -24,85 +24,85 @@
     {
       "id": "5",
       "bank": "Terabank",
-      "buy": 2.84,
-      "sell": 2.87,
-      "sourceUpdatedAt": null
-    },
-    {
-      "id": "2",
-      "bank": "Credo Bank",
-      "buy": 2.839,
-      "sell": 2.863,
+      "buy": 2.835,
+      "sell": 2.86,
       "sourceUpdatedAt": null
     },
     {
       "id": "6",
       "bank": "Silk Bank",
-      "buy": 2.837,
-      "sell": 2.857,
-      "sourceUpdatedAt": null
-    },
-    {
-      "id": "4",
-      "bank": "Khalyk Bank Georgia",
-      "buy": 2.82,
-      "sell": 2.89,
+      "buy": 2.83,
+      "sell": 2.862,
       "sourceUpdatedAt": null
     },
     {
       "id": "16",
       "bank": "Is Bank",
-      "buy": 2.813,
-      "sell": 2.928,
+      "buy": 2.816,
+      "sell": 2.931,
+      "sourceUpdatedAt": null
+    },
+    {
+      "id": "4",
+      "bank": "Khalyk Bank Georgia",
+      "buy": 2.81,
+      "sell": 2.89,
+      "sourceUpdatedAt": null
+    },
+    {
+      "id": "2",
+      "bank": "Credo Bank",
+      "buy": 2.808,
+      "sell": 2.882,
       "sourceUpdatedAt": null
     },
     {
       "id": "9",
       "bank": "Bank of Georgia",
-      "buy": 2.806,
-      "sell": 2.886,
-      "sourceUpdatedAt": null
-    },
-    {
-      "id": "10",
-      "bank": "Basisbank",
-      "buy": 2.8037,
-      "sell": 2.8887,
+      "buy": 2.803,
+      "sell": 2.883,
       "sourceUpdatedAt": null
     },
     {
       "id": "8",
       "bank": "Cartu Bank",
-      "buy": 2.795,
-      "sell": 2.895,
+      "buy": 2.79,
+      "sell": 2.89,
+      "sourceUpdatedAt": null
+    },
+    {
+      "id": "10",
+      "bank": "Basisbank",
+      "buy": 2.7862,
+      "sell": 2.8968,
       "sourceUpdatedAt": null
     },
     {
       "id": "12",
       "bank": "Liberty Bank",
-      "buy": 2.787,
-      "sell": 2.903,
+      "buy": 2.782,
+      "sell": 2.898,
       "sourceUpdatedAt": null
     },
     {
       "id": "7",
       "bank": "Procredit bank",
-      "buy": 2.773,
-      "sell": 2.923,
+      "buy": 2.77,
+      "sell": 2.919,
       "sourceUpdatedAt": null
     },
     {
       "id": "11",
       "bank": "TBC Bank",
-      "buy": 2.772,
-      "sell": 2.915,
+      "buy": 2.769,
+      "sell": 2.912,
       "sourceUpdatedAt": null
     },
     {
       "id": "3",
       "bank": "Pasha Bank Georgia",
-      "buy": 2.7382,
-      "sell": 2.9536,
+      "buy": 2.7256,
+      "sell": 2.9664,
       "sourceUpdatedAt": null
     }
   ],
